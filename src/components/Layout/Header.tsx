@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen } from 'lucide-react';
+import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useCredits } from '../../hooks/useCredits';
+import { useProfile } from '../../hooks/useProfile';
 import { AuthModal } from '../Auth/AuthModal';
 import toast from 'react-hot-toast';
 
@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
   const params = useParams();
   const projectId = params.projectId;
   const { user, signOut } = useAuth();
-  const { credits, loading: creditsLoading } = useCredits();
+  const { profile, loading: profileLoading } = useProfile();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -39,6 +39,17 @@ export const Header: React.FC = () => {
     if (credits >= 100) return 'text-gold-400';
     if (credits >= 50) return 'text-orange-400';
     return 'text-red-400';
+  };
+
+  const getPlanBadge = (plan: string) => {
+    switch (plan) {
+      case 'pro':
+        return { label: 'Pro', color: 'text-gold-400' };
+      case 'enterprise':
+        return { label: 'Enterprise', color: 'text-purple-400' };
+      default:
+        return { label: 'Free', color: 'text-gray-400' };
+    }
   };
 
   return (
@@ -120,8 +131,8 @@ export const Header: React.FC = () => {
                   {/* Credits Display */}
                   <div className="flex items-center space-x-2 bg-gray-700 px-3 py-1 rounded-lg">
                     <Zap className="h-4 w-4 text-gold-400" />
-                    <span className={`text-sm font-medium ${getCreditsColor(credits)}`}>
-                      {creditsLoading ? '...' : credits.toLocaleString()}
+                    <span className={`text-sm font-medium ${getCreditsColor(profile?.credits || 0)}`}>
+                      {profileLoading ? '...' : (profile?.credits || 0).toLocaleString()}
                     </span>
                     <span className="text-xs text-gray-400">credits</span>
                   </div>
@@ -133,21 +144,44 @@ export const Header: React.FC = () => {
                       className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       <User className="h-4 w-4" />
-                      <span>{user.email?.split('@')[0]}</span>
+                      <span>{profile?.full_name || user.email?.split('@')[0]}</span>
+                      {profile?.plan && profile.plan !== 'free' && (
+                        <span className={`text-xs ${getPlanBadge(profile.plan).color}`}>
+                          {getPlanBadge(profile.plan).label}
+                        </span>
+                      )}
                     </button>
                     
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50">
+                      <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50">
                         <div className="py-1">
                           <div className="px-4 py-3 text-sm border-b border-gray-700">
                             <div className="text-gray-300">{user.email}</div>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Zap className="h-3 w-3 text-gold-400" />
-                              <span className={`text-xs font-medium ${getCreditsColor(credits)}`}>
-                                {credits.toLocaleString()} credits remaining
-                              </span>
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="flex items-center space-x-2">
+                                <Zap className="h-3 w-3 text-gold-400" />
+                                <span className={`text-xs font-medium ${getCreditsColor(profile?.credits || 0)}`}>
+                                  {(profile?.credits || 0).toLocaleString()} credits
+                                </span>
+                              </div>
+                              {profile?.plan && (
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  profile.plan === 'pro' ? 'bg-gold-600' : 
+                                  profile.plan === 'enterprise' ? 'bg-purple-600' : 'bg-gray-600'
+                                } text-white`}>
+                                  {getPlanBadge(profile.plan).label}
+                                </span>
+                              )}
                             </div>
                           </div>
+                          <Link
+                            to="/profile"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Profile Settings</span>
+                          </Link>
                           <Link
                             to="/pricing"
                             onClick={() => setShowUserMenu(false)}

@@ -223,6 +223,38 @@ export interface Database {
           updated_at?: string;
         };
       };
+      user_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          full_name: string | null;
+          avatar_url: string | null;
+          plan: string;
+          credits: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          plan?: string;
+          credits?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          plan?: string;
+          credits?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       user_credits: {
         Row: {
           id: string;
