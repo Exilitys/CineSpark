@@ -10,6 +10,7 @@ import { PhotoboardPage } from './pages/PhotoboardPage';
 import { ExportPage } from './pages/ExportPage';
 import { PricingPage } from './pages/PricingPage';
 import { PaymentPage } from './pages/PaymentPage';
+import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useAuth } from './hooks/useAuth';
 
@@ -40,6 +41,7 @@ function App() {
           <Route path="/export/:projectId" element={<ExportPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/payment/:planId" element={<PaymentPage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
         <Toaster 

@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, Star, Zap, Crown, ArrowRight, Sparkles, Shield, AlertCircle } from 'lucide-react';
+import { Zap, Crown, Sparkles, Shield, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useProfile } from '../hooks/useProfile';
 import { AuthModal } from '../components/Auth/AuthModal';
+import { PricingCard } from '../components/Pricing/PricingCard';
+import { createCheckoutSession, STRIPE_PRODUCTS } from '../lib/stripe';
 import { storePricingSession, getPricingSession, clearPricingSession } from '../utils/sessionStorage';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
   const { user, loading: authLoading, initialized } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
   // Check for stored pricing session on component mount
   useEffect(() => {
@@ -29,22 +34,13 @@ export const PricingPage: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Debug auth state
-  useEffect(() => {
-    console.log('💰 PricingPage auth state:', {
-      user: user?.email || 'None',
-      authLoading,
-      initialized,
-      timestamp: new Date().toISOString()
-    });
-  });
-
   const plans = [
     {
       id: 'free',
       name: 'Free',
-      price: '$0',
-      period: 'forever',
+      description: 'Perfect for getting started with AI filmmaking',
+      monthlyPrice: 0,
+      annualPrice: 0,
       credits: 100,
       icon: Sparkles,
       color: 'from-gray-500 to-gray-600',
@@ -68,8 +64,9 @@ export const PricingPage: React.FC = () => {
     {
       id: 'pro',
       name: 'Pro',
-      price: '$29',
-      period: 'per month',
+      description: 'Advanced features for professional filmmakers',
+      monthlyPrice: 29,
+      annualPrice: 290,
       credits: 1000,
       icon: Zap,
       color: 'from-gold-500 to-gold-600',
@@ -92,8 +89,9 @@ export const PricingPage: React.FC = () => {
     {
       id: 'enterprise',
       name: 'Enterprise',
-      price: '$99',
-      period: 'per month',
+      description: 'Complete solution for studios and teams',
+      monthlyPrice: 99,
+      annualPrice: 990,
       credits: 5000,
       icon: Crown,
       color: 'from-purple-500 to-purple-600',
@@ -117,13 +115,13 @@ export const PricingPage: React.FC = () => {
     }
   ];
 
-  const handleSelectPlan = async (planId: string) => {
+  const handleSelectPlan = async (planId: string, annual: boolean) => {
     console.log('💳 handleSelectPlan called:', {
       planId,
+      annual,
       user: user?.email || 'None',
       authLoading,
       initialized,
-      timestamp: new Date().toISOString()
     });
 
     // Wait for auth to finish loading and be initialized
@@ -133,8 +131,8 @@ export const PricingPage: React.FC = () => {
       return;
     }
 
-    const selectedPlanData = plans.find(p => p.id === planId);
-    if (!selectedPlanData) {
+    const selectedPlan = plans.find(p => p.id === planId);
+    if (!selectedPlan) {
       toast.error('Invalid plan selected');
       return;
     }
@@ -155,8 +153,8 @@ export const PricingPage: React.FC = () => {
       console.log('🚫 No user found, storing pricing session and showing auth modal');
       
       // Store pricing session securely
-      const priceValue = parseInt(selectedPlanData.price.replace('$', ''));
-      storePricingSession(planId, selectedPlanData.name, priceValue);
+      const price = annual ? selectedPlan.annualPrice : selectedPlan.monthlyPrice;
+      storePricingSession(planId, selectedPlan.name, price);
       
       // Set pending plan for UI feedback
       setPendingPlanId(planId);
@@ -168,11 +166,34 @@ export const PricingPage: React.FC = () => {
       return;
     }
 
-    console.log('✅ User is authenticated, proceeding with plan selection');
+    console.log('✅ User is authenticated, proceeding with Stripe checkout');
+    setProcessingPlan(planId);
 
-    // User is authenticated, proceed to payment
-    console.log('🚀 Navigating to payment page for plan:', planId);
-    navigate(`/payment/${planId}`);
+    try {
+      // Get the appropriate price ID based on plan and billing cycle
+      const priceId = annual 
+        ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.annual
+        : STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.monthly;
+
+      if (!priceId) {
+        throw new Error('Price ID not found for selected plan');
+      }
+
+      // Create Stripe checkout session
+      const { sessionId, url } = await createCheckoutSession(priceId, profile?.id);
+      
+      if (url) {
+        // Redirect to Stripe Checkout
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('💥 Stripe checkout error:', error);
+      toast.error('Failed to start checkout process. Please try again.');
+    } finally {
+      setProcessingPlan(null);
+    }
   };
 
   const handleAuthModalClose = () => {
@@ -189,7 +210,7 @@ export const PricingPage: React.FC = () => {
   ];
 
   // Show loading state while auth is loading or not initialized
-  if (authLoading || !initialized) {
+  if (authLoading || !initialized || profileLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -213,9 +234,34 @@ export const PricingPage: React.FC = () => {
           <h1 className="text-4xl font-bold text-white mb-4">
             Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">Creative Plan</span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-8">
             Unlock the full potential of AI-powered filmmaking with flexible pricing designed for creators at every level.
           </p>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center space-x-4 mb-8">
+            <span className={`text-sm font-medium ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>
+              Monthly
+            </span>
+            <button
+              onClick={() => setIsAnnual(!isAnnual)}
+              className="relative inline-flex items-center"
+            >
+              {isAnnual ? (
+                <ToggleRight className="h-8 w-8 text-gold-500" />
+              ) : (
+                <ToggleLeft className="h-8 w-8 text-gray-400" />
+              )}
+            </button>
+            <span className={`text-sm font-medium ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
+              Annual
+            </span>
+            {isAnnual && (
+              <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                Save up to 17%
+              </span>
+            )}
+          </div>
           
           {/* Auth Status */}
           <div className="mt-6">
@@ -280,93 +326,43 @@ export const PricingPage: React.FC = () => {
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {plans.map((plan, index) => (
-            <motion.div
+            <PricingCard
               key={plan.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 * index }}
-              className={`relative bg-gray-800 rounded-2xl p-8 border-2 ${plan.borderColor} ${
-                plan.popular ? 'ring-2 ring-gold-500 ring-opacity-50' : ''
-              } ${
-                pendingPlanId === plan.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-              } hover:border-opacity-80 transition-all duration-300`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                    <Star className="h-4 w-4" />
-                    <span>Most Popular</span>
-                  </div>
-                </div>
-              )}
-
-              {pendingPlanId === plan.id && (
-                <div className="absolute -top-4 right-4">
-                  <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    Pending Auth
-                  </div>
-                </div>
-              )}
-
-              <div className="text-center mb-8">
-                <div className={`w-16 h-16 bg-gradient-to-br ${plan.color} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                  <plan.icon className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <div className="flex items-baseline justify-center mb-2">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  <span className="text-gray-400 ml-2">/{plan.period}</span>
-                </div>
-                <div className="text-gold-400 font-medium">
-                  {plan.credits.toLocaleString()} credits included
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <h4 className="font-semibold text-white">Features included:</h4>
-                {plan.features.map((feature, featureIndex) => (
-                  <div key={featureIndex} className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              {plan.limitations.length > 0 && (
-                <div className="space-y-2 mb-8">
-                  <h4 className="font-semibold text-gray-400 text-sm">Limitations:</h4>
-                  {plan.limitations.map((limitation, limitIndex) => (
-                    <div key={limitIndex} className="text-gray-500 text-sm">
-                      • {limitation}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <motion.button
-                onClick={() => handleSelectPlan(plan.id)}
-                disabled={authLoading || !initialized}
-                className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  plan.popular
-                    ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white'
-                    : plan.id === 'free'
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
-                }`}
-                whileHover={{ scale: (authLoading || !initialized) ? 1 : 1.02 }}
-                whileTap={{ scale: (authLoading || !initialized) ? 1 : 0.98 }}
-              >
-                <span>
-                  {plan.id === 'free' 
-                    ? (user ? 'Current Plan' : 'Get Started') 
-                    : (user ? 'Continue to Payment' : 'Sign In to Continue')
-                  }
-                </span>
-                {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
-              </motion.button>
-            </motion.div>
+              plan={plan}
+              isAnnual={isAnnual}
+              isLoading={processingPlan === plan.id}
+              onSelectPlan={handleSelectPlan}
+              currentPlan={profile?.plan}
+            />
           ))}
         </div>
+
+        {/* Security & Trust Indicators */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="bg-gray-800 rounded-xl p-8 border border-gray-700 mb-16"
+        >
+          <h3 className="text-2xl font-bold text-white mb-8 text-center">Secure & Trusted</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <Shield className="h-12 w-12 text-green-400 mx-auto mb-4" />
+              <h4 className="font-semibold text-white mb-2">Bank-Level Security</h4>
+              <p className="text-gray-400">Your payment information is encrypted and secure with industry-standard SSL protection.</p>
+            </div>
+            <div className="text-center">
+              <Zap className="h-12 w-12 text-gold-400 mx-auto mb-4" />
+              <h4 className="font-semibold text-white mb-2">Instant Access</h4>
+              <p className="text-gray-400">Get immediate access to your plan features as soon as your payment is processed.</p>
+            </div>
+            <div className="text-center">
+              <Crown className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+              <h4 className="font-semibold text-white mb-2">Cancel Anytime</h4>
+              <p className="text-gray-400">No long-term commitments. Cancel or change your plan anytime from your account settings.</p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* FAQ Section */}
         <motion.div
@@ -392,6 +388,14 @@ export const PricingPage: React.FC = () => {
             <div>
               <h4 className="font-semibold text-white mb-2">Is there a free trial?</h4>
               <p className="text-gray-400">Every new user starts with 100 free credits to explore all features. No credit card required to get started.</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">What payment methods do you accept?</h4>
+              <p className="text-gray-400">We accept all major credit cards, debit cards, and digital wallets through our secure Stripe payment processor.</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">Is my payment information secure?</h4>
+              <p className="text-gray-400">Yes! We use Stripe for payment processing, which is PCI DSS compliant and trusted by millions of businesses worldwide.</p>
             </div>
           </div>
         </motion.div>
