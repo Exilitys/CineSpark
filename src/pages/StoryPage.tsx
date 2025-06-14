@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { StoryEditor } from '../components/Story/StoryEditor';
 import { useStory } from '../hooks/useStory';
 import { motion } from 'framer-motion';
@@ -7,9 +7,8 @@ import { FileText, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const StoryPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const projectId = searchParams.get('project');
   
   const { 
     story, 
@@ -17,11 +16,11 @@ export const StoryPage: React.FC = () => {
     updateStory, 
     updateCharacter, 
     updateScene 
-  } = useStory(projectId);
+  } = useStory(projectId || null);
 
   const handleApproveStory = () => {
     toast.success('Story approved! Ready to generate shot list.');
-    navigate(`/shots?project=${projectId}`);
+    navigate(`/shots/${projectId}`);
   };
 
   if (loading) {

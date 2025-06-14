@@ -1,23 +1,26 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { FileText, Camera, Image, Download, Settings, HelpCircle } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
+  const params = useParams();
+  const projectId = params.projectId;
+
+  // Don't show sidebar on home page
+  if (location.pathname === '/') return null;
 
   const mainNavItems = [
-    { path: '/story', icon: FileText, label: 'Story Development' },
-    { path: '/shots', icon: Camera, label: 'Shot List' },
-    { path: '/photoboard', icon: Image, label: 'Photoboard' },
-    { path: '/export', icon: Download, label: 'Export' },
+    { path: `/story/${projectId}`, icon: FileText, label: 'Story Development' },
+    { path: `/shots/${projectId}`, icon: Camera, label: 'Shot List' },
+    { path: `/photoboard/${projectId}`, icon: Image, label: 'Photoboard' },
+    { path: `/export/${projectId}`, icon: Download, label: 'Export' },
   ];
 
   const secondaryNavItems = [
     { path: '/settings', icon: Settings, label: 'Settings' },
     { path: '/help', icon: HelpCircle, label: 'Help' },
   ];
-
-  if (location.pathname === '/') return null;
 
   return (
     <aside className="bg-gray-800 w-64 min-h-screen border-r border-gray-700 hidden lg:block">

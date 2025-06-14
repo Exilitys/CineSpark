@@ -14,10 +14,10 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/story" element={<StoryPage />} />
-          <Route path="/shots" element={<ShotListPage />} />
-          <Route path="/photoboard" element={<PhotoboardPage />} />
-          <Route path="/export" element={<ExportPage />} />
+          <Route path="/story/:projectId" element={<StoryPage />} />
+          <Route path="/shots/:projectId" element={<ShotListPage />} />
+          <Route path="/photoboard/:projectId" element={<PhotoboardPage />} />
+          <Route path="/export/:projectId" element={<ExportPage />} />
         </Routes>
         <Toaster 
           position="top-right"

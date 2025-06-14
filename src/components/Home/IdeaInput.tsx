@@ -49,8 +49,8 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ onGenerate, isGenerating =
       
       setTimeout(() => {
         toast.success('Story generated! Review and edit as needed.', { id: 'generation' });
-        // Navigate to story page with project ID
-        navigate(`/story?project=${project.id}`);
+        // Navigate to story page with project ID as route parameter
+        navigate(`/story/${project.id}`);
       }, 3000);
 
     } catch (error) {
