@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout/Layout';
 import { HomePage } from './pages/HomePage';
+import { ProjectsPage } from './pages/ProjectsPage';
 import { StoryPage } from './pages/StoryPage';
 import { ShotListPage } from './pages/ShotListPage';
 import { PhotoboardPage } from './pages/PhotoboardPage';
@@ -15,6 +16,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/story/:projectId" element={<StoryPage />} />
           <Route path="/shots/:projectId" element={<ShotListPage />} />
           <Route path="/photoboard/:projectId" element={<PhotoboardPage />} />

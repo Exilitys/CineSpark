@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap } from 'lucide-react';
+import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useCredits } from '../../hooks/useCredits';
 import { AuthModal } from '../Auth/AuthModal';
@@ -17,6 +17,7 @@ export const Header: React.FC = () => {
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
+    { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: `/story/${projectId}`, icon: FileText, label: 'Story' },
     { path: `/shots/${projectId}`, icon: Camera, label: 'Shot List' },
     { path: `/photoboard/${projectId}`, icon: Image, label: 'Photoboard' },
@@ -60,8 +61,26 @@ export const Header: React.FC = () => {
 
             <nav className="hidden md:flex space-x-8">
               {navItems.map(({ path, icon: Icon, label }) => {
+                // Show Home and Projects for everyone
+                if (path === '/' || path === '/projects') {
+                  return (
+                    <Link
+                      key={path}
+                      to={path}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        location.pathname === path
+                          ? 'bg-cinema-600 text-white shadow-lg'
+                          : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                }
+                
                 // Skip project-specific nav items if no projectId
-                if (path.includes('undefined') || (!projectId && path !== '/')) {
+                if (path.includes('undefined') || !projectId) {
                   return null;
                 }
                 
