@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShotListView } from '../components/ShotList/ShotListView';
 import { ShotEditor } from '../components/ShotList/ShotEditor';
+import { ShotCreator } from '../components/ShotList/ShotCreator';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { useShots } from '../hooks/useShots';
 import { usePhotoboard } from '../hooks/usePhotoboard';
@@ -17,6 +18,7 @@ export const ShotListPage: React.FC = () => {
   const navigate = useNavigate();
   const [editingShot, setEditingShot] = useState<Shot | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [showCreator, setShowCreator] = useState(false);
 
   const { 
     shots, 
@@ -37,7 +39,7 @@ export const ShotListPage: React.FC = () => {
   const handleDeleteShot = async (shotId: string) => {
     try {
       await deleteShot(shotId);
-      toast.success('Shot deleted successfully!');
+      toast.success('Shot and photoboard frame deleted successfully!');
     } catch (error) {
       toast.error('Error deleting shot');
       throw error; // Re-throw to handle loading state in component
@@ -48,29 +50,12 @@ export const ShotListPage: React.FC = () => {
     await updateShot(shotId, updates);
   };
 
-  const handleAddShot = async () => {
-    try {
-      const newShotNumber = Math.max(...shots.map(s => s.shot_number), 0) + 1;
-      
-      // Determine scene number based on existing shots
-      const lastShot = shots[shots.length - 1];
-      const defaultSceneNumber = lastShot?.scene_number || 1;
-      
-      await createShot({
-        shot_number: newShotNumber,
-        scene_number: defaultSceneNumber,
-        shot_type: 'Wide Shot',
-        camera_angle: 'Eye-level',
-        camera_movement: 'Static',
-        description: 'New shot description',
-        lens_recommendation: '50mm standard lens',
-        estimated_duration: 5,
-        notes: '',
-      });
-      toast.success('New shot added successfully!');
-    } catch (error) {
-      toast.error('Error adding new shot');
-    }
+  const handleCreateShot = async (shotData: any) => {
+    await createShot(shotData);
+  };
+
+  const handleAddShot = () => {
+    setShowCreator(true);
   };
 
   const handleApproveShots = async () => {
@@ -179,6 +164,13 @@ export const ShotListPage: React.FC = () => {
             setEditingShot(null);
           }}
           onSave={handleSaveShot}
+        />
+
+        <ShotCreator
+          isOpen={showCreator}
+          onClose={() => setShowCreator(false)}
+          onCreateShot={handleCreateShot}
+          existingShots={shots}
         />
       </div>
     </div>

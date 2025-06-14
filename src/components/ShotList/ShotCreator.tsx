@@ -1,65 +1,73 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Edit3, Image, Info } from 'lucide-react';
-import { Database } from '../../types/database';
+import { X, Plus, Camera, Image, Info, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type Shot = Database['public']['Tables']['shots']['Row'];
-
-interface ShotEditorProps {
-  shot: Shot | null;
+interface ShotCreatorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (shotId: string, updates: any) => Promise<void>;
+  onCreateShot: (shotData: any) => Promise<void>;
+  existingShots: any[];
 }
 
-export const ShotEditor: React.FC<ShotEditorProps> = ({
-  shot,
+export const ShotCreator: React.FC<ShotCreatorProps> = ({
   isOpen,
   onClose,
-  onSave
+  onCreateShot,
+  existingShots
 }) => {
-  const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
-    shot_number: shot?.shot_number || 1,
-    scene_number: shot?.scene_number || 1,
-    shot_type: shot?.shot_type || 'Wide Shot',
-    camera_angle: shot?.camera_angle || 'Eye-level',
-    camera_movement: shot?.camera_movement || 'Static',
-    description: shot?.description || '',
-    lens_recommendation: shot?.lens_recommendation || '',
-    estimated_duration: shot?.estimated_duration || 5,
-    notes: shot?.notes || '',
+    shot_number: Math.max(...existingShots.map(s => s.shot_number), 0) + 1,
+    scene_number: existingShots.length > 0 ? existingShots[existingShots.length - 1]?.scene_number || 1 : 1,
+    shot_type: 'Wide Shot',
+    camera_angle: 'Eye-level',
+    camera_movement: 'Static',
+    description: '',
+    lens_recommendation: '50mm standard lens',
+    estimated_duration: 5,
+    notes: '',
   });
 
   React.useEffect(() => {
-    if (shot) {
-      setFormData({
-        shot_number: shot.shot_number,
-        scene_number: shot.scene_number || 1,
-        shot_type: shot.shot_type,
-        camera_angle: shot.camera_angle,
-        camera_movement: shot.camera_movement,
-        description: shot.description,
-        lens_recommendation: shot.lens_recommendation,
-        estimated_duration: shot.estimated_duration || 5,
-        notes: shot.notes || '',
-      });
+    if (isOpen) {
+      // Reset form with updated shot number when modal opens
+      setFormData(prev => ({
+        ...prev,
+        shot_number: Math.max(...existingShots.map(s => s.shot_number), 0) + 1,
+        scene_number: existingShots.length > 0 ? existingShots[existingShots.length - 1]?.scene_number || 1 : 1,
+      }));
     }
-  }, [shot]);
+  }, [isOpen, existingShots]);
 
-  const handleSave = async () => {
-    if (!shot) return;
+  const handleCreate = async () => {
+    if (!formData.description.trim()) {
+      toast.error('Please provide a shot description');
+      return;
+    }
 
-    setSaving(true);
+    setCreating(true);
     try {
-      await onSave(shot.id, formData);
-      toast.success('Shot updated successfully! Photoboard frame will be updated automatically.');
+      await onCreateShot(formData);
+      toast.success('Shot created successfully! Photoboard frame has been automatically generated.');
       onClose();
+      
+      // Reset form
+      setFormData({
+        shot_number: Math.max(...existingShots.map(s => s.shot_number), 0) + 2,
+        scene_number: formData.scene_number,
+        shot_type: 'Wide Shot',
+        camera_angle: 'Eye-level',
+        camera_movement: 'Static',
+        description: '',
+        lens_recommendation: '50mm standard lens',
+        estimated_duration: 5,
+        notes: '',
+      });
     } catch (error) {
-      toast.error('Error updating shot');
+      toast.error('Error creating shot');
     } finally {
-      setSaving(false);
+      setCreating(false);
     }
   };
 
@@ -93,7 +101,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && shot && (
+      {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
@@ -112,11 +120,11 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-cinema-600 rounded-lg flex items-center justify-center">
-                  <Camera className="h-5 w-5 text-white" />
+                  <Plus className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Edit Shot</h2>
-                  <p className="text-gray-400">Shot #{shot.shot_number.toString().padStart(3, '0')} • Scene {shot.scene_number || 1}</p>
+                  <h2 className="text-xl font-bold text-white">Create New Shot</h2>
+                  <p className="text-gray-400">Shot #{formData.shot_number.toString().padStart(3, '0')} • Scene {formData.scene_number}</p>
                 </div>
               </div>
               <button
@@ -128,13 +136,13 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
             </div>
 
             {/* Photoboard Integration Notice */}
-            <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-6">
+            <div className="bg-green-900/20 border border-green-700 rounded-lg p-4 mb-6">
               <div className="flex items-start space-x-3">
-                <Image className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <Sparkles className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-blue-400 font-medium text-sm">Photoboard Integration</h4>
-                  <p className="text-blue-300 text-xs mt-1">
-                    Changes to this shot will automatically update the corresponding photoboard frame with new technical specifications and annotations.
+                  <h4 className="text-green-400 font-medium text-sm">Automatic Photoboard Creation</h4>
+                  <p className="text-green-300 text-xs mt-1">
+                    A corresponding photoboard frame will be automatically created with visual reference, technical specifications, and production annotations.
                   </p>
                 </div>
               </div>
@@ -144,7 +152,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
               {/* Left Column - Basic Info */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-white flex items-center">
-                  <Edit3 className="h-5 w-5 mr-2" />
+                  <Camera className="h-5 w-5 mr-2" />
                   Shot Details
                 </h3>
 
@@ -235,14 +243,15 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Shot Description
+                    Shot Description *
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none"
                     rows={3}
-                    placeholder="Describe the shot composition and action..."
+                    placeholder="Describe the shot composition, action, and visual elements..."
+                    required
                   />
                 </div>
 
@@ -284,7 +293,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                     onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none"
                     rows={3}
-                    placeholder="Special requirements, lighting notes, props, effects..."
+                    placeholder="Special requirements, lighting notes, props, effects, crew instructions..."
                   />
                 </div>
               </div>
@@ -299,21 +308,21 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                 Cancel
               </button>
               <motion.button
-                onClick={handleSave}
-                disabled={saving}
+                onClick={handleCreate}
+                disabled={creating || !formData.description.trim()}
                 className="bg-gradient-to-r from-cinema-500 to-cinema-600 hover:from-cinema-600 hover:to-cinema-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {saving ? (
+                {creating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Saving...</span>
+                    <span>Creating...</span>
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4" />
-                    <span>Save Changes</span>
+                    <Plus className="h-4 w-4" />
+                    <span>Create Shot & Photoboard</span>
                   </>
                 )}
               </motion.button>

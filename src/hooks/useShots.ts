@@ -210,6 +210,59 @@ export const useShots = (projectId: string | null) => {
     }
   };
 
+  const createPhotoboardFrame = async (shot: Shot) => {
+    try {
+      console.log('📸 Creating photoboard frame for shot:', shot.shot_number);
+      
+      // Generate frame description based on shot details
+      const frameDescription = `${shot.shot_type} - ${shot.camera_angle} - ${shot.description}`;
+      
+      // Select appropriate placeholder image based on shot type
+      const getPlaceholderImage = (shotType: string, cameraAngle: string) => {
+        const imageMap = {
+          'Wide Shot': 'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'Medium Shot': 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'Close-up': 'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'Extreme Close-up': 'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'POV': 'https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800',
+          'Over Shoulder': 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800'
+        };
+        
+        return imageMap[shotType as keyof typeof imageMap] || imageMap['Wide Shot'];
+      };
+
+      const frameData = {
+        project_id: projectId,
+        shot_id: shot.id,
+        description: frameDescription,
+        style: 'Cinematic',
+        annotations: [
+          `Shot ${shot.shot_number.toString().padStart(3, '0')}`,
+          `Scene ${shot.scene_number}`,
+          shot.shot_type,
+          shot.camera_angle,
+          shot.camera_movement,
+          shot.lens_recommendation
+        ],
+        image_url: getPlaceholderImage(shot.shot_type, shot.camera_angle)
+      };
+
+      const { data: frame, error } = await supabase
+        .from('photoboard_frames')
+        .insert(frameData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      console.log('✅ Photoboard frame created successfully:', frame.id);
+      return frame;
+    } catch (error) {
+      console.error('❌ Error creating photoboard frame:', error);
+      throw error;
+    }
+  };
+
   const updateShot = async (shotId: string, updates: Partial<ShotInsert>) => {
     try {
       const { data, error } = await supabase
@@ -225,6 +278,9 @@ export const useShots = (projectId: string | null) => {
         shot.id === shotId ? { ...shot, ...data } : shot
       ));
 
+      // Update corresponding photoboard frame if it exists
+      await updateCorrespondingPhotoboardFrame(data);
+
       return data;
     } catch (error) {
       console.error('Error updating shot:', error);
@@ -232,10 +288,49 @@ export const useShots = (projectId: string | null) => {
     }
   };
 
+  const updateCorrespondingPhotoboardFrame = async (shot: Shot) => {
+    try {
+      // Check if photoboard frame exists for this shot
+      const { data: existingFrame } = await supabase
+        .from('photoboard_frames')
+        .select('id')
+        .eq('shot_id', shot.id)
+        .single();
+
+      if (existingFrame) {
+        // Update frame description and annotations
+        const frameDescription = `${shot.shot_type} - ${shot.camera_angle} - ${shot.description}`;
+        const updatedAnnotations = [
+          `Shot ${shot.shot_number.toString().padStart(3, '0')}`,
+          `Scene ${shot.scene_number}`,
+          shot.shot_type,
+          shot.camera_angle,
+          shot.camera_movement,
+          shot.lens_recommendation
+        ];
+
+        await supabase
+          .from('photoboard_frames')
+          .update({
+            description: frameDescription,
+            annotations: updatedAnnotations
+          })
+          .eq('id', existingFrame.id);
+
+        console.log('📸 Updated corresponding photoboard frame');
+      }
+    } catch (error) {
+      console.error('Error updating photoboard frame:', error);
+      // Don't throw error as this is a secondary operation
+    }
+  };
+
   const createShot = async (shotData: Omit<ShotInsert, 'project_id'>) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
+      console.log('🎬 Creating new shot with data:', shotData);
+      
       const { data, error } = await supabase
         .from('shots')
         .insert({
@@ -248,6 +343,16 @@ export const useShots = (projectId: string | null) => {
       if (error) throw error;
 
       setShots(prev => [...prev, data].sort((a, b) => a.shot_number - b.shot_number));
+      
+      // Automatically create corresponding photoboard frame
+      try {
+        await createPhotoboardFrame(data);
+        console.log('✅ Shot and photoboard frame created successfully');
+      } catch (frameError) {
+        console.error('⚠️ Shot created but photoboard frame creation failed:', frameError);
+        // Don't throw error as the shot was created successfully
+      }
+      
       return data;
     } catch (error) {
       console.error('Error creating shot:', error);
@@ -257,6 +362,13 @@ export const useShots = (projectId: string | null) => {
 
   const deleteShot = async (shotId: string) => {
     try {
+      // First delete corresponding photoboard frame
+      await supabase
+        .from('photoboard_frames')
+        .delete()
+        .eq('shot_id', shotId);
+
+      // Then delete the shot
       const { error } = await supabase
         .from('shots')
         .delete()
@@ -265,6 +377,7 @@ export const useShots = (projectId: string | null) => {
       if (error) throw error;
 
       setShots(prev => prev.filter(shot => shot.id !== shotId));
+      console.log('🗑️ Shot and corresponding photoboard frame deleted');
     } catch (error) {
       console.error('Error deleting shot:', error);
       throw error;
