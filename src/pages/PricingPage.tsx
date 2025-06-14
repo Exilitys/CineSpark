@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
@@ -89,10 +89,23 @@ export const PricingPage: React.FC = () => {
   ];
 
   const handleSelectPlan = async (planId: string) => {
+    console.log('handleSelectPlan called with:', planId);
+    console.log('User:', user);
+    console.log('Auth loading:', authLoading);
+
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('Auth still loading, waiting...');
+      return;
+    }
+
     if (!user) {
+      console.log('No user found, showing sign in message');
       toast.error('Please sign in to select a plan');
       return;
     }
+
+    console.log('User is authenticated, proceeding with plan selection');
 
     if (planId === 'free') {
       toast.success('You\'re already on the free plan!');
@@ -100,6 +113,7 @@ export const PricingPage: React.FC = () => {
     }
 
     // Navigate to payment page
+    console.log('Navigating to payment page for plan:', planId);
     navigate(`/payment/${planId}`);
   };
 
@@ -110,6 +124,18 @@ export const PricingPage: React.FC = () => {
     { action: 'Regenerate content', credits: 3 },
     { action: 'AI enhancement', credits: 2 }
   ];
+
+  // Show loading state while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 py-12">
@@ -211,15 +237,16 @@ export const PricingPage: React.FC = () => {
 
               <motion.button
                 onClick={() => handleSelectPlan(plan.id)}
-                className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                disabled={authLoading}
+                className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   plan.popular
                     ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white'
                     : plan.id === 'free'
                     ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
                 }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: authLoading ? 1 : 1.02 }}
+                whileTap={{ scale: authLoading ? 1 : 0.98 }}
               >
                 <span>{plan.id === 'free' ? 'Current Plan' : 'Get Started'}</span>
                 {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
@@ -271,9 +298,8 @@ export const PricingPage: React.FC = () => {
               <span>Start Creating for Free</span>
             </button>
           )}
-          </motion.div>
-        </div>
+        </motion.div>
       </div>
-  
+    </div>
   );
 };
