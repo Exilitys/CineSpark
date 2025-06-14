@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Lock, Check, ArrowLeft, Zap, Crown, Sparkles, AlertCircle } from 'lucide-react';
+import { CreditCard, Lock, Check, ArrowLeft, Zap, Crown, Sparkles, AlertCircle, Shield } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
+import { getPricingSession, clearPricingSession } from '../utils/sessionStorage';
 import toast from 'react-hot-toast';
 
 export const PaymentPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading, initialized } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -65,25 +66,56 @@ export const PaymentPage: React.FC = () => {
 
   const selectedPlan = planId ? plans[planId as keyof typeof plans] : null;
 
+  // Authentication and authorization check
   useEffect(() => {
-    if (!user) {
-      toast.error('Please sign in to continue');
-      navigate('/');
-      return;
-    }
+    const performAuthCheck = async () => {
+      console.log('🔐 PaymentPage auth check:', {
+        planId,
+        user: user?.email || 'None',
+        authLoading,
+        initialized,
+        selectedPlan: selectedPlan?.name || 'None'
+      });
 
-    if (!selectedPlan) {
-      toast.error('Invalid plan selected');
-      navigate('/pricing');
-      return;
-    }
+      // Wait for auth to be initialized
+      if (!initialized || authLoading) {
+        console.log('⏳ Waiting for auth initialization...');
+        return;
+      }
 
-    if (planId === 'free') {
-      toast.error('Free plan does not require payment');
-      navigate('/pricing');
-      return;
-    }
-  }, [user, selectedPlan, planId, navigate]);
+      // Check if user is authenticated
+      if (!user) {
+        console.log('🚫 User not authenticated, redirecting to pricing with error');
+        toast.error('Authentication required to access payment');
+        navigate('/pricing');
+        return;
+      }
+
+      // Validate plan selection
+      if (!selectedPlan) {
+        console.log('❌ Invalid plan selected:', planId);
+        toast.error('Invalid plan selected');
+        navigate('/pricing');
+        return;
+      }
+
+      // Check for free plan (shouldn't reach payment)
+      if (planId === 'free') {
+        console.log('❌ Free plan should not reach payment page');
+        toast.error('Free plan does not require payment');
+        navigate('/pricing');
+        return;
+      }
+
+      console.log('✅ Auth check passed, user can access payment');
+      setAuthCheckComplete(true);
+
+      // Clear any stored pricing session since we're now in payment
+      clearPricingSession();
+    };
+
+    performAuthCheck();
+  }, [user, authLoading, initialized, planId, selectedPlan, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -139,7 +171,16 @@ export const PaymentPage: React.FC = () => {
   };
 
   const handlePayment = async () => {
-    if (!validateForm() || !selectedPlan || !profile) return;
+    if (!validateForm() || !selectedPlan || !profile || !user) {
+      console.log('❌ Payment validation failed');
+      return;
+    }
+
+    console.log('💳 Processing payment for:', {
+      user: user.email,
+      plan: selectedPlan.name,
+      price: selectedPlan.price
+    });
 
     setIsProcessing(true);
     
@@ -156,11 +197,12 @@ export const PaymentPage: React.FC = () => {
         credits: profile.credits + selectedPlan.credits
       });
       
+      console.log('✅ Payment successful, profile updated');
       toast.success('Payment successful!', { id: 'payment' });
       setPaymentComplete(true);
       
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('💥 Payment error:', error);
       toast.error('Payment failed. Please try again.', { id: 'payment' });
     } finally {
       setIsProcessing(false);
@@ -171,18 +213,23 @@ export const PaymentPage: React.FC = () => {
     navigate('/');
   };
 
-  if (profileLoading) {
+  // Show loading while auth is being checked
+  if (!initialized || authLoading || profileLoading || !authCheckComplete) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-gray-400">Verifying access...</p>
+          <p className="text-gray-500 text-sm mt-2">
+            Checking authentication and plan details
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!selectedPlan) {
+  // This should not render if auth check fails, but adding as safety
+  if (!user || !selectedPlan) {
     return null;
   }
 
@@ -292,6 +339,21 @@ export const PaymentPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Pricing</span>
           </button>
+        </motion.div>
+
+        {/* Security Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="bg-green-900/20 border border-green-700 rounded-xl p-4 mb-8"
+        >
+          <div className="flex items-center justify-center space-x-2">
+            <Shield className="h-5 w-5 text-green-400" />
+            <span className="text-green-400 font-medium">
+              Secure Payment - Authenticated as {user.email}
+            </span>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

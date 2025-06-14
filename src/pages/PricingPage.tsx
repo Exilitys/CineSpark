@@ -1,16 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, Star, Zap, Crown, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, Star, Zap, Crown, ArrowRight, Sparkles, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { AuthModal } from '../components/Auth/AuthModal';
+import { storePricingSession, getPricingSession, clearPricingSession } from '../utils/sessionStorage';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
   const { user, loading: authLoading, initialized } = useAuth();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
 
-  // Debug auth state on every render
+  // Check for stored pricing session on component mount
+  useEffect(() => {
+    const storedSession = getPricingSession();
+    if (storedSession && user) {
+      console.log('🔄 Found stored pricing session for authenticated user:', storedSession);
+      toast.success(`Resuming ${storedSession.planName} plan selection...`);
+      
+      // Auto-redirect to payment after a short delay
+      setTimeout(() => {
+        navigate(`/payment/${storedSession.planId}`);
+        clearPricingSession();
+      }, 2000);
+    }
+  }, [user, navigate]);
+
+  // Debug auth state
   useEffect(() => {
     console.log('💰 PricingPage auth state:', {
       user: user?.email || 'None',
@@ -114,22 +133,51 @@ export const PricingPage: React.FC = () => {
       return;
     }
 
+    const selectedPlanData = plans.find(p => p.id === planId);
+    if (!selectedPlanData) {
+      toast.error('Invalid plan selected');
+      return;
+    }
+
+    // Handle free plan
+    if (planId === 'free') {
+      if (user) {
+        toast.success('You\'re already on the free plan!');
+      } else {
+        toast.info('Sign up to get started with the free plan');
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
+    // Check authentication for paid plans
     if (!user) {
-      console.log('🚫 No user found, showing sign in message');
-      toast.error('Please sign in to select a plan');
+      console.log('🚫 No user found, storing pricing session and showing auth modal');
+      
+      // Store pricing session securely
+      const priceValue = parseInt(selectedPlanData.price.replace('$', ''));
+      storePricingSession(planId, selectedPlanData.name, priceValue);
+      
+      // Set pending plan for UI feedback
+      setPendingPlanId(planId);
+      
+      // Show auth modal with payment context
+      setShowAuthModal(true);
+      
+      toast.info('Please sign in or create an account to complete your purchase');
       return;
     }
 
     console.log('✅ User is authenticated, proceeding with plan selection');
 
-    if (planId === 'free') {
-      toast.success('You\'re already on the free plan!');
-      return;
-    }
-
-    // Navigate to payment page
+    // User is authenticated, proceed to payment
     console.log('🚀 Navigating to payment page for plan:', planId);
     navigate(`/payment/${planId}`);
+  };
+
+  const handleAuthModalClose = () => {
+    setShowAuthModal(false);
+    setPendingPlanId(null);
   };
 
   const creditUsageExamples = [
@@ -147,10 +195,6 @@ export const PricingPage: React.FC = () => {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading pricing information...</p>
-          <p className="text-gray-500 text-sm mt-2">
-            Auth Loading: {authLoading ? 'Yes' : 'No'} | 
-            Initialized: {initialized ? 'Yes' : 'No'}
-          </p>
         </div>
       </div>
     );
@@ -173,23 +217,41 @@ export const PricingPage: React.FC = () => {
             Unlock the full potential of AI-powered filmmaking with flexible pricing designed for creators at every level.
           </p>
           
-          {/* Auth Status Debug */}
-          <div className="mt-4 space-y-2">
+          {/* Auth Status */}
+          <div className="mt-6">
             {user ? (
-              <div className="text-green-400 font-medium">
-                ✅ Signed in as {user.email}
+              <div className="inline-flex items-center space-x-2 bg-green-900/20 border border-green-700 rounded-lg px-4 py-2">
+                <Shield className="h-4 w-4 text-green-400" />
+                <span className="text-green-400 font-medium text-sm">
+                  Signed in as {user.email}
+                </span>
               </div>
             ) : (
-              <div className="text-red-400 font-medium">
-                ❌ Not signed in
+              <div className="inline-flex items-center space-x-2 bg-blue-900/20 border border-blue-700 rounded-lg px-4 py-2">
+                <AlertCircle className="h-4 w-4 text-blue-400" />
+                <span className="text-blue-400 font-medium text-sm">
+                  Sign in to select a plan and start creating
+                </span>
               </div>
             )}
-            <div className="text-gray-500 text-sm">
-              Loading: {authLoading ? 'Yes' : 'No'} | 
-              Initialized: {initialized ? 'Yes' : 'No'}
-            </div>
           </div>
         </motion.div>
+
+        {/* Stored Session Notice */}
+        {getPricingSession() && user && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gold-900/20 border border-gold-700 rounded-xl p-4 mb-8 text-center"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <Sparkles className="h-5 w-5 text-gold-400" />
+              <span className="text-gold-400 font-medium">
+                Resuming your plan selection... Redirecting to payment.
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Credit Usage Guide */}
         <motion.div
@@ -225,6 +287,8 @@ export const PricingPage: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.1 * index }}
               className={`relative bg-gray-800 rounded-2xl p-8 border-2 ${plan.borderColor} ${
                 plan.popular ? 'ring-2 ring-gold-500 ring-opacity-50' : ''
+              } ${
+                pendingPlanId === plan.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
               } hover:border-opacity-80 transition-all duration-300`}
             >
               {plan.popular && (
@@ -232,6 +296,14 @@ export const PricingPage: React.FC = () => {
                   <div className="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
                     <Star className="h-4 w-4" />
                     <span>Most Popular</span>
+                  </div>
+                </div>
+              )}
+
+              {pendingPlanId === plan.id && (
+                <div className="absolute -top-4 right-4">
+                  <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                    Pending Auth
                   </div>
                 </div>
               )}
@@ -284,7 +356,12 @@ export const PricingPage: React.FC = () => {
                 whileHover={{ scale: (authLoading || !initialized) ? 1 : 1.02 }}
                 whileTap={{ scale: (authLoading || !initialized) ? 1 : 0.98 }}
               >
-                <span>{plan.id === 'free' ? 'Current Plan' : 'Get Started'}</span>
+                <span>
+                  {plan.id === 'free' 
+                    ? (user ? 'Current Plan' : 'Get Started') 
+                    : (user ? 'Continue to Payment' : 'Sign In to Continue')
+                  }
+                </span>
                 {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
               </motion.button>
             </motion.div>
@@ -329,13 +406,23 @@ export const PricingPage: React.FC = () => {
           <h3 className="text-2xl font-bold text-white mb-4">Ready to Create Your Next Masterpiece?</h3>
           <p className="text-gray-400 mb-8">Join thousands of filmmakers using CineSpark AI to bring their visions to life.</p>
           {!user && (
-            <button className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto">
+            <button 
+              onClick={() => setShowAuthModal(true)}
+              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
+            >
               <Sparkles className="h-5 w-5" />
               <span>Start Creating for Free</span>
             </button>
           )}
         </motion.div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={handleAuthModalClose}
+        showReturnMessage={!!pendingPlanId}
+      />
     </div>
   );
 };

@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Sparkles } from 'lucide-react';
+import { X, Mail, Lock, User, Sparkles, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { getPricingSession, clearPricingSession } from '../../utils/sessionStorage';
 import toast from 'react-hot-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  redirectAfterAuth?: string;
+  showReturnMessage?: boolean;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  redirectAfterAuth,
+  showReturnMessage = false 
+}) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,32 +33,67 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     setLoading(true);
     try {
-      console.log('Auth modal submitting:', { isSignUp, email });
+      console.log('🔐 Auth modal submitting:', { isSignUp, email, redirectAfterAuth });
       
       const { error } = isSignUp 
         ? await signUp(email, password)
         : await signIn(email, password);
 
       if (error) {
-        console.error('Auth error:', error);
+        console.error('❌ Auth error:', error);
         toast.error(error.message);
       } else {
-        console.log('Auth successful');
+        console.log('✅ Auth successful');
         toast.success(isSignUp ? 'Account created successfully!' : 'Welcome back!');
-        onClose();
+        
+        // Clear form
         setEmail('');
         setPassword('');
-        
-        // Force a small delay to ensure auth state is updated
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        onClose();
+
+        // Handle post-authentication flow
+        await handlePostAuthFlow();
       }
     } catch (error) {
-      console.error('Unexpected auth error:', error);
+      console.error('💥 Unexpected auth error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePostAuthFlow = async () => {
+    // Check if there's a stored pricing session
+    const pricingSession = getPricingSession();
+    
+    if (pricingSession) {
+      console.log('🔄 Resuming payment flow with stored session:', pricingSession);
+      toast.success(`Resuming ${pricingSession.planName} plan purchase...`);
+      
+      // Small delay to ensure auth state is fully updated
+      setTimeout(() => {
+        navigate(`/payment/${pricingSession.planId}`);
+        clearPricingSession(); // Clear after successful redirect
+      }, 1000);
+    } else if (redirectAfterAuth) {
+      console.log('🔄 Redirecting to:', redirectAfterAuth);
+      setTimeout(() => {
+        navigate(redirectAfterAuth);
+      }, 1000);
+    } else {
+      // Default behavior - stay on current page or go to projects
+      const currentPath = location.pathname;
+      if (currentPath === '/pricing') {
+        // Stay on pricing page, it will update to show authenticated state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        // Go to projects page
+        setTimeout(() => {
+          navigate('/projects');
+        }, 1000);
+      }
     }
   };
 
@@ -96,6 +142,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 }
               </p>
             </div>
+
+            {/* Return message for payment flow */}
+            {showReturnMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-6"
+              >
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-blue-400 font-medium text-sm">Complete Your Purchase</h4>
+                    <p className="text-blue-300 text-xs mt-1">
+                      Please sign in or create an account to complete your plan selection. 
+                      Your pricing selection has been saved and will be restored after authentication.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
