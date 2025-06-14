@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Star, Zap, Crown, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const plans = [
     {
@@ -98,15 +99,8 @@ export const PricingPage: React.FC = () => {
       return;
     }
 
-    setSelectedPlan(planId);
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setSelectedPlan(null);
-      toast.success(`Successfully upgraded to ${plans.find(p => p.id === planId)?.name} plan!`);
-    }, 2000);
+    // Navigate to payment page
+    navigate(`/payment/${planId}`);
   };
 
   const creditUsageExamples = [
@@ -217,28 +211,18 @@ export const PricingPage: React.FC = () => {
 
               <motion.button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={isProcessing && selectedPlan === plan.id}
                 className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                   plan.popular
                     ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white'
                     : plan.id === 'free'
                     ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {isProcessing && selectedPlan === plan.id ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{plan.id === 'free' ? 'Current Plan' : 'Get Started'}</span>
-                    {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
-                  </>
-                )}
+                <span>{plan.id === 'free' ? 'Current Plan' : 'Get Started'}</span>
+                {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
               </motion.button>
             </motion.div>
           ))}
@@ -287,7 +271,7 @@ export const PricingPage: React.FC = () => {
               <span>Start Creating for Free</span>
             </button>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
