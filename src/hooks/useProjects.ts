@@ -95,12 +95,17 @@ export const useProjects = () => {
     }
   };
 
+  const getProjectById = (id: string) => {
+    return projects.find(p => p.id === id);
+  };
+
   return {
     projects,
     loading,
     createProject,
     updateProject,
     deleteProject,
+    getProjectById,
     refetch: fetchProjects,
   };
 };

@@ -1,13 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Film, Calendar, Edit3, Trash2, Plus } from 'lucide-react';
+import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight } from 'lucide-react';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const ProjectsList: React.FC = () => {
   const { projects, loading, deleteProject } = useProjects();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleDeleteProject = async (id: string, title: string) => {
     if (window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
@@ -18,6 +20,10 @@ export const ProjectsList: React.FC = () => {
         toast.error('Error deleting project');
       }
     }
+  };
+
+  const handleOpenProject = (projectId: string) => {
+    navigate(`/story/${projectId}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -51,7 +57,10 @@ export const ProjectsList: React.FC = () => {
       <div className="text-center py-12">
         <Film className="h-12 w-12 text-gray-500 mx-auto mb-4" />
         <p className="text-gray-400 mb-4">No projects yet. Create your first film project!</p>
-        <button className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto">
+        <button 
+          onClick={() => navigate('/')}
+          className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto"
+        >
           <Plus className="h-4 w-4" />
           <span>Create Project</span>
         </button>
@@ -66,7 +75,10 @@ export const ProjectsList: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Your Projects</h1>
           <p className="text-gray-400">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2">
+        <button 
+          onClick={() => navigate('/')}
+          className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+        >
           <Plus className="h-4 w-4" />
           <span>New Project</span>
         </button>
@@ -79,7 +91,8 @@ export const ProjectsList: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group"
+            className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group cursor-pointer"
+            onClick={() => handleOpenProject(project.id)}
           >
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -87,11 +100,20 @@ export const ProjectsList: React.FC = () => {
                   <Film className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add edit functionality here
+                    }}
+                    className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                  >
                     <Edit3 className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteProject(project.id, project.title)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProject(project.id, project.title);
+                    }}
                     className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -99,7 +121,7 @@ export const ProjectsList: React.FC = () => {
                 </div>
               </div>
               
-              <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+              <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">
                 {project.title}
               </h3>
               
@@ -119,13 +141,23 @@ export const ProjectsList: React.FC = () => {
             <div className="px-6 py-3 bg-gray-700/50 border-t border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4 text-xs text-gray-400">
-                  <span>Story ✓</span>
-                  <span>Shots ✓</span>
-                  <span>Board ✓</span>
+                  <span className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-400 rounded-full" />
+                    <span>Story</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                    <span>Shots</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                    <span>Board</span>
+                  </span>
                 </div>
-                <button className="text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200">
-                  Open →
-                </button>
+                <div className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200">
+                  <span>Open</span>
+                  <ArrowRight className="h-3 w-3" />
+                </div>
               </div>
             </div>
           </motion.div>
