@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, FileText, Camera, Image, Check, Package, ArrowLeft } from 'lucide-react';
+import { Download, FileText, Camera, Image, Check, Package, ArrowLeft, Home, CheckCircle } from 'lucide-react';
 
 export const ExportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['pdf']);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportComplete, setExportComplete] = useState(false);
 
   const exportOptions = [
     {
@@ -50,12 +51,102 @@ export const ExportPage: React.FC = () => {
 
   const handleExport = async () => {
     setIsExporting(true);
+    
     // Simulate export process
     setTimeout(() => {
       setIsExporting(false);
+      setExportComplete(true);
     }, 3000);
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
+  // Export Success Screen
+  if (exportComplete) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gray-900 flex items-center justify-center p-6"
+      >
+        <div className="max-w-md w-full text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <CheckCircle className="h-10 w-10 text-white" />
+          </motion.div>
+          
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-3xl font-bold text-white mb-4"
+          >
+            Export Successful!
+          </motion.h1>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-gray-400 mb-8 leading-relaxed"
+          >
+            Your project has been successfully exported. The files have been downloaded to your device and are ready for production.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700"
+          >
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Exported Formats:</h3>
+            <div className="space-y-2">
+              {selectedFormats.map(formatId => {
+                const option = exportOptions.find(opt => opt.id === formatId);
+                return (
+                  <div key={formatId} className="flex items-center text-sm text-gray-400">
+                    <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0" />
+                    <span>{option?.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            onClick={handleBackToHome}
+            className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Home className="h-5 w-5" />
+            <span>Back to Home</span>
+          </motion.button>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="text-xs text-gray-500 mt-4"
+          >
+            Ready to start your next project? Create a new film concept from the home page.
+          </motion.p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Main Export Page
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
