@@ -44,8 +44,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       transition={{ duration: 0.5 }}
       className={`relative bg-gray-800 rounded-2xl p-8 border-2 ${plan.borderColor} ${
         plan.popular ? 'ring-2 ring-gold-500 ring-opacity-50' : ''
-      } ${
-        isCurrentPlan ? 'ring-2 ring-green-500 ring-opacity-50' : ''
       } hover:border-opacity-80 transition-all duration-300`}
     >
       {plan.popular && (
@@ -53,14 +51,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           <div className="bg-gradient-to-r from-gold-500 to-gold-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
             <Star className="h-4 w-4" />
             <span>Most Popular</span>
-          </div>
-        </div>
-      )}
-
-      {isCurrentPlan && (
-        <div className="absolute -top-4 right-4">
-          <div className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-            Current Plan
           </div>
         </div>
       )}
@@ -113,7 +103,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 
       <motion.button
         onClick={() => onSelectPlan(plan.id, isAnnual)}
-        disabled={isLoading || isCurrentPlan}
+        disabled={isLoading}
         className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
           plan.popular
             ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white'
@@ -121,16 +111,14 @@ export const PricingCard: React.FC<PricingCardProps> = ({
             ? 'bg-gray-700 hover:bg-gray-600 text-white'
             : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
         }`}
-        whileHover={{ scale: isLoading || isCurrentPlan ? 1 : 1.02 }}
-        whileTap={{ scale: isLoading || isCurrentPlan ? 1 : 0.98 }}
+        whileHover={{ scale: isLoading ? 1 : 1.02 }}
+        whileTap={{ scale: isLoading ? 1 : 0.98 }}
       >
         {isLoading ? (
           <>
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             <span>Processing...</span>
           </>
-        ) : isCurrentPlan ? (
-          <span>Current Plan</span>
         ) : (
           <>
             <span>
