@@ -22,19 +22,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     setLoading(true);
     try {
+      console.log('Auth modal submitting:', { isSignUp, email });
+      
       const { error } = isSignUp 
         ? await signUp(email, password)
         : await signIn(email, password);
 
       if (error) {
+        console.error('Auth error:', error);
         toast.error(error.message);
       } else {
+        console.log('Auth successful');
         toast.success(isSignUp ? 'Account created successfully!' : 'Welcome back!');
         onClose();
         setEmail('');
         setPassword('');
+        
+        // Force a small delay to ensure auth state is updated
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (error) {
+      console.error('Unexpected auth error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
