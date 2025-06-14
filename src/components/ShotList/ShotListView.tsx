@@ -8,6 +8,7 @@ type Shot = Database['public']['Tables']['shots']['Row'];
 interface ShotListViewProps {
   shots: Shot[];
   onEditShot?: (shot: Shot) => void;
+  onDeleteShot?: (shotId: string) => void;
   onAddShot?: () => void;
   onApprove?: () => void;
 }
@@ -15,10 +16,12 @@ interface ShotListViewProps {
 export const ShotListView: React.FC<ShotListViewProps> = ({ 
   shots, 
   onEditShot, 
+  onDeleteShot,
   onAddShot,
   onApprove 
 }) => {
   const [selectedScene, setSelectedScene] = useState('all');
+  const [deletingShot, setDeletingShot] = useState<string | null>(null);
 
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
   uniqueScenes.sort((a, b) => a - b);
@@ -60,6 +63,25 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
     acc[sceneNum].push(shot);
     return acc;
   }, {} as Record<number, Shot[]>);
+
+  const handleDeleteShot = async (shot: Shot) => {
+    if (!onDeleteShot) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete Shot ${shot.shot_number.toString().padStart(3, '0')}?\n\n"${shot.description}"\n\nThis action cannot be undone.`
+    );
+
+    if (confirmed) {
+      setDeletingShot(shot.id);
+      try {
+        await onDeleteShot(shot.id);
+      } catch (error) {
+        console.error('Error deleting shot:', error);
+      } finally {
+        setDeletingShot(null);
+      }
+    }
+  };
 
   return (
     <motion.div
@@ -180,7 +202,9 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="hover:bg-gray-700/50 transition-colors duration-200"
+                  className={`hover:bg-gray-700/50 transition-colors duration-200 ${
+                    deletingShot === shot.id ? 'opacity-50' : ''
+                  }`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-white">
@@ -224,10 +248,25 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
                       {onEditShot && (
                         <button
                           onClick={() => onEditShot(shot)}
-                          className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
+                          disabled={deletingShot === shot.id}
+                          className="text-gold-400 hover:text-gold-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                           title="Edit shot"
                         >
                           <Edit3 className="h-4 w-4" />
+                        </button>
+                      )}
+                      {onDeleteShot && (
+                        <button
+                          onClick={() => handleDeleteShot(shot)}
+                          disabled={deletingShot === shot.id}
+                          className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                          title="Delete shot"
+                        >
+                          {deletingShot === shot.id ? (
+                            <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       )}
                     </div>
