@@ -83,8 +83,6 @@ export const useStory = (projectId: string | null) => {
     try {
       setLoading(true);
       
-      let storyToProcess: Story;
-
       // Fetch story
       const { data: storyData, error: storyError } = await supabase
         .from('stories')
@@ -92,26 +90,13 @@ export const useStory = (projectId: string | null) => {
         .eq('project_id', projectId)
         .single();
 
-      if (storyError) {
-        if (storyError.code === 'PGRST116') {
-          // No story found, create one with dummy data
-          const newStory = await createStory(getDummyStoryData());
-          if (!newStory) {
-            throw new Error('Failed to create initial story');
-          }
-          storyToProcess = newStory;
-        } else {
-          throw storyError;
-        }
-      } else {
-        storyToProcess = storyData;
-      }
+      if (storyError) throw storyError;
 
       // Fetch characters
       const { data: charactersData, error: charactersError } = await supabase
         .from('characters')
         .select('*')
-        .eq('story_id', storyToProcess.id)
+        .eq('story_id', storyData.id)
         .order('order_index');
 
       if (charactersError) throw charactersError;
@@ -120,19 +105,36 @@ export const useStory = (projectId: string | null) => {
       const { data: scenesData, error: scenesError } = await supabase
         .from('scenes')
         .select('*')
-        .eq('story_id', storyToProcess.id)
+        .eq('story_id', storyData.id)
         .order('order_index');
 
       if (scenesError) throw scenesError;
 
       setStory({
-        ...storyToProcess,
+        ...storyData,
         characters: charactersData || [],
         scenes: scenesData || [],
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching story:', error);
-      setStory(null);
+      
+      // Check if the error is because no story exists (PGRST116)
+      if (error?.code === 'PGRST116' || (error?.body && JSON.parse(error.body)?.code === 'PGRST116')) {
+        try {
+          // No story found, create one with dummy data
+          const newStory = await createStory(getDummyStoryData());
+          if (newStory) {
+            setStory(newStory);
+          } else {
+            setStory(null);
+          }
+        } catch (createError) {
+          console.error('Error creating initial story:', createError);
+          setStory(null);
+        }
+      } else {
+        setStory(null);
+      }
     } finally {
       setLoading(false);
     }
