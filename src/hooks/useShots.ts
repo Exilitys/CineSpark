@@ -45,9 +45,6 @@ export const useShots = (projectId: string | null) => {
       }
     }
 
-    // Distribute shots across scenes
-    const shotsPerScene = Math.ceil(8 / sceneCount);
-    
     return [
       {
         shot_number: 1,
@@ -166,6 +163,22 @@ export const useShots = (projectId: string | null) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
+      // First check if shots already exist for this project
+      const { data: existingShots, error: checkError } = await supabase
+        .from('shots')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      // If shots already exist, don't generate new ones
+      if (existingShots && existingShots.length > 0) {
+        console.log('Shots already exist for this project, skipping generation');
+        await fetchShots(); // Refresh the current shots
+        return shots;
+      }
+
       const dummyShots = await getDummyShotsData();
       
       const shotsToInsert = dummyShots.map((shot) => ({

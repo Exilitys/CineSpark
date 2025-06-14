@@ -82,7 +82,7 @@ export const ShotListPage: React.FC = () => {
         toast.success('Shot list generated successfully!', { id: 'generate-shots' });
       }
       
-      // Generate photoboard frames
+      // Generate photoboard frames (only if they don't already exist)
       toast.loading('Generating storyboard frames...', { id: 'generate-frames' });
       await generateFrames();
       toast.success('Storyboard frames generated successfully!', { id: 'generate-frames' });
@@ -92,6 +92,17 @@ export const ShotListPage: React.FC = () => {
     } catch (error) {
       console.error('Error in approval process:', error);
       toast.error('Error generating storyboard. Please try again.');
+    }
+  };
+
+  const handleGenerateShots = async () => {
+    try {
+      toast.loading('Generating shot list...', { id: 'generate-shots' });
+      await generateShots();
+      toast.success('Shot list generated successfully!', { id: 'generate-shots' });
+    } catch (error) {
+      console.error('Error generating shots:', error);
+      toast.error('Error generating shots. Please try again.', { id: 'generate-shots' });
     }
   };
 
@@ -143,7 +154,7 @@ export const ShotListPage: React.FC = () => {
               Ready to create your cinematography breakdown? We'll generate a professional shot list based on your story.
             </p>
             <button
-              onClick={handleApproveShots}
+              onClick={handleGenerateShots}
               className="bg-gradient-to-r from-cinema-500 to-cinema-600 hover:from-cinema-600 hover:to-cinema-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
             >
               <Camera className="h-5 w-5" />

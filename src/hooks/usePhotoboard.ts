@@ -88,7 +88,23 @@ export const usePhotoboard = (projectId: string | null) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
-      // First, get the shots for this project to link frames to shots
+      // First check if photoboard frames already exist for this project
+      const { data: existingFrames, error: checkError } = await supabase
+        .from('photoboard_frames')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      // If frames already exist, don't generate new ones
+      if (existingFrames && existingFrames.length > 0) {
+        console.log('Photoboard frames already exist for this project, skipping generation');
+        await fetchFrames(); // Refresh the current frames
+        return frames;
+      }
+
+      // Get the shots for this project to link frames to shots
       const { data: shots, error: shotsError } = await supabase
         .from('shots')
         .select('id, shot_number, scene_number, description, shot_type, camera_angle, lens_recommendation')
@@ -96,6 +112,11 @@ export const usePhotoboard = (projectId: string | null) => {
         .order('shot_number');
 
       if (shotsError) throw shotsError;
+
+      // If no shots exist, we can't generate frames
+      if (!shots || shots.length === 0) {
+        throw new Error('No shots found for this project. Please generate shots first.');
+      }
 
       const dummyFrames = getDummyFramesData();
       
