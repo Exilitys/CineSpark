@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Star, Zap, Crown, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
   const { user, loading: authLoading, initialized } = useAuth();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+  // Debug auth state on every render
+  useEffect(() => {
+    console.log('💰 PricingPage auth state:', {
+      user: user?.email || 'None',
+      authLoading,
+      initialized,
+      timestamp: new Date().toISOString()
+    });
+  });
 
   const plans = [
     {
@@ -89,25 +99,28 @@ export const PricingPage: React.FC = () => {
   ];
 
   const handleSelectPlan = async (planId: string) => {
-    console.log('handleSelectPlan called with:', planId);
-    console.log('User:', user);
-    console.log('Auth loading:', authLoading);
-    console.log('Initialized:', initialized);
+    console.log('💳 handleSelectPlan called:', {
+      planId,
+      user: user?.email || 'None',
+      authLoading,
+      initialized,
+      timestamp: new Date().toISOString()
+    });
 
     // Wait for auth to finish loading and be initialized
     if (authLoading || !initialized) {
-      console.log('Auth still loading or not initialized, waiting...');
+      console.log('⏳ Auth still loading or not initialized, waiting...');
       toast.error('Please wait while we load your account information');
       return;
     }
 
     if (!user) {
-      console.log('No user found, showing sign in message');
+      console.log('🚫 No user found, showing sign in message');
       toast.error('Please sign in to select a plan');
       return;
     }
 
-    console.log('User is authenticated, proceeding with plan selection');
+    console.log('✅ User is authenticated, proceeding with plan selection');
 
     if (planId === 'free') {
       toast.success('You\'re already on the free plan!');
@@ -115,7 +128,7 @@ export const PricingPage: React.FC = () => {
     }
 
     // Navigate to payment page
-    console.log('Navigating to payment page for plan:', planId);
+    console.log('🚀 Navigating to payment page for plan:', planId);
     navigate(`/payment/${planId}`);
   };
 
@@ -134,6 +147,10 @@ export const PricingPage: React.FC = () => {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading pricing information...</p>
+          <p className="text-gray-500 text-sm mt-2">
+            Auth Loading: {authLoading ? 'Yes' : 'No'} | 
+            Initialized: {initialized ? 'Yes' : 'No'}
+          </p>
         </div>
       </div>
     );
@@ -155,11 +172,23 @@ export const PricingPage: React.FC = () => {
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Unlock the full potential of AI-powered filmmaking with flexible pricing designed for creators at every level.
           </p>
-          {user && (
-            <div className="mt-4 text-green-400">
-              ✓ Signed in as {user.email}
+          
+          {/* Auth Status Debug */}
+          <div className="mt-4 space-y-2">
+            {user ? (
+              <div className="text-green-400 font-medium">
+                ✅ Signed in as {user.email}
+              </div>
+            ) : (
+              <div className="text-red-400 font-medium">
+                ❌ Not signed in
+              </div>
+            )}
+            <div className="text-gray-500 text-sm">
+              Loading: {authLoading ? 'Yes' : 'No'} | 
+              Initialized: {initialized ? 'Yes' : 'No'}
             </div>
-          )}
+          </div>
         </motion.div>
 
         {/* Credit Usage Guide */}
