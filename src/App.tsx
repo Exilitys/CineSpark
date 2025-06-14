@@ -7,6 +7,7 @@ import { StoryPage } from './pages/StoryPage';
 import { ShotListPage } from './pages/ShotListPage';
 import { PhotoboardPage } from './pages/PhotoboardPage';
 import { ExportPage } from './pages/ExportPage';
+import { PricingPage } from './pages/PricingPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/shots/:projectId" element={<ShotListPage />} />
           <Route path="/photoboard/:projectId" element={<PhotoboardPage />} />
           <Route path="/export/:projectId" element={<ExportPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
         </Routes>
         <Toaster 
           position="top-right"
