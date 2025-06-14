@@ -104,7 +104,7 @@ export const HomePage: React.FC = () => {
           <div className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-cinema-900/20 to-gold-900/20"></div>
             <div className="relative max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
-              <IdeaInput onGenerate={handleGenerateStory} isGenerating={isGenerating} />
+              <IdeaInput isGenerating={isGenerating} />
             </div>
           </div>
 
