@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, FileText, Camera, Image, Check, Package } from 'lucide-react';
+import { Download, FileText, Camera, Image, Check, Package, ArrowLeft } from 'lucide-react';
 
 export const ExportPage: React.FC = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['pdf']);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -60,6 +63,21 @@ export const ExportPage: React.FC = () => {
       transition={{ duration: 0.6 }}
       className="max-w-6xl mx-auto p-6"
     >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-6"
+      >
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Projects</span>
+        </button>
+      </motion.div>
+
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-cinema-600 rounded-lg flex items-center justify-center">

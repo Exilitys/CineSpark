@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Edit3, Plus, Filter, Download } from 'lucide-react';
+import { Camera, Edit3, Plus, Filter, Download, Check } from 'lucide-react';
 import { Shot } from '../../types';
 
 interface ShotListViewProps {
   shots: Shot[];
   onEditShot?: (shot: Shot) => void;
   onAddShot?: () => void;
+  onApprove?: () => void;
 }
 
-export const ShotListView: React.FC<ShotListViewProps> = ({ shots, onEditShot, onAddShot }) => {
+export const ShotListView: React.FC<ShotListViewProps> = ({ 
+  shots, 
+  onEditShot, 
+  onAddShot,
+  onApprove 
+}) => {
   const [filter, setFilter] = useState('all');
   const [selectedScene, setSelectedScene] = useState('all');
 
@@ -58,10 +64,19 @@ export const ShotListView: React.FC<ShotListViewProps> = ({ shots, onEditShot, o
           {onAddShot && (
             <button
               onClick={onAddShot}
-              className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
             >
               <Plus className="h-4 w-4" />
               <span>Add Shot</span>
+            </button>
+          )}
+          {onApprove && (
+            <button
+              onClick={onApprove}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            >
+              <Check className="h-4 w-4" />
+              <span>Approve & Continue</span>
             </button>
           )}
         </div>

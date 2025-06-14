@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List } from 'lucide-react';
+import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List, Check } from 'lucide-react';
 import { PhotoboardFrame } from '../../types';
 
 interface PhotoboardViewProps {
   frames: PhotoboardFrame[];
   onEditFrame?: (frame: PhotoboardFrame) => void;
   onRegenerateFrame?: (frame: PhotoboardFrame) => void;
+  onApprove?: () => void;
 }
 
 export const PhotoboardView: React.FC<PhotoboardViewProps> = ({ 
   frames, 
   onEditFrame, 
-  onRegenerateFrame 
+  onRegenerateFrame,
+  onApprove 
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedStyle, setSelectedStyle] = useState('all');
@@ -74,6 +76,15 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
             <Download className="h-4 w-4" />
             <span>Export Board</span>
           </button>
+          {onApprove && (
+            <button
+              onClick={onApprove}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            >
+              <Check className="h-4 w-4" />
+              <span>Approve & Continue</span>
+            </button>
+          )}
         </div>
       </div>
 
