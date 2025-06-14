@@ -22,6 +22,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     shot_number: shot?.shot_number || 1,
+    scene_number: shot?.scene_number || 1,
     shot_type: shot?.shot_type || 'Wide Shot',
     camera_angle: shot?.camera_angle || 'Eye-level',
     camera_movement: shot?.camera_movement || 'Static',
@@ -35,6 +36,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
     if (shot) {
       setFormData({
         shot_number: shot.shot_number,
+        scene_number: shot.scene_number || 1,
         shot_type: shot.shot_type,
         camera_angle: shot.camera_angle,
         camera_movement: shot.camera_movement,
@@ -114,7 +116,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Edit Shot</h2>
-                  <p className="text-gray-400">Shot #{shot.shot_number.toString().padStart(3, '0')}</p>
+                  <p className="text-gray-400">Shot #{shot.shot_number.toString().padStart(3, '0')} • Scene {shot.scene_number || 1}</p>
                 </div>
               </div>
               <button
@@ -126,18 +128,32 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
             </div>
 
             <div className="space-y-6">
-              {/* Shot Number */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Shot Number
-                </label>
-                <input
-                  type="number"
-                  value={formData.shot_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shot_number: parseInt(e.target.value) || 1 }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
-                  min="1"
-                />
+              {/* Shot Number and Scene Number */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Shot Number
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.shot_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shot_number: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Scene Number
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.scene_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, scene_number: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
+                    min="1"
+                  />
+                </div>
               </div>
 
               {/* Shot Type */}

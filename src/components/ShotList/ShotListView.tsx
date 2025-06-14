@@ -18,14 +18,14 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
   onAddShot,
   onApprove 
 }) => {
-  const [filter, setFilter] = useState('all');
   const [selectedScene, setSelectedScene] = useState('all');
 
-  const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_id).filter(Boolean)));
+  const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
+  uniqueScenes.sort((a, b) => a - b);
 
   const filteredShots = shots.filter(shot => {
     if (selectedScene === 'all') return true;
-    return shot.scene_id === selectedScene;
+    return shot.scene_number === parseInt(selectedScene);
   });
 
   const getShotTypeColor = (shotType: string) => {
@@ -40,7 +40,26 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
     return colors[shotType as keyof typeof colors] || 'text-gray-400 bg-gray-900/20';
   };
 
+  const getSceneColor = (sceneNumber: number) => {
+    const colors = [
+      'text-gold-400 bg-gold-900/20',
+      'text-cinema-400 bg-cinema-900/20', 
+      'text-green-400 bg-green-900/20',
+      'text-purple-400 bg-purple-900/20',
+      'text-red-400 bg-red-900/20',
+    ];
+    return colors[(sceneNumber - 1) % colors.length] || 'text-gray-400 bg-gray-900/20';
+  };
+
   const totalDuration = filteredShots.reduce((sum, shot) => sum + (shot.estimated_duration || 0), 0);
+
+  // Group shots by scene for better organization
+  const shotsByScene = filteredShots.reduce((acc, shot) => {
+    const sceneNum = shot.scene_number || 1;
+    if (!acc[sceneNum]) acc[sceneNum] = [];
+    acc[sceneNum].push(shot);
+    return acc;
+  }, {} as Record<number, Shot[]>);
 
   return (
     <motion.div
@@ -57,7 +76,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
           <div>
             <h1 className="text-3xl font-bold text-white">Shot List</h1>
             <p className="text-gray-400">
-              {shots.length} shots • {Math.floor(totalDuration / 60)}m {totalDuration % 60}s total
+              {shots.length} shots • {uniqueScenes.length} scenes • {Math.floor(totalDuration / 60)}m {totalDuration % 60}s total
             </p>
           </div>
         </div>
@@ -89,23 +108,38 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
       </div>
 
       {/* Filters */}
-      {uniqueScenes.length > 0 && (
+      {uniqueScenes.length > 1 && (
         <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-300">Filter by scene:</span>
             </div>
-            <select
-              value={selectedScene}
-              onChange={(e) => setSelectedScene(e.target.value)}
-              className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-1"
-            >
-              <option value="all">All Scenes</option>
-              {uniqueScenes.map(sceneId => (
-                <option key={sceneId} value={sceneId}>Scene {sceneId}</option>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedScene('all')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                  selectedScene === 'all' 
+                    ? 'bg-cinema-600 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                All Scenes
+              </button>
+              {uniqueScenes.map(sceneNum => (
+                <button
+                  key={sceneNum}
+                  onClick={() => setSelectedScene(sceneNum.toString())}
+                  className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                    selectedScene === sceneNum.toString() 
+                      ? 'bg-cinema-600 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Scene {sceneNum}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
         </div>
       )}
@@ -118,6 +152,9 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Shot #
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Scene
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Shot Type
@@ -149,6 +186,11 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
                     <div className="text-sm font-medium text-white">
                       {shot.shot_number.toString().padStart(3, '0')}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(shot.scene_number || 1)}`}>
+                      Scene {shot.scene_number || 1}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(shot.shot_type)}`}>
@@ -197,10 +239,45 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         </div>
       </div>
 
+      {/* Scene Summary */}
+      {selectedScene === 'all' && uniqueScenes.length > 1 && (
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {uniqueScenes.map(sceneNum => {
+            const sceneShots = shotsByScene[sceneNum] || [];
+            const sceneDuration = sceneShots.reduce((sum, shot) => sum + (shot.estimated_duration || 0), 0);
+            
+            return (
+              <motion.div
+                key={sceneNum}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: sceneNum * 0.1 }}
+                className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(sceneNum)}`}>
+                    Scene {sceneNum}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {Math.floor(sceneDuration / 60)}m {sceneDuration % 60}s
+                  </span>
+                </div>
+                <div className="text-sm text-gray-300">
+                  {sceneShots.length} shots
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Shots {sceneShots[0]?.shot_number} - {sceneShots[sceneShots.length - 1]?.shot_number}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
       {filteredShots.length === 0 && shots.length > 0 && (
         <div className="text-center py-12">
           <Camera className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-400">No shots found for the selected filters.</p>
+          <p className="text-gray-400">No shots found for the selected scene.</p>
         </div>
       )}
     </motion.div>

@@ -86,8 +86,6 @@ export const usePhotoboard = (projectId: string | null) => {
       setFrames(data || []);
     } catch (error: any) {
       console.error('Error fetching photoboard frames:', error);
-      
-      // If no frames exist, they'll be generated when shots are approved
       setFrames([]);
     } finally {
       setLoading(false);
@@ -101,7 +99,7 @@ export const usePhotoboard = (projectId: string | null) => {
       // First, get the shots for this project to link frames to shots
       const { data: shots, error: shotsError } = await supabase
         .from('shots')
-        .select('id, shot_number')
+        .select('id, shot_number, scene_number')
         .eq('project_id', projectId)
         .order('shot_number');
 
@@ -109,14 +107,18 @@ export const usePhotoboard = (projectId: string | null) => {
 
       const dummyFrames = getDummyFramesData();
       
-      const framesToInsert = dummyFrames.map((frame, index) => ({
-        project_id: projectId,
-        shot_id: shots[index]?.id || null, // Link to shot if available
-        description: frame.description,
-        style: frame.style,
-        annotations: frame.annotations,
-        image_url: frame.image_url,
-      }));
+      // Create one frame per shot, ensuring correspondence
+      const framesToInsert = shots.map((shot, index) => {
+        const frameData = dummyFrames[index % dummyFrames.length]; // Cycle through dummy data if more shots than frames
+        return {
+          project_id: projectId,
+          shot_id: shot.id, // Link each frame to its corresponding shot
+          description: `Shot ${shot.shot_number} (Scene ${shot.scene_number}): ${frameData.description}`,
+          style: frameData.style,
+          annotations: [...frameData.annotations, `Shot ${shot.shot_number}`, `Scene ${shot.scene_number}`],
+          image_url: frameData.image_url,
+        };
+      });
 
       const { data, error } = await supabase
         .from('photoboard_frames')

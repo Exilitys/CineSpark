@@ -18,88 +18,127 @@ export const useShots = (projectId: string | null) => {
     }
   }, [projectId]);
 
-  const getDummyShotsData = () => [
-    {
-      shot_number: 1,
-      shot_type: 'Wide Shot',
-      camera_angle: 'High Angle',
-      camera_movement: 'Static',
-      description: 'Establishing shot of the lighthouse at dawn, surrounded by mist and crashing waves',
-      lens_recommendation: '24mm wide-angle lens',
-      estimated_duration: 8,
-      notes: 'Golden hour lighting, emphasize isolation'
-    },
-    {
-      shot_number: 2,
-      shot_type: 'Medium Shot',
-      camera_angle: 'Eye-level',
-      camera_movement: 'Pan',
-      description: 'Marcus moving through lighthouse interior, checking equipment methodically',
-      lens_recommendation: '50mm standard lens',
-      estimated_duration: 12,
-      notes: 'Handheld for intimate feel'
-    },
-    {
-      shot_number: 3,
-      shot_type: 'Close-up',
-      camera_angle: 'Eye-level',
-      camera_movement: 'Static',
-      description: 'Close-up of Marcus\'s weathered hands adjusting lighthouse mechanism',
-      lens_recommendation: '85mm portrait lens',
-      estimated_duration: 4,
-      notes: 'Focus on texture and routine'
-    },
-    {
-      shot_number: 4,
-      shot_type: 'Wide Shot',
-      camera_angle: 'Low Angle',
-      camera_movement: 'Dolly',
-      description: 'Marcus walking down rocky shore, storm debris scattered around',
-      lens_recommendation: '35mm lens',
-      estimated_duration: 10,
-      notes: 'Steadicam for smooth movement'
-    },
-    {
-      shot_number: 5,
-      shot_type: 'Extreme Close-up',
-      camera_angle: 'High Angle',
-      camera_movement: 'Static',
-      description: 'Marcus\'s eyes widening as he first sees Naia',
-      lens_recommendation: '100mm macro lens',
-      estimated_duration: 3,
-      notes: 'Capture moment of discovery'
-    },
-    {
-      shot_number: 6,
-      shot_type: 'POV',
-      camera_angle: 'Eye-level',
-      camera_movement: 'Handheld',
-      description: 'Naia\'s perspective as she awakens in the makeshift pool',
-      lens_recommendation: '28mm wide lens',
-      estimated_duration: 6,
-      notes: 'Underwater housing for partial submersion'
-    },
-    {
-      shot_number: 7,
-      shot_type: 'Over Shoulder',
-      camera_angle: 'Eye-level',
-      camera_movement: 'Static',
-      description: 'Over Marcus\'s shoulder as he first communicates with Naia',
-      lens_recommendation: '85mm portrait lens',
-      estimated_duration: 8,
-      notes: 'Shallow depth of field to isolate subjects'
-    },
-    {
-      shot_number: 8,
-      shot_type: 'Medium Shot',
-      camera_angle: 'Low Angle',
-      camera_movement: 'Crane',
-      description: 'Marcus and Naia working together to establish communication',
-      lens_recommendation: '50mm standard lens',
-      estimated_duration: 15,
-      notes: 'Crane movement to show collaboration'
+  const getDummyShotsData = async () => {
+    // Get the number of scenes from the story
+    let sceneCount = 3; // Default to 3 scenes
+    
+    if (projectId) {
+      try {
+        const { data: story } = await supabase
+          .from('stories')
+          .select('id')
+          .eq('project_id', projectId)
+          .single();
+
+        if (story) {
+          const { data: scenes } = await supabase
+            .from('scenes')
+            .select('id')
+            .eq('story_id', story.id);
+          
+          if (scenes && scenes.length > 0) {
+            sceneCount = scenes.length;
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch scene count, using default');
+      }
     }
-  ];
+
+    // Distribute shots across scenes
+    const shotsPerScene = Math.ceil(8 / sceneCount);
+    
+    return [
+      {
+        shot_number: 1,
+        scene_number: 1,
+        shot_type: 'Wide Shot',
+        camera_angle: 'High Angle',
+        camera_movement: 'Static',
+        description: 'Establishing shot of the lighthouse at dawn, surrounded by mist and crashing waves',
+        lens_recommendation: '24mm wide-angle lens',
+        estimated_duration: 8,
+        notes: 'Golden hour lighting, emphasize isolation'
+      },
+      {
+        shot_number: 2,
+        scene_number: 1,
+        shot_type: 'Medium Shot',
+        camera_angle: 'Eye-level',
+        camera_movement: 'Pan',
+        description: 'Marcus moving through lighthouse interior, checking equipment methodically',
+        lens_recommendation: '50mm standard lens',
+        estimated_duration: 12,
+        notes: 'Handheld for intimate feel'
+      },
+      {
+        shot_number: 3,
+        scene_number: 1,
+        shot_type: 'Close-up',
+        camera_angle: 'Eye-level',
+        camera_movement: 'Static',
+        description: 'Close-up of Marcus\'s weathered hands adjusting lighthouse mechanism',
+        lens_recommendation: '85mm portrait lens',
+        estimated_duration: 4,
+        notes: 'Focus on texture and routine'
+      },
+      {
+        shot_number: 4,
+        scene_number: 2,
+        shot_type: 'Wide Shot',
+        camera_angle: 'Low Angle',
+        camera_movement: 'Dolly',
+        description: 'Marcus walking down rocky shore, storm debris scattered around',
+        lens_recommendation: '35mm lens',
+        estimated_duration: 10,
+        notes: 'Steadicam for smooth movement'
+      },
+      {
+        shot_number: 5,
+        scene_number: 2,
+        shot_type: 'Extreme Close-up',
+        camera_angle: 'High Angle',
+        camera_movement: 'Static',
+        description: 'Marcus\'s eyes widening as he first sees Naia',
+        lens_recommendation: '100mm macro lens',
+        estimated_duration: 3,
+        notes: 'Capture moment of discovery'
+      },
+      {
+        shot_number: 6,
+        scene_number: 2,
+        shot_type: 'POV',
+        camera_angle: 'Eye-level',
+        camera_movement: 'Handheld',
+        description: 'Naia\'s perspective as she awakens in the makeshift pool',
+        lens_recommendation: '28mm wide lens',
+        estimated_duration: 6,
+        notes: 'Underwater housing for partial submersion'
+      },
+      {
+        shot_number: 7,
+        scene_number: 3,
+        shot_type: 'Over Shoulder',
+        camera_angle: 'Eye-level',
+        camera_movement: 'Static',
+        description: 'Over Marcus\'s shoulder as he first communicates with Naia',
+        lens_recommendation: '85mm portrait lens',
+        estimated_duration: 8,
+        notes: 'Shallow depth of field to isolate subjects'
+      },
+      {
+        shot_number: 8,
+        scene_number: 3,
+        shot_type: 'Medium Shot',
+        camera_angle: 'Low Angle',
+        camera_movement: 'Crane',
+        description: 'Marcus and Naia working together to establish communication',
+        lens_recommendation: '50mm standard lens',
+        estimated_duration: 15,
+        notes: 'Crane movement to show collaboration'
+      }
+    ];
+  };
 
   const fetchShots = async () => {
     if (!projectId) return;
@@ -117,19 +156,7 @@ export const useShots = (projectId: string | null) => {
       setShots(data || []);
     } catch (error: any) {
       console.error('Error fetching shots:', error);
-      
-      // Check if no shots exist, create dummy data
-      if (error?.code === 'PGRST116' || (error?.body && JSON.parse(error.body)?.code === 'PGRST116')) {
-        try {
-          const newShots = await generateShots();
-          setShots(newShots);
-        } catch (createError) {
-          console.error('Error creating initial shots:', createError);
-          setShots([]);
-        }
-      } else {
-        setShots([]);
-      }
+      setShots([]);
     } finally {
       setLoading(false);
     }
@@ -139,12 +166,13 @@ export const useShots = (projectId: string | null) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
-      const dummyShots = getDummyShotsData();
+      const dummyShots = await getDummyShotsData();
       
       const shotsToInsert = dummyShots.map((shot) => ({
         project_id: projectId,
-        scene_id: null, // We'll link to scenes later
+        scene_id: null, // We'll link to scenes later if needed
         shot_number: shot.shot_number,
+        scene_number: shot.scene_number,
         shot_type: shot.shot_type,
         camera_angle: shot.camera_angle,
         camera_movement: shot.camera_movement,
@@ -160,6 +188,8 @@ export const useShots = (projectId: string | null) => {
         .select();
 
       if (error) throw error;
+      
+      setShots(data || []);
       return data || [];
     } catch (error) {
       console.error('Error generating shots:', error);

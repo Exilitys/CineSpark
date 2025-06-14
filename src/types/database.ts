@@ -144,6 +144,7 @@ export interface Database {
           project_id: string;
           scene_id: string | null;
           shot_number: number;
+          scene_number: number;
           shot_type: string;
           camera_angle: string;
           camera_movement: string;
@@ -159,6 +160,7 @@ export interface Database {
           project_id: string;
           scene_id?: string | null;
           shot_number: number;
+          scene_number?: number;
           shot_type: string;
           camera_angle: string;
           camera_movement: string;
@@ -174,6 +176,7 @@ export interface Database {
           project_id?: string;
           scene_id?: string | null;
           shot_number?: number;
+          scene_number?: number;
           shot_type?: string;
           camera_angle?: string;
           camera_movement?: string;
