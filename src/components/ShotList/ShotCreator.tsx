@@ -322,7 +322,7 @@ export const ShotCreator: React.FC<ShotCreatorProps> = ({
                 ) : (
                   <>
                     <Plus className="h-4 w-4" />
-                    <span>Create Shot & Photoboard</span>
+                    <span>Create Shot</span>
                   </>
                 )}
               </motion.button>
