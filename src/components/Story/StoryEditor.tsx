@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
+import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2, Camera } from 'lucide-react';
 import { StoryWithDetails } from '../../hooks/useStory';
+import { useShots } from '../../hooks/useShots';
 import toast from 'react-hot-toast';
 
 interface StoryEditorProps {
@@ -23,6 +24,11 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   const [editingCharacter, setEditingCharacter] = useState<string | null>(null);
   const [editingScene, setEditingScene] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [generatingShots, setGeneratingShots] = useState(false);
+
+  // Get project ID from story
+  const projectId = story.project_id;
+  const { generateShots } = useShots(projectId);
 
   // Local state for editing
   const [logline, setLogline] = useState(story.logline);
@@ -91,6 +97,28 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
     }
   };
 
+  const handleApproveStory = async () => {
+    setGeneratingShots(true);
+    try {
+      toast.loading('Generating shot list from your story...', { id: 'generate-shots' });
+      
+      // Generate shots based on the story
+      await generateShots();
+      
+      toast.success('Shot list generated successfully!', { id: 'generate-shots' });
+      
+      // Call the onSave callback to navigate to shots page
+      if (onSave) {
+        onSave();
+      }
+    } catch (error) {
+      console.error('Error generating shots:', error);
+      toast.error('Error generating shots. Please try again.', { id: 'generate-shots' });
+    } finally {
+      setGeneratingShots(false);
+    }
+  };
+
   const updateCharacter = (characterId: string, field: string, value: string) => {
     setCharacters(prev => prev.map(char => 
       char.id === characterId ? { ...char, [field]: value } : char
@@ -108,7 +136,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-6xl mx-auto p-6"
+      className="max-w-6xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -120,15 +148,23 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
             <p className="text-gray-400">Review and refine your AI-generated story</p>
           </div>
         </div>
-        {onSave && (
-          <button
-            onClick={onSave}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
-          >
-            <Save className="h-4 w-4" />
-            <span>Approve Story</span>
-          </button>
-        )}
+        <button
+          onClick={handleApproveStory}
+          disabled={generatingShots}
+          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+        >
+          {generatingShots ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Generating Shots...</span>
+            </>
+          ) : (
+            <>
+              <Camera className="h-4 w-4" />
+              <span>Approve & Generate Shots</span>
+            </>
+          )}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

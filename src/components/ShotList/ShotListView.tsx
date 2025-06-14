@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Edit3, Plus, Filter, Download, Check } from 'lucide-react';
-import { Shot } from '../../types';
+import { Camera, Edit3, Plus, Filter, Download, Check, Trash2 } from 'lucide-react';
+import { Database } from '../../types/database';
+
+type Shot = Database['public']['Tables']['shots']['Row'];
 
 interface ShotListViewProps {
   shots: Shot[];
@@ -19,11 +21,11 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
   const [filter, setFilter] = useState('all');
   const [selectedScene, setSelectedScene] = useState('all');
 
-  const uniqueScenes = Array.from(new Set(shots.map(shot => shot.sceneId)));
+  const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_id).filter(Boolean)));
 
   const filteredShots = shots.filter(shot => {
     if (selectedScene === 'all') return true;
-    return shot.sceneId === selectedScene;
+    return shot.scene_id === selectedScene;
   });
 
   const getShotTypeColor = (shotType: string) => {
@@ -38,12 +40,14 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
     return colors[shotType as keyof typeof colors] || 'text-gray-400 bg-gray-900/20';
   };
 
+  const totalDuration = filteredShots.reduce((sum, shot) => sum + (shot.estimated_duration || 0), 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-7xl mx-auto p-6"
+      className="max-w-7xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -52,7 +56,9 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white">Shot List</h1>
-            <p className="text-gray-400">Professional cinematography breakdown</p>
+            <p className="text-gray-400">
+              {shots.length} shots • {Math.floor(totalDuration / 60)}m {totalDuration % 60}s total
+            </p>
           </div>
         </div>
         
@@ -83,24 +89,26 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
       </div>
 
       {/* Filters */}
-      <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-300">Filter by scene:</span>
+      {uniqueScenes.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <span className="text-sm font-medium text-gray-300">Filter by scene:</span>
+            </div>
+            <select
+              value={selectedScene}
+              onChange={(e) => setSelectedScene(e.target.value)}
+              className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-1"
+            >
+              <option value="all">All Scenes</option>
+              {uniqueScenes.map(sceneId => (
+                <option key={sceneId} value={sceneId}>Scene {sceneId}</option>
+              ))}
+            </select>
           </div>
-          <select
-            value={selectedScene}
-            onChange={(e) => setSelectedScene(e.target.value)}
-            className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-1"
-          >
-            <option value="all">All Scenes</option>
-            {uniqueScenes.map(sceneId => (
-              <option key={sceneId} value={sceneId}>Scene {sceneId}</option>
-            ))}
-          </select>
         </div>
-      </div>
+      )}
 
       {/* Shot List Table */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
@@ -110,9 +118,6 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Shot #
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Scene
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Shot Type
@@ -142,21 +147,18 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-white">
-                      {shot.shotNumber.toString().padStart(3, '0')}
+                      {shot.shot_number.toString().padStart(3, '0')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-300">{shot.sceneId}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(shot.shotType)}`}>
-                      {shot.shotType}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(shot.shot_type)}`}>
+                      {shot.shot_type}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-300">
-                      <div>{shot.cameraAngle}</div>
-                      <div className="text-xs text-gray-500">{shot.cameraMovement}</div>
+                      <div>{shot.camera_angle}</div>
+                      <div className="text-xs text-gray-500">{shot.camera_movement}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -164,21 +166,29 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
                       {shot.description}
                     </div>
                     <div className="text-xs text-gold-400 mt-1">
-                      {shot.lensRecommendation}
+                      {shot.lens_recommendation}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-300">{shot.estimatedDuration}s</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {onEditShot && (
-                      <button
-                        onClick={() => onEditShot(shot)}
-                        className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
+                    {shot.notes && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {shot.notes}
+                      </div>
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-300">{shot.estimated_duration}s</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      {onEditShot && (
+                        <button
+                          onClick={() => onEditShot(shot)}
+                          className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
+                          title="Edit shot"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -187,7 +197,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         </div>
       </div>
 
-      {filteredShots.length === 0 && (
+      {filteredShots.length === 0 && shots.length > 0 && (
         <div className="text-center py-12">
           <Camera className="h-12 w-12 text-gray-500 mx-auto mb-4" />
           <p className="text-gray-400">No shots found for the selected filters.</p>
