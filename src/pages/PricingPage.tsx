@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, initialized } = useAuth();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
@@ -92,10 +92,12 @@ export const PricingPage: React.FC = () => {
     console.log('handleSelectPlan called with:', planId);
     console.log('User:', user);
     console.log('Auth loading:', authLoading);
+    console.log('Initialized:', initialized);
 
-    // Wait for auth to finish loading
-    if (authLoading) {
-      console.log('Auth still loading, waiting...');
+    // Wait for auth to finish loading and be initialized
+    if (authLoading || !initialized) {
+      console.log('Auth still loading or not initialized, waiting...');
+      toast.error('Please wait while we load your account information');
       return;
     }
 
@@ -125,13 +127,13 @@ export const PricingPage: React.FC = () => {
     { action: 'AI enhancement', credits: 2 }
   ];
 
-  // Show loading state while auth is loading
-  if (authLoading) {
+  // Show loading state while auth is loading or not initialized
+  if (authLoading || !initialized) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-gray-400">Loading pricing information...</p>
         </div>
       </div>
     );
@@ -153,6 +155,11 @@ export const PricingPage: React.FC = () => {
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Unlock the full potential of AI-powered filmmaking with flexible pricing designed for creators at every level.
           </p>
+          {user && (
+            <div className="mt-4 text-green-400">
+              ✓ Signed in as {user.email}
+            </div>
+          )}
         </motion.div>
 
         {/* Credit Usage Guide */}
@@ -237,7 +244,7 @@ export const PricingPage: React.FC = () => {
 
               <motion.button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={authLoading}
+                disabled={authLoading || !initialized}
                 className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   plan.popular
                     ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white'
@@ -245,8 +252,8 @@ export const PricingPage: React.FC = () => {
                     ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
                 }`}
-                whileHover={{ scale: authLoading ? 1 : 1.02 }}
-                whileTap={{ scale: authLoading ? 1 : 0.98 }}
+                whileHover={{ scale: (authLoading || !initialized) ? 1 : 1.02 }}
+                whileTap={{ scale: (authLoading || !initialized) ? 1 : 0.98 }}
               >
                 <span>{plan.id === 'free' ? 'Current Plan' : 'Get Started'}</span>
                 {plan.id !== 'free' && <ArrowRight className="h-4 w-4" />}
