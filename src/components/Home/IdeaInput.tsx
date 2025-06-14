@@ -8,11 +8,10 @@ import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface IdeaInputProps {
-  onGenerate: (idea: string) => void;
   isGenerating?: boolean;
 }
 
-export const IdeaInput: React.FC<IdeaInputProps> = ({ onGenerate, isGenerating = false }) => {
+export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) => {
   const [idea, setIdea] = useState('');
   const [localGenerating, setLocalGenerating] = useState(false);
   const { user } = useAuth();
@@ -142,8 +141,6 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ onGenerate, isGenerating =
     setLocalGenerating(true);
     
     try {
-      onGenerate(idea.trim());
-      
       // Show generation progress
       toast.loading('Analyzing your concept...', { id: 'generation' });
       
@@ -154,34 +151,26 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ onGenerate, isGenerating =
         original_idea: idea.trim(),
       });
 
-      setTimeout(() => {
-        toast.loading('Creating story structure...', { id: 'generation' });
-      }, 1000);
+      // Simulate AI generation process with realistic timing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.loading('Creating story structure...', { id: 'generation' });
       
-      setTimeout(async () => {
-        toast.loading('Generating characters and scenes...', { id: 'generation' });
-        
-        try {
-          // Create the story in the database
-          await createStoryInDatabase(project.id);
-          
-          setTimeout(() => {
-            toast.success('Story generated! Review and edit as needed.', { id: 'generation' });
-            setLocalGenerating(false);
-            // Navigate to story page with project ID as route parameter
-            navigate(`/story/${project.id}`);
-          }, 1000);
-          
-        } catch (error) {
-          console.error('Error creating story:', error);
-          toast.error('Error creating story. Please try again.', { id: 'generation' });
-          setLocalGenerating(false);
-        }
-      }, 2000);
-
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.loading('Generating characters and scenes...', { id: 'generation' });
+      
+      // Create the story in the database
+      await createStoryInDatabase(project.id);
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Story generated successfully!', { id: 'generation' });
+      
+      // Navigate to story page with project ID
+      navigate(`/story/${project.id}`);
+      
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error('Error creating project. Please try again.');
+    } finally {
       setLocalGenerating(false);
     }
   };

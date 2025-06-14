@@ -5,38 +5,10 @@ import { IdeaInput } from '../components/Home/IdeaInput';
 import { ProjectsList } from '../components/Projects/ProjectsList';
 import { Film, Sparkles, Lightbulb, Camera, Image as ImageIcon, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import toast from 'react-hot-toast';
 
 export const HomePage: React.FC = () => {
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleGenerateStory = async (idea: string) => {
-    setIsGenerating(true);
-    
-    // Simulate AI generation process
-    toast.loading('Analyzing your concept...', { id: 'generation' });
-    
-    setTimeout(() => {
-      toast.loading('Creating story structure...', { id: 'generation' });
-    }, 1000);
-    
-    setTimeout(() => {
-      toast.loading('Generating shot list...', { id: 'generation' });
-    }, 2000);
-    
-    setTimeout(() => {
-      toast.loading('Creating photoboard...', { id: 'generation' });
-    }, 3000);
-    
-    setTimeout(() => {
-      toast.success('Project created successfully!', { id: 'generation' });
-      setIsGenerating(false);
-      navigate('/story');
-    }, 4000);
-  };
 
   const features = [
     {
@@ -104,7 +76,7 @@ export const HomePage: React.FC = () => {
           <div className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-cinema-900/20 to-gold-900/20"></div>
             <div className="relative max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
-              <IdeaInput isGenerating={isGenerating} />
+              <IdeaInput />
             </div>
           </div>
 
