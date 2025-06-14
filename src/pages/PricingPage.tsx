@@ -271,8 +271,9 @@ export const PricingPage: React.FC = () => {
               <span>Start Creating for Free</span>
             </button>
           )}
+          </motion.div>
         </div>
       </div>
-    </div>
+  
   );
 };
