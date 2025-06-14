@@ -11,7 +11,7 @@ import { storePricingSession, getPricingSession, clearPricingSession } from '../
 import toast from 'react-hot-toast';
 
 export const PricingPage: React.FC = () => {
-  const { user, loading: authLoading, initialized } = useAuth();
+  const { user, session, loading: authLoading, initialized } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
@@ -179,8 +179,12 @@ export const PricingPage: React.FC = () => {
         throw new Error('Price ID not found for selected plan');
       }
 
-      // Create Stripe checkout session
-      const { sessionId, url } = await createCheckoutSession(priceId, profile?.id);
+      // Create Stripe checkout session with user's access token
+      const { sessionId, url } = await createCheckoutSession(
+        priceId, 
+        profile?.id, 
+        session?.access_token
+      );
       
       if (url) {
         // Redirect to Stripe Checkout
@@ -390,7 +394,7 @@ export const PricingPage: React.FC = () => {
               <p className="text-gray-400">Every new user starts with 100 free credits to explore all features. No credit card required to get started.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">What payment methods do you accept?</h4>
+              <h4 className="font-semibent text-white mb-2">What payment methods do you accept?</h4>
               <p className="text-gray-400">We accept all major credit cards, debit cards, and digital wallets through our secure Stripe payment processor.</p>
             </div>
             <div>

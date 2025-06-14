@@ -28,7 +28,7 @@ export const STRIPE_PRODUCTS = {
 };
 
 // Stripe API helpers
-export const createCheckoutSession = async (priceId: string, customerId?: string) => {
+export const createCheckoutSession = async (priceId: string, customerId?: string, accessToken?: string) => {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -37,11 +37,14 @@ export const createCheckoutSession = async (priceId: string, customerId?: string
       throw new Error('Supabase configuration missing');
     }
 
+    // Use access token for authenticated requests, fallback to anon key
+    const authToken = accessToken || supabaseAnonKey;
+
     const response = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         priceId,
@@ -64,7 +67,7 @@ export const createCheckoutSession = async (priceId: string, customerId?: string
   }
 };
 
-export const createCustomerPortalSession = async (customerId: string) => {
+export const createCustomerPortalSession = async (customerId: string, accessToken?: string) => {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -73,11 +76,14 @@ export const createCustomerPortalSession = async (customerId: string) => {
       throw new Error('Supabase configuration missing');
     }
 
+    // Use access token for authenticated requests, fallback to anon key
+    const authToken = accessToken || supabaseAnonKey;
+
     const response = await fetch(`${supabaseUrl}/functions/v1/stripe-portal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         customerId,
