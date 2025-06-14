@@ -192,14 +192,14 @@ export const useStory = (projectId: string | null) => {
 
       if (charactersError) throw charactersError;
 
-      // Create scenes
+      // Create scenes - ensure arrays are properly formatted for PostgreSQL
       const scenesToInsert = storyData.scenes.map((scene, index) => ({
         story_id: story.id,
         title: scene.title,
         setting: scene.setting,
         description: scene.description,
-        characters: scene.characters,
-        key_actions: scene.key_actions,
+        characters: scene.characters, // PostgreSQL text[] arrays can accept JS arrays directly
+        key_actions: scene.key_actions, // PostgreSQL text[] arrays can accept JS arrays directly
         order_index: index,
       }));
 
