@@ -25,41 +25,24 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
   onApprove 
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedStyle, setSelectedStyle] = useState('all');
   const [selectedScene, setSelectedScene] = useState('all');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
-  const styles = ['Photorealistic', 'Sketch', 'Comic Book', 'Cinematic', 'Noir'];
-  
   // Get unique scenes from shots
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
   uniqueScenes.sort((a, b) => a - b);
 
-  // Filter frames by style and scene
+  // Filter frames by scene only (no style filter)
   const filteredFrames = frames.filter(frame => {
     const shot = shots.find(s => s.id === frame.shot_id);
-    
-    const styleMatch = selectedStyle === 'all' || frame.style === selectedStyle;
     const sceneMatch = selectedScene === 'all' || (shot && shot.scene_number === parseInt(selectedScene));
-    
-    return styleMatch && sceneMatch;
+    return sceneMatch;
   });
 
   // Helper function to get shot details for a frame
   const getShotDetails = (frame: PhotoboardFrame) => {
     const shot = shots.find(s => s.id === frame.shot_id);
     return shot || null;
-  };
-
-  const getStyleColor = (style: string) => {
-    const colors = {
-      'Photorealistic': 'text-blue-400 bg-blue-900/20',
-      'Sketch': 'text-green-400 bg-green-900/20',
-      'Comic Book': 'text-red-400 bg-red-900/20',
-      'Cinematic': 'text-gold-400 bg-gold-900/20',
-      'Noir': 'text-gray-400 bg-gray-900/20',
-    };
-    return colors[style as keyof typeof colors] || 'text-gray-400 bg-gray-900/20';
   };
 
   const getSceneColor = (sceneNumber: number) => {
@@ -170,41 +153,10 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-        <div className="flex flex-wrap items-center gap-6">
-          {/* Style Filter */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-300">Style:</span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedStyle('all')}
-                className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
-                  selectedStyle === 'all' 
-                    ? 'bg-cinema-600 text-white' 
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                All Styles
-              </button>
-              {styles.map(style => (
-                <button
-                  key={style}
-                  onClick={() => setSelectedStyle(style)}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
-                    selectedStyle === style 
-                      ? 'bg-cinema-600 text-white' 
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Scene Filter */}
-          {uniqueScenes.length > 1 && (
+      {/* Scene Filter Only */}
+      {uniqueScenes.length > 1 && (
+        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-300">Scene:</span>
               <div className="flex flex-wrap gap-2">
@@ -233,9 +185,9 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                 ))}
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Photoboard Grid/List */}
       {viewMode === 'grid' ? (
@@ -340,9 +292,6 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                         </>
                       )}
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
-                      {frame.style}
-                    </span>
                   </div>
                   
                   {/* Shot Description from Shot List */}
@@ -465,9 +414,6 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                             </span>
                           </>
                         )}
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
-                          {frame.style}
-                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         {onEditFrame && (
@@ -534,7 +480,7 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
       {filteredFrames.length === 0 && (
         <div className="text-center py-12">
           <Image className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-400">No frames found for the selected filters.</p>
+          <p className="text-gray-400">No frames found for the selected scene.</p>
         </div>
       )}
     </motion.div>
