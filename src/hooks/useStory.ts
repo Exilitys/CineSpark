@@ -133,7 +133,10 @@ export const useStory = (projectId: string | null) => {
       ]
     };
 
-    await createStory(dummyStoryData);
+    const newStory = await createStory(dummyStoryData);
+    if (newStory) {
+      setStory(newStory);
+    }
   };
 
   const createStory = async (storyData: {
@@ -212,7 +215,6 @@ export const useStory = (projectId: string | null) => {
         scenes: scenes || [],
       };
 
-      setStory(newStory);
       return newStory;
     } catch (error) {
       console.error('Error creating story:', error);
