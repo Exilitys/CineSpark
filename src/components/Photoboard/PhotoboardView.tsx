@@ -311,21 +311,7 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                     </div>
                   )}
                   
-                  {/* Frame Annotations */}
-                  {frame.annotations && frame.annotations.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {frame.annotations.slice(0, 3).map((annotation, i) => (
-                        <span key={i} className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
-                          {annotation}
-                        </span>
-                      ))}
-                      {frame.annotations.length > 3 && (
-                        <span className="text-xs text-gray-500">
-                          +{frame.annotations.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {/* Removed Frame Annotations - No longer displaying tags */}
                 </div>
               </motion.div>
             );
@@ -459,16 +445,7 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       </div>
                     )}
                     
-                    {/* Frame Annotations */}
-                    {frame.annotations && frame.annotations.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {frame.annotations.map((annotation, i) => (
-                          <span key={i} className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
-                            {annotation}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {/* Removed Frame Annotations - No longer displaying tags */}
                   </div>
                 </div>
               </motion.div>

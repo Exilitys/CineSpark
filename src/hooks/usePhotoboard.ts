@@ -22,42 +22,42 @@ export const usePhotoboard = (projectId: string | null) => {
   const getDummyFramesData = () => [
     {
       description: 'Lighthouse at dawn with misty atmosphere and dramatic lighting',
-      annotations: ['Golden hour', 'Atmospheric mist', 'Isolation theme'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Interior lighthouse scene with vintage equipment and warm lighting',
-      annotations: ['Warm interior', 'Routine work', 'Character establishment'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Close-up of weathered hands working with mechanical precision',
-      annotations: ['Texture focus', 'Character detail', 'Mechanical precision'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Rocky coastline with storm debris and dramatic sky',
-      annotations: ['Post-storm', 'Rocky terrain', 'Discovery setup'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Extreme close-up of surprised human eyes reflecting wonder',
-      annotations: ['Emotional moment', 'Discovery reaction', 'Character depth'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Underwater perspective looking up toward surface with mysterious ambiance',
-      annotations: ['POV shot', 'Underwater', 'Mystery element'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Marcus walking down rocky shore, storm debris scattered around',
-      annotations: ['Post-storm', 'Character movement', 'Environmental storytelling'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
     {
       description: 'Naia\'s perspective as she awakens in the makeshift pool',
-      annotations: ['POV shot', 'Awakening moment', 'Mystery element'],
+      annotations: [], // Removed annotation tags
       image_url: 'https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800'
     }
   ];
@@ -107,13 +107,7 @@ export const usePhotoboard = (projectId: string | null) => {
           shot_id: shot.id, // Link each frame to its corresponding shot
           description: frameData.description, // Use frame description, shot description will be shown from shot data
           style: 'Cinematic', // Default style, no longer user-selectable
-          annotations: [
-            ...frameData.annotations, 
-            `Shot ${shot.shot_number.toString().padStart(3, '0')}`, 
-            `Scene ${shot.scene_number || 1}`,
-            shot.shot_type,
-            shot.camera_angle
-          ],
+          annotations: [], // No longer using annotation tags
           image_url: frameData.image_url,
         };
       });
