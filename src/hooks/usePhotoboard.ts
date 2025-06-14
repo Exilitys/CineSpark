@@ -99,7 +99,7 @@ export const usePhotoboard = (projectId: string | null) => {
       // First, get the shots for this project to link frames to shots
       const { data: shots, error: shotsError } = await supabase
         .from('shots')
-        .select('id, shot_number, scene_number')
+        .select('id, shot_number, scene_number, description, shot_type, camera_angle, lens_recommendation')
         .eq('project_id', projectId)
         .order('shot_number');
 
@@ -113,9 +113,15 @@ export const usePhotoboard = (projectId: string | null) => {
         return {
           project_id: projectId,
           shot_id: shot.id, // Link each frame to its corresponding shot
-          description: `Shot ${shot.shot_number} (Scene ${shot.scene_number}): ${frameData.description}`,
+          description: frameData.description, // Use frame description, shot description will be shown from shot data
           style: frameData.style,
-          annotations: [...frameData.annotations, `Shot ${shot.shot_number}`, `Scene ${shot.scene_number}`],
+          annotations: [
+            ...frameData.annotations, 
+            `Shot ${shot.shot_number.toString().padStart(3, '0')}`, 
+            `Scene ${shot.scene_number || 1}`,
+            shot.shot_type,
+            shot.camera_angle
+          ],
           image_url: frameData.image_url,
         };
       });

@@ -7,6 +7,7 @@ type PhotoboardFrame = Database['public']['Tables']['photoboard_frames']['Row'];
 
 interface PhotoboardViewProps {
   frames: PhotoboardFrame[];
+  shots?: any[]; // Add shots prop to get shot details
   uploading?: string | null;
   onEditFrame?: (frame: PhotoboardFrame) => void;
   onRegenerateFrame?: (frame: PhotoboardFrame) => void;
@@ -16,6 +17,7 @@ interface PhotoboardViewProps {
 
 export const PhotoboardView: React.FC<PhotoboardViewProps> = ({ 
   frames, 
+  shots = [],
   uploading,
   onEditFrame, 
   onRegenerateFrame,
@@ -24,12 +26,30 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedStyle, setSelectedStyle] = useState('all');
+  const [selectedScene, setSelectedScene] = useState('all');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const styles = ['Photorealistic', 'Sketch', 'Comic Book', 'Cinematic', 'Noir'];
-  const filteredFrames = selectedStyle === 'all' 
-    ? frames 
-    : frames.filter(frame => frame.style === selectedStyle);
+  
+  // Get unique scenes from shots
+  const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
+  uniqueScenes.sort((a, b) => a - b);
+
+  // Filter frames by style and scene
+  const filteredFrames = frames.filter(frame => {
+    const shot = shots.find(s => s.id === frame.shot_id);
+    
+    const styleMatch = selectedStyle === 'all' || frame.style === selectedStyle;
+    const sceneMatch = selectedScene === 'all' || (shot && shot.scene_number === parseInt(selectedScene));
+    
+    return styleMatch && sceneMatch;
+  });
+
+  // Helper function to get shot details for a frame
+  const getShotDetails = (frame: PhotoboardFrame) => {
+    const shot = shots.find(s => s.id === frame.shot_id);
+    return shot || null;
+  };
 
   const getStyleColor = (style: string) => {
     const colors = {
@@ -40,6 +60,17 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
       'Noir': 'text-gray-400 bg-gray-900/20',
     };
     return colors[style as keyof typeof colors] || 'text-gray-400 bg-gray-900/20';
+  };
+
+  const getSceneColor = (sceneNumber: number) => {
+    const colors = [
+      'text-gold-400 bg-gold-900/20',
+      'text-cinema-400 bg-cinema-900/20', 
+      'text-green-400 bg-green-900/20',
+      'text-purple-400 bg-purple-900/20',
+      'text-red-400 bg-red-900/20',
+    ];
+    return colors[(sceneNumber - 1) % colors.length] || 'text-gray-400 bg-gray-900/20';
   };
 
   const handleFileUpload = async (frameId: string, file: File) => {
@@ -98,7 +129,9 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white">Photoboard</h1>
-            <p className="text-gray-400">Visual storyboard for your film</p>
+            <p className="text-gray-400">
+              {frames.length} frames • {uniqueScenes.length} scenes • Visual storyboard for your film
+            </p>
           </div>
         </div>
         
@@ -137,167 +170,89 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
         </div>
       </div>
 
-      {/* Style Filter */}
+      {/* Filters */}
       <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="text-sm font-medium text-gray-300">Style:</span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedStyle('all')}
-              className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
-                selectedStyle === 'all' 
-                  ? 'bg-cinema-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              All Styles
-            </button>
-            {styles.map(style => (
+        <div className="flex flex-wrap items-center gap-6">
+          {/* Style Filter */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-300">Style:</span>
+            <div className="flex flex-wrap gap-2">
               <button
-                key={style}
-                onClick={() => setSelectedStyle(style)}
+                onClick={() => setSelectedStyle('all')}
                 className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
-                  selectedStyle === style 
+                  selectedStyle === 'all' 
                     ? 'bg-cinema-600 text-white' 
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                {style}
+                All Styles
               </button>
-            ))}
+              {styles.map(style => (
+                <button
+                  key={style}
+                  onClick={() => setSelectedStyle(style)}
+                  className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                    selectedStyle === style 
+                      ? 'bg-cinema-600 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Scene Filter */}
+          {uniqueScenes.length > 1 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-300">Scene:</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedScene('all')}
+                  className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                    selectedScene === 'all' 
+                      ? 'bg-cinema-600 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  All Scenes
+                </button>
+                {uniqueScenes.map(sceneNum => (
+                  <button
+                    key={sceneNum}
+                    onClick={() => setSelectedScene(sceneNum.toString())}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                      selectedScene === sceneNum.toString() 
+                        ? 'bg-cinema-600 text-white' 
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    Scene {sceneNum}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Photoboard Grid/List */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredFrames.map((frame, index) => (
-            <motion.div
-              key={frame.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden group hover:border-gold-500 transition-colors duration-200"
-            >
-              <div 
-                className={`aspect-video bg-gray-700 flex items-center justify-center relative ${
-                  dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
-                }`}
-                onDrop={(e) => handleDrop(e, frame.id)}
-                onDragOver={(e) => handleDragOver(e, frame.id)}
-                onDragLeave={handleDragLeave}
+          {filteredFrames.map((frame, index) => {
+            const shot = getShotDetails(frame);
+            
+            return (
+              <motion.div
+                key={frame.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden group hover:border-gold-500 transition-colors duration-200"
               >
-                {uploading === frame.id ? (
-                  <div className="text-center p-4">
-                    <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Uploading...</p>
-                  </div>
-                ) : frame.image_url ? (
-                  <img 
-                    src={frame.image_url} 
-                    alt={frame.description}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center p-4">
-                    <Image className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500">Generating image...</p>
-                  </div>
-                )}
-                
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <div className="flex items-center space-x-2">
-                    {/* Upload Button */}
-                    <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
-                      <Upload className="h-4 w-4 text-white" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(frame.id, file);
-                        }}
-                      />
-                    </label>
-                    
-                    {onEditFrame && (
-                      <button
-                        onClick={() => onEditFrame(frame)}
-                        className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
-                      >
-                        <Edit3 className="h-4 w-4 text-white" />
-                      </button>
-                    )}
-                    {onRegenerateFrame && (
-                      <button
-                        onClick={() => onRegenerateFrame(frame)}
-                        className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
-                      >
-                        <RefreshCw className="h-4 w-4 text-white" />
-                      </button>
-                    )}
-                    <button className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200">
-                      <Play className="h-4 w-4 text-white" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Drag overlay */}
-                {dragOver === frame.id && (
-                  <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center">
-                    <div className="text-center">
-                      <Upload className="h-8 w-8 text-gold-400 mx-auto mb-2" />
-                      <p className="text-gold-400 font-medium">Drop image here</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-400">
-                    Frame {index + 1}
-                  </span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
-                    {frame.style}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-300 line-clamp-2">
-                  {frame.description}
-                </p>
-                {frame.annotations && frame.annotations.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {frame.annotations.slice(0, 2).map((annotation, i) => (
-                      <span key={i} className="text-xs bg-gold-900/20 text-gold-400 px-2 py-1 rounded">
-                        {annotation}
-                      </span>
-                    ))}
-                    {frame.annotations.length > 2 && (
-                      <span className="text-xs text-gray-500">
-                        +{frame.annotations.length - 2} more
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredFrames.map((frame, index) => (
-            <motion.div
-              key={frame.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-gray-800 rounded-xl border border-gray-700 p-6 hover:border-gold-500 transition-colors duration-200"
-            >
-              <div className="flex items-start space-x-6">
                 <div 
-                  className={`w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center relative ${
+                  className={`aspect-video bg-gray-700 flex items-center justify-center relative ${
                     dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
                   }`}
                   onDrop={(e) => handleDrop(e, frame.id)}
@@ -305,104 +260,281 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                   onDragLeave={handleDragLeave}
                 >
                   {uploading === frame.id ? (
-                    <div className="text-center">
-                      <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-1" />
-                      <p className="text-xs text-gray-500">Uploading...</p>
+                    <div className="text-center p-4">
+                      <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">Uploading...</p>
                     </div>
                   ) : frame.image_url ? (
                     <img 
                       src={frame.image_url} 
                       alt={frame.description}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="text-center">
-                      <Image className="h-6 w-6 text-gray-500 mx-auto mb-1" />
-                      <p className="text-xs text-gray-500">Generating...</p>
+                    <div className="text-center p-4">
+                      <Image className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500">Generating image...</p>
                     </div>
                   )}
-
-                  {/* Upload overlay for list view */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 rounded-lg">
-                    <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
-                      <Upload className="h-4 w-4 text-white" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(frame.id, file);
-                        }}
-                      />
-                    </label>
-                  </div>
-
-                  {/* Drag overlay */}
-                  {dragOver === frame.id && (
-                    <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center rounded-lg">
-                      <div className="text-center">
-                        <Upload className="h-6 w-6 text-gold-400 mx-auto mb-1" />
-                        <p className="text-xs text-gold-400 font-medium">Drop here</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg font-medium text-white">
-                        Frame {index + 1}
-                      </span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
-                        {frame.style}
-                      </span>
-                    </div>
+                  
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="flex items-center space-x-2">
+                      {/* Upload Button */}
+                      <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
+                        <Upload className="h-4 w-4 text-white" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(frame.id, file);
+                          }}
+                        />
+                      </label>
+                      
                       {onEditFrame && (
                         <button
                           onClick={() => onEditFrame(frame)}
-                          className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                          className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
                         >
-                          <Edit3 className="h-4 w-4" />
+                          <Edit3 className="h-4 w-4 text-white" />
                         </button>
                       )}
                       {onRegenerateFrame && (
                         <button
                           onClick={() => onRegenerateFrame(frame)}
-                          className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                          className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
                         >
-                          <RefreshCw className="h-4 w-4" />
+                          <RefreshCw className="h-4 w-4 text-white" />
                         </button>
                       )}
+                      <button className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200">
+                        <Play className="h-4 w-4 text-white" />
+                      </button>
                     </div>
                   </div>
-                  
-                  <p className="text-gray-300 mb-3">
-                    {frame.description}
-                  </p>
-                  
-                  {frame.annotations && frame.annotations.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {frame.annotations.map((annotation, i) => (
-                        <span key={i} className="text-xs bg-gold-900/20 text-gold-400 px-2 py-1 rounded">
-                          {annotation}
-                        </span>
-                      ))}
+
+                  {/* Drag overlay */}
+                  {dragOver === frame.id && (
+                    <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center">
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 text-gold-400 mx-auto mb-2" />
+                        <p className="text-gold-400 font-medium">Drop image here</p>
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            </motion.div>
-          ))}
+                
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      {shot && (
+                        <>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(shot.scene_number || 1)}`}>
+                            Scene {shot.scene_number || 1}
+                          </span>
+                          <span className="text-xs font-medium text-gray-400">
+                            Shot {shot.shot_number.toString().padStart(3, '0')}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
+                      {frame.style}
+                    </span>
+                  </div>
+                  
+                  {/* Shot Description from Shot List */}
+                  {shot && (
+                    <div className="mb-3">
+                      <p className="text-sm text-white font-medium mb-1">
+                        {shot.shot_type} • {shot.camera_angle}
+                      </p>
+                      <p className="text-sm text-gray-300 line-clamp-3">
+                        {shot.description}
+                      </p>
+                      {shot.lens_recommendation && (
+                        <p className="text-xs text-gold-400 mt-1">
+                          {shot.lens_recommendation}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Frame Annotations */}
+                  {frame.annotations && frame.annotations.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {frame.annotations.slice(0, 3).map((annotation, i) => (
+                        <span key={i} className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
+                          {annotation}
+                        </span>
+                      ))}
+                      {frame.annotations.length > 3 && (
+                        <span className="text-xs text-gray-500">
+                          +{frame.annotations.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredFrames.map((frame, index) => {
+            const shot = getShotDetails(frame);
+            
+            return (
+              <motion.div
+                key={frame.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="bg-gray-800 rounded-xl border border-gray-700 p-6 hover:border-gold-500 transition-colors duration-200"
+              >
+                <div className="flex items-start space-x-6">
+                  <div 
+                    className={`w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center relative ${
+                      dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
+                    }`}
+                    onDrop={(e) => handleDrop(e, frame.id)}
+                    onDragOver={(e) => handleDragOver(e, frame.id)}
+                    onDragLeave={handleDragLeave}
+                  >
+                    {uploading === frame.id ? (
+                      <div className="text-center">
+                        <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-1" />
+                        <p className="text-xs text-gray-500">Uploading...</p>
+                      </div>
+                    ) : frame.image_url ? (
+                      <img 
+                        src={frame.image_url} 
+                        alt={frame.description}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Image className="h-6 w-6 text-gray-500 mx-auto mb-1" />
+                        <p className="text-xs text-gray-500">Generating...</p>
+                      </div>
+                    )}
+
+                    {/* Upload overlay for list view */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 rounded-lg">
+                      <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
+                        <Upload className="h-4 w-4 text-white" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(frame.id, file);
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Drag overlay */}
+                    {dragOver === frame.id && (
+                      <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center rounded-lg">
+                        <div className="text-center">
+                          <Upload className="h-6 w-6 text-gold-400 mx-auto mb-1" />
+                          <p className="text-xs text-gold-400 font-medium">Drop here</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        {shot && (
+                          <>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(shot.scene_number || 1)}`}>
+                              Scene {shot.scene_number || 1}
+                            </span>
+                            <span className="text-lg font-medium text-white">
+                              Shot {shot.shot_number.toString().padStart(3, '0')}
+                            </span>
+                            <span className="text-sm text-gray-400">
+                              {shot.shot_type} • {shot.camera_angle}
+                            </span>
+                          </>
+                        )}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
+                          {frame.style}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {onEditFrame && (
+                          <button
+                            onClick={() => onEditFrame(frame)}
+                            className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                        )}
+                        {onRegenerateFrame && (
+                          <button
+                            onClick={() => onRegenerateFrame(frame)}
+                            className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Shot Description from Shot List */}
+                    {shot && (
+                      <div className="mb-3">
+                        <p className="text-gray-300 mb-2">
+                          {shot.description}
+                        </p>
+                        {shot.lens_recommendation && (
+                          <p className="text-sm text-gold-400">
+                            <span className="font-medium">Lens:</span> {shot.lens_recommendation}
+                          </p>
+                        )}
+                        {shot.estimated_duration && (
+                          <p className="text-sm text-gray-400">
+                            <span className="font-medium">Duration:</span> {shot.estimated_duration}s
+                          </p>
+                        )}
+                        {shot.notes && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            <span className="font-medium">Notes:</span> {shot.notes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Frame Annotations */}
+                    {frame.annotations && frame.annotations.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {frame.annotations.map((annotation, i) => (
+                          <span key={i} className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
+                            {annotation}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
       {filteredFrames.length === 0 && (
         <div className="text-center py-12">
           <Image className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-400">No frames found for the selected style.</p>
+          <p className="text-gray-400">No frames found for the selected filters.</p>
         </div>
       )}
     </motion.div>

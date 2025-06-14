@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PhotoboardView } from '../components/Photoboard/PhotoboardView';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { usePhotoboard } from '../hooks/usePhotoboard';
+import { useShots } from '../hooks/useShots';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,13 +14,20 @@ export const PhotoboardPage: React.FC = () => {
 
   const { 
     frames, 
-    loading, 
+    loading: framesLoading, 
     uploading,
     generateFrames,
     uploadImage, 
     updateFrame, 
     regenerateFrame 
   } = usePhotoboard(projectId || null);
+
+  const { 
+    shots, 
+    loading: shotsLoading 
+  } = useShots(projectId || null);
+
+  const loading = framesLoading || shotsLoading;
 
   const handleEditFrame = (frame: any) => {
     console.log('Edit frame:', frame);
@@ -119,6 +127,7 @@ export const PhotoboardPage: React.FC = () => {
         ) : (
           <PhotoboardView 
             frames={frames}
+            shots={shots}
             uploading={uploading}
             onEditFrame={handleEditFrame}
             onRegenerateFrame={handleRegenerateFrame}
