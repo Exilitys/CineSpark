@@ -4,6 +4,7 @@ import { ShotListView } from '../components/ShotList/ShotListView';
 import { ShotEditor } from '../components/ShotList/ShotEditor';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { useShots } from '../hooks/useShots';
+import { usePhotoboard } from '../hooks/usePhotoboard';
 import { Database } from '../types/database';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Camera } from 'lucide-react';
@@ -25,6 +26,8 @@ export const ShotListPage: React.FC = () => {
     deleteShot,
     generateShots 
   } = useShots(projectId || null);
+
+  const { generateFrames } = usePhotoboard(projectId || null);
 
   const handleEditShot = (shot: Shot) => {
     setEditingShot(shot);
@@ -63,10 +66,16 @@ export const ShotListPage: React.FC = () => {
         toast.success('Shot list generated successfully!', { id: 'generate-shots' });
       }
       
-      toast.success('Shot list approved! Ready to create storyboard.');
+      // Generate photoboard frames
+      toast.loading('Generating storyboard frames...', { id: 'generate-frames' });
+      await generateFrames();
+      toast.success('Storyboard frames generated successfully!', { id: 'generate-frames' });
+      
+      // Navigate to photoboard page
       navigate(`/photoboard/${projectId}`);
     } catch (error) {
-      toast.error('Error generating shots');
+      console.error('Error in approval process:', error);
+      toast.error('Error generating storyboard. Please try again.');
     }
   };
 

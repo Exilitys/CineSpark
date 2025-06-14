@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List, Check } from 'lucide-react';
-import { PhotoboardFrame } from '../../types';
+import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List, Check, Upload, X } from 'lucide-react';
+import { Database } from '../../types/database';
+
+type PhotoboardFrame = Database['public']['Tables']['photoboard_frames']['Row'];
 
 interface PhotoboardViewProps {
   frames: PhotoboardFrame[];
+  uploading?: string | null;
   onEditFrame?: (frame: PhotoboardFrame) => void;
   onRegenerateFrame?: (frame: PhotoboardFrame) => void;
+  onUploadImage?: (frameId: string, file: File) => Promise<void>;
   onApprove?: () => void;
 }
 
 export const PhotoboardView: React.FC<PhotoboardViewProps> = ({ 
   frames, 
+  uploading,
   onEditFrame, 
   onRegenerateFrame,
+  onUploadImage,
   onApprove 
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedStyle, setSelectedStyle] = useState('all');
+  const [dragOver, setDragOver] = useState<string | null>(null);
 
   const styles = ['Photorealistic', 'Sketch', 'Comic Book', 'Cinematic', 'Noir'];
   const filteredFrames = selectedStyle === 'all' 
@@ -33,6 +40,48 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
       'Noir': 'text-gray-400 bg-gray-900/20',
     };
     return colors[style as keyof typeof colors] || 'text-gray-400 bg-gray-900/20';
+  };
+
+  const handleFileUpload = async (frameId: string, file: File) => {
+    if (!onUploadImage) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      await onUploadImage(frameId, file);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Error uploading image. Please try again.');
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, frameId: string) => {
+    e.preventDefault();
+    setDragOver(null);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(frameId, files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, frameId: string) => {
+    e.preventDefault();
+    setDragOver(frameId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(null);
   };
 
   return (
@@ -131,10 +180,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden group hover:border-gold-500 transition-colors duration-200"
             >
-              <div className="aspect-video bg-gray-700 flex items-center justify-center relative">
-                {frame.imageUrl ? (
+              <div 
+                className={`aspect-video bg-gray-700 flex items-center justify-center relative ${
+                  dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
+                }`}
+                onDrop={(e) => handleDrop(e, frame.id)}
+                onDragOver={(e) => handleDragOver(e, frame.id)}
+                onDragLeave={handleDragLeave}
+              >
+                {uploading === frame.id ? (
+                  <div className="text-center p-4">
+                    <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Uploading...</p>
+                  </div>
+                ) : frame.image_url ? (
                   <img 
-                    src={frame.imageUrl} 
+                    src={frame.image_url} 
                     alt={frame.description}
                     className="w-full h-full object-cover"
                   />
@@ -147,6 +208,20 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                 
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <div className="flex items-center space-x-2">
+                    {/* Upload Button */}
+                    <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
+                      <Upload className="h-4 w-4 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(frame.id, file);
+                        }}
+                      />
+                    </label>
+                    
                     {onEditFrame && (
                       <button
                         onClick={() => onEditFrame(frame)}
@@ -168,12 +243,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                     </button>
                   </div>
                 </div>
+
+                {/* Drag overlay */}
+                {dragOver === frame.id && (
+                  <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center">
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 text-gold-400 mx-auto mb-2" />
+                      <p className="text-gold-400 font-medium">Drop image here</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-gray-400">
-                    Shot {frame.shotId}
+                    Frame {index + 1}
                   </span>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
                     {frame.style}
@@ -211,10 +296,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
               className="bg-gray-800 rounded-xl border border-gray-700 p-6 hover:border-gold-500 transition-colors duration-200"
             >
               <div className="flex items-start space-x-6">
-                <div className="w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center">
-                  {frame.imageUrl ? (
+                <div 
+                  className={`w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center relative ${
+                    dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
+                  }`}
+                  onDrop={(e) => handleDrop(e, frame.id)}
+                  onDragOver={(e) => handleDragOver(e, frame.id)}
+                  onDragLeave={handleDragLeave}
+                >
+                  {uploading === frame.id ? (
+                    <div className="text-center">
+                      <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-1" />
+                      <p className="text-xs text-gray-500">Uploading...</p>
+                    </div>
+                  ) : frame.image_url ? (
                     <img 
-                      src={frame.imageUrl} 
+                      src={frame.image_url} 
                       alt={frame.description}
                       className="w-full h-full object-cover rounded-lg"
                     />
@@ -224,13 +321,39 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       <p className="text-xs text-gray-500">Generating...</p>
                     </div>
                   )}
+
+                  {/* Upload overlay for list view */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 rounded-lg">
+                    <label className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 cursor-pointer">
+                      <Upload className="h-4 w-4 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(frame.id, file);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Drag overlay */}
+                  {dragOver === frame.id && (
+                    <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center rounded-lg">
+                      <div className="text-center">
+                        <Upload className="h-6 w-6 text-gold-400 mx-auto mb-1" />
+                        <p className="text-xs text-gold-400 font-medium">Drop here</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <span className="text-lg font-medium text-white">
-                        Shot {frame.shotId}
+                        Frame {index + 1}
                       </span>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStyleColor(frame.style)}`}>
                         {frame.style}
