@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight } from 'lucide-react';
+import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight, CheckCircle, Circle, Clock } from 'lucide-react';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useProjectStatus } from '../../hooks/useProjectStatus';
 import toast from 'react-hot-toast';
 
 export const ProjectsList: React.FC = () => {
@@ -86,83 +87,189 @@ export const ProjectsList: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project, index) => (
-          <motion.div
+          <ProjectCard
             key={project.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group cursor-pointer"
-            onClick={() => handleOpenProject(project.id)}
-          >
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 bg-cinema-600 rounded-lg flex items-center justify-center">
-                  <Film className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add edit functionality here
-                    }}
-                    className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProject(project.id, project.title);
-                    }}
-                    className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">
-                {project.title}
-              </h3>
-              
-              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                {project.original_idea}
-              </p>
-              
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>Created {formatDate(project.created_at)}</span>
-                </div>
-                <span>Updated {formatDate(project.updated_at)}</span>
-              </div>
-            </div>
-            
-            <div className="px-6 py-3 bg-gray-700/50 border-t border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-xs text-gray-400">
-                  <span className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full" />
-                    <span>Story</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full" />
-                    <span>Shots</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full" />
-                    <span>Board</span>
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200">
-                  <span>Open</span>
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            project={project}
+            index={index}
+            onOpen={() => handleOpenProject(project.id)}
+            onDelete={() => handleDeleteProject(project.id, project.title)}
+            formatDate={formatDate}
+          />
         ))}
       </div>
     </div>
+  );
+};
+
+interface ProjectCardProps {
+  project: any;
+  index: number;
+  onOpen: () => void;
+  onDelete: () => void;
+  formatDate: (date: string) => string;
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ 
+  project, 
+  index, 
+  onOpen, 
+  onDelete, 
+  formatDate 
+}) => {
+  const { status, loading } = useProjectStatus(project.id);
+
+  const getStatusIcon = (completed: boolean, inProgress: boolean) => {
+    if (completed) {
+      return <CheckCircle className="h-4 w-4 text-green-400" />;
+    } else if (inProgress) {
+      return <Clock className="h-4 w-4 text-gold-400" />;
+    } else {
+      return <Circle className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getStatusColor = (completed: boolean, inProgress: boolean) => {
+    if (completed) return 'text-green-400';
+    if (inProgress) return 'text-gold-400';
+    return 'text-gray-500';
+  };
+
+  const getProgressPercentage = () => {
+    if (!status) return 0;
+    
+    let completed = 0;
+    if (status.story.completed) completed++;
+    if (status.shots.completed) completed++;
+    if (status.photoboard.completed) completed++;
+    
+    return Math.round((completed / 3) * 100);
+  };
+
+  const getNextStep = () => {
+    if (!status) return 'Start with story development';
+    
+    if (!status.story.completed) return 'Complete story development';
+    if (!status.shots.completed) return 'Generate shot list';
+    if (!status.photoboard.completed) return 'Create storyboard';
+    return 'Ready for export';
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.1 }}
+      className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group cursor-pointer"
+      onClick={onOpen}
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-10 h-10 bg-cinema-600 rounded-lg flex items-center justify-center">
+            <Film className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add edit functionality here
+              }}
+              className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+            >
+              <Edit3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        
+        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">
+          {project.title}
+        </h3>
+        
+        <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+          {project.original_idea}
+        </p>
+
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-400">Progress</span>
+            <span className="text-xs text-gray-400">{getProgressPercentage()}%</span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-cinema-500 to-gold-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${getProgressPercentage()}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Next Step */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-500 mb-1">Next step:</p>
+          <p className="text-sm text-gold-400 font-medium">{getNextStep()}</p>
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+          <div className="flex items-center space-x-1">
+            <Calendar className="h-3 w-3" />
+            <span>Created {formatDate(project.created_at)}</span>
+          </div>
+          <span>Updated {formatDate(project.updated_at)}</span>
+        </div>
+      </div>
+      
+      <div className="px-6 py-3 bg-gray-700/50 border-t border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4 text-xs">
+            {loading ? (
+              <div className="flex items-center space-x-4">
+                <div className="w-4 h-4 border border-gray-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-gray-400">Loading status...</span>
+              </div>
+            ) : status ? (
+              <>
+                {/* Story Status */}
+                <div className="flex items-center space-x-1">
+                  {getStatusIcon(status.story.completed, status.story.inProgress)}
+                  <span className={getStatusColor(status.story.completed, status.story.inProgress)}>
+                    Story
+                  </span>
+                </div>
+
+                {/* Shots Status */}
+                <div className="flex items-center space-x-1">
+                  {getStatusIcon(status.shots.completed, status.shots.inProgress)}
+                  <span className={getStatusColor(status.shots.completed, status.shots.inProgress)}>
+                    Shots
+                  </span>
+                </div>
+
+                {/* Photoboard Status */}
+                <div className="flex items-center space-x-1">
+                  {getStatusIcon(status.photoboard.completed, status.photoboard.inProgress)}
+                  <span className={getStatusColor(status.photoboard.completed, status.photoboard.inProgress)}>
+                    Board
+                  </span>
+                </div>
+              </>
+            ) : (
+              <span className="text-gray-500">Status unavailable</span>
+            )}
+          </div>
+          <div className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200">
+            <span>Open</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
