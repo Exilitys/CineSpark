@@ -13,27 +13,35 @@ export const STRIPE_CONFIG = {
   locale: 'en' as const,
 };
 
-// Product and price IDs (these would come from your Stripe dashboard)
+// Product and price IDs (UPDATE THESE WITH YOUR ACTUAL STRIPE PRICE IDs)
 export const STRIPE_PRODUCTS = {
   pro: {
     productId: 'prod_cinespark_pro',
-    monthly: 'price_pro_monthly_29',
-    annual: 'price_pro_annual_290',
+    monthly: 'price_1QZqGhP123abc456def789gh', // Replace with actual Price ID from Stripe Dashboard
+    annual: 'price_1QZqGiP123abc456def789gh',  // Replace with actual Price ID from Stripe Dashboard
   },
   enterprise: {
     productId: 'prod_cinespark_enterprise', 
-    monthly: 'price_enterprise_monthly_99',
-    annual: 'price_enterprise_annual_990',
+    monthly: 'price_1QZqGjP123abc456def789gh',  // Replace with actual Price ID from Stripe Dashboard
+    annual: 'price_1QZqGkP123abc456def789gh',   // Replace with actual Price ID from Stripe Dashboard
   },
 };
 
 // Stripe API helpers
 export const createCheckoutSession = async (priceId: string, customerId?: string) => {
   try {
-    const response = await fetch('/api/stripe/create-checkout-session', {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase configuration missing');
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({
         priceId,
@@ -44,6 +52,8 @@ export const createCheckoutSession = async (priceId: string, customerId?: string
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Checkout session error:', errorData);
       throw new Error('Failed to create checkout session');
     }
 
@@ -56,10 +66,18 @@ export const createCheckoutSession = async (priceId: string, customerId?: string
 
 export const createCustomerPortalSession = async (customerId: string) => {
   try {
-    const response = await fetch('/api/stripe/create-portal-session', {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase configuration missing');
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/stripe-portal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({
         customerId,
@@ -68,6 +86,8 @@ export const createCustomerPortalSession = async (customerId: string) => {
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Portal session error:', errorData);
       throw new Error('Failed to create portal session');
     }
 
