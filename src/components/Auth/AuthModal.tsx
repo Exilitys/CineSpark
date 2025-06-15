@@ -22,6 +22,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -31,12 +32,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     if (!email || !password) return;
 
+    // Validate full name for sign up
+    if (isSignUp && !fullName.trim()) {
+      toast.error('Please enter your full name');
+      return;
+    }
+
+    if (isSignUp && fullName.trim().length < 2) {
+      toast.error('Name must be at least 2 characters long');
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log('🔐 Auth modal submitting:', { isSignUp, email, redirectAfterAuth });
+      console.log('🔐 Auth modal submitting:', { isSignUp, email, fullName: isSignUp ? fullName : 'N/A', redirectAfterAuth });
       
       const { error } = isSignUp 
-        ? await signUp(email, password)
+        ? await signUp(email, password, fullName.trim())
         : await signIn(email, password);
 
       if (error) {
@@ -49,6 +61,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         // Clear form
         setEmail('');
         setPassword('');
+        setFullName('');
         onClose();
 
         // Handle post-authentication flow
@@ -101,6 +114,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsSignUp(!isSignUp);
     setEmail('');
     setPassword('');
+    setFullName('');
   };
 
   return (
@@ -164,6 +178,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Full Name (Sign Up Only) */}
+              {isSignUp && (
+                <div>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">
+                    Full Name *
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Enter your full name"
+                      maxLength={50}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">This will be displayed in your profile</p>
+                </div>
+              )}
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                   Email Address
@@ -203,7 +240,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <motion.button
                 type="submit"
-                disabled={loading || !email || !password}
+                disabled={loading || !email || !password || (isSignUp && !fullName.trim())}
                 className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

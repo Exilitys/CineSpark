@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft } from 'lucide-react';
+import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +27,29 @@ export const ProfilePage: React.FC = () => {
   }, [profile]);
 
   const handleSave = async () => {
+    // Validate name
+    if (!formData.full_name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+
+    // Validate name length
+    if (formData.full_name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters long');
+      return;
+    }
+
+    if (formData.full_name.trim().length > 50) {
+      toast.error('Name must be less than 50 characters');
+      return;
+    }
+
     setSaving(true);
     try {
-      await updateProfile(formData);
+      await updateProfile({
+        full_name: formData.full_name.trim(),
+        avatar_url: formData.avatar_url.trim() || null,
+      });
       setIsEditing(false);
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -75,6 +95,16 @@ export const ProfilePage: React.FC = () => {
       default:
         return 'bg-gray-600 text-gray-100';
     }
+  };
+
+  const getDisplayName = () => {
+    if (profile?.full_name && profile.full_name.trim()) {
+      return profile.full_name;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
   };
 
   if (loading) {
@@ -194,17 +224,20 @@ export const ProfilePage: React.FC = () => {
               </div>
               
               {isEditing ? (
-                <input
-                  type="url"
-                  value={formData.avatar_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, avatar_url: e.target.value }))}
-                  placeholder="Avatar URL"
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm"
-                />
+                <div className="space-y-2">
+                  <input
+                    type="url"
+                    value={formData.avatar_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, avatar_url: e.target.value }))}
+                    placeholder="Avatar URL (optional)"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm"
+                  />
+                  <p className="text-xs text-gray-500">Enter a URL for your profile picture</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   <h2 className="text-xl font-semibold text-white">
-                    {profile.full_name || 'No name set'}
+                    {getDisplayName()}
                   </h2>
                   <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPlanBadgeStyle(profile.plan)}`}>
                     <Crown className="h-4 w-4 mr-1" />
@@ -219,20 +252,33 @@ export const ProfilePage: React.FC = () => {
               {/* Full Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
+                  Full Name *
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                    placeholder="Enter your full name"
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-                  />
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                      placeholder="Enter your full name"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+                      maxLength={50}
+                      required
+                    />
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">This name will be displayed in the navigation bar</span>
+                      <span className={`${formData.full_name.length > 40 ? 'text-orange-400' : 'text-gray-500'}`}>
+                        {formData.full_name.length}/50
+                      </span>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
                     <User className="h-5 w-5 text-gray-400" />
                     <span className="text-white">{profile.full_name || 'Not set'}</span>
+                    {profile.full_name && (
+                      <Check className="h-4 w-4 text-green-400" />
+                    )}
                   </div>
                 )}
               </div>
@@ -261,6 +307,16 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Name Display Preview */}
+          {isEditing && formData.full_name.trim() && (
+            <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+              <h4 className="text-blue-400 font-medium text-sm mb-2">Preview</h4>
+              <p className="text-blue-300 text-sm">
+                Your name will appear as "<span className="font-medium">{formData.full_name.trim()}</span>" in the navigation bar and throughout the app.
+              </p>
+            </div>
+          )}
         </motion.div>
 
         {/* Plan & Credits Information */}

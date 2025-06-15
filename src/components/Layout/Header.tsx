@@ -52,6 +52,17 @@ export const Header: React.FC = () => {
     }
   };
 
+  // Get display name - prioritize full_name, fallback to email username
+  const getDisplayName = () => {
+    if (profile?.full_name && profile.full_name.trim()) {
+      return profile.full_name;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
   return (
     <>
       <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
@@ -144,7 +155,7 @@ export const Header: React.FC = () => {
                       className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       <User className="h-4 w-4" />
-                      <span>{profile?.full_name || user.email?.split('@')[0]}</span>
+                      <span className="max-w-32 truncate">{getDisplayName()}</span>
                       {profile?.plan && profile.plan !== 'free' && (
                         <span className={`text-xs ${getPlanBadge(profile.plan).color}`}>
                           {getPlanBadge(profile.plan).label}
@@ -156,8 +167,9 @@ export const Header: React.FC = () => {
                       <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50">
                         <div className="py-1">
                           <div className="px-4 py-3 text-sm border-b border-gray-700">
-                            <div className="text-gray-300">{user.email}</div>
-                            <div className="flex items-center justify-between mt-1">
+                            <div className="font-medium text-white">{getDisplayName()}</div>
+                            <div className="text-gray-400 text-xs">{user.email}</div>
+                            <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center space-x-2">
                                 <Zap className="h-3 w-3 text-gold-400" />
                                 <span className={`text-xs font-medium ${getCreditsColor(profile?.credits || 0)}`}>

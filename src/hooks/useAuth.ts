@@ -87,13 +87,26 @@ export const useAuth = () => {
     };
   }, [initialized]);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      console.log('📝 Attempting sign up for:', email);
-      const { data, error } = await supabase.auth.signUp({
+      console.log('📝 Attempting sign up for:', email, 'with name:', fullName);
+      
+      const signUpData: any = {
         email,
         password,
-      });
+      };
+
+      // Add full name to user metadata if provided
+      if (fullName && fullName.trim()) {
+        signUpData.options = {
+          data: {
+            full_name: fullName.trim()
+          }
+        };
+      }
+
+      const { data, error } = await supabase.auth.signUp(signUpData);
+      
       console.log('📝 Sign up result:', { 
         user: data?.user?.email || 'None', 
         session: data?.session ? 'Present' : 'None',
