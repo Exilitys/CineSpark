@@ -12,6 +12,7 @@ import { PricingPage } from './pages/PricingPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { StoryGenerationPage } from './pages/StoryGenerationPage';
 import { useAuth } from './hooks/useAuth';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
           <Route path="/payment/:planId" element={<PaymentPage />} />
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/story-generator" element={<StoryGenerationPage />} />
         </Routes>
         <Toaster 
           position="top-right"
