@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings, PenTool } from 'lucide-react';
+import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import { AuthModal } from '../Auth/AuthModal';
@@ -18,7 +18,6 @@ export const Header: React.FC = () => {
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
-    { path: '/story-generator', icon: PenTool, label: 'AI Stories' },
     { path: `/story/${projectId}`, icon: FileText, label: 'Story' },
     { path: `/shots/${projectId}`, icon: Camera, label: 'Shot List' },
     { path: `/photoboard/${projectId}`, icon: Image, label: 'Photoboard' },
@@ -73,8 +72,8 @@ export const Header: React.FC = () => {
 
             <nav className="hidden md:flex space-x-8">
               {navItems.map(({ path, icon: Icon, label }) => {
-                // Show Home, Projects, and AI Stories for everyone
-                if (path === '/' || path === '/projects' || path === '/story-generator') {
+                // Show Home and Projects for everyone
+                if (path === '/' || path === '/projects') {
                   return (
                     <Link
                       key={path}
