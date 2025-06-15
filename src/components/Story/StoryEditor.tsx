@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2, Camera } from 'lucide-react';
 import { StoryWithDetails } from '../../hooks/useStory';
-import { useShots } from '../../hooks/useShots';
+import { useShotListAPI } from '../../hooks/useShotListAPI';
+import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 interface StoryEditorProps {
@@ -26,9 +28,11 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const [generatingShots, setGeneratingShots] = useState(false);
 
+  const navigate = useNavigate();
+  const { generateShotListFromAPI, loading: apiLoading, error: apiError } = useShotListAPI();
+
   // Get project ID from story
   const projectId = story.project_id;
-  const { generateShots } = useShots(projectId);
 
   // Local state for editing
   const [logline, setLogline] = useState(story.logline);
@@ -97,23 +101,81 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
     }
   };
 
+  const createShotListInDatabase = async (shotListData: any) => {
+    try {
+      const shotsToInsert = shotListData.shots.map((shot: any) => ({
+        project_id: projectId,
+        scene_id: null, // We'll link to scenes later if needed
+        shot_number: shot.shot_number,
+        scene_number: shot.scene_number,
+        shot_type: shot.shot_type,
+        camera_angle: shot.camera_angle,
+        camera_movement: shot.camera_movement,
+        description: shot.description,
+        lens_recommendation: shot.lens_recommendation,
+        estimated_duration: shot.estimated_duration,
+        notes: shot.notes,
+      }));
+
+      const { data, error } = await supabase
+        .from('shots')
+        .insert(shotsToInsert)
+        .select();
+
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error creating shot list in database:', error);
+      throw error;
+    }
+  };
+
   const handleApproveStory = async () => {
     setGeneratingShots(true);
     try {
-      toast.loading('Generating shot list from your story...', { id: 'generate-shots' });
+      // Step 1: Send story data to API for shot list generation
+      toast.loading('Sending story to AI for shot list generation...', { id: 'generate-shots' });
       
-      // Generate shots based on the story
-      await generateShots();
+      const storyData = {
+        logline,
+        synopsis,
+        three_act_structure: threeActStructure,
+        characters: characters.map(char => ({
+          name: char.name,
+          description: char.description,
+          motivation: char.motivation,
+          arc: char.arc
+        })),
+        scenes: scenes.map(scene => ({
+          title: scene.title,
+          setting: scene.setting,
+          description: scene.description,
+          characters: scene.characters,
+          key_actions: scene.key_actions
+        }))
+      };
+
+      const generatedShotList = await generateShotListFromAPI(storyData);
+      
+      if (!generatedShotList) {
+        toast.error('Failed to generate shot list. Please try again.', { id: 'generate-shots' });
+        return;
+      }
+
+      // Step 2: Save shot list to database
+      toast.loading('Creating shot list in your project...', { id: 'generate-shots' });
+      
+      await createShotListInDatabase(generatedShotList);
       
       toast.success('Shot list generated successfully!', { id: 'generate-shots' });
       
-      // Call the onSave callback to navigate to shots page
-      if (onSave) {
-        onSave();
-      }
+      // Step 3: Navigate to shot list page
+      navigate(`/shots/${projectId}`);
+      
     } catch (error) {
       console.error('Error generating shots:', error);
-      toast.error('Error generating shots. Please try again.', { id: 'generate-shots' });
+      toast.error('Error generating shot list. Please try again.', { id: 'generate-shots' });
     } finally {
       setGeneratingShots(false);
     }
@@ -130,6 +192,8 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
       scene.id === sceneId ? { ...scene, [field]: value } : scene
     ));
   };
+
+  const isCurrentlyGenerating = generatingShots || apiLoading;
 
   return (
     <motion.div
@@ -150,10 +214,10 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         </div>
         <button
           onClick={handleApproveStory}
-          disabled={generatingShots}
+          disabled={isCurrentlyGenerating}
           className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200"
         >
-          {generatingShots ? (
+          {isCurrentlyGenerating ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               <span>Generating Shots...</span>
@@ -166,6 +230,15 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
           )}
         </button>
       </div>
+
+      {/* API Error Display */}
+      {apiError && (
+        <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+          <p className="text-red-400">
+            Error generating shot list: {apiError}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Logline & Synopsis */}
