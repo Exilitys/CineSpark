@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProjects } from '../../hooks/useProjects';
+import { useStoryAPI } from '../../hooks/useStoryAPI';
+import { StoryDisplay } from './StoryDisplay';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -11,78 +13,48 @@ interface IdeaInputProps {
   isGenerating?: boolean;
 }
 
+interface GeneratedStory {
+  logline: string;
+  synopsis: string;
+  three_act_structure: {
+    act1: string;
+    act2: string;
+    act3: string;
+  };
+  characters: Array<{
+    name: string;
+    description: string;
+    motivation: string;
+    arc: string;
+  }>;
+  scenes: Array<{
+    title: string;
+    setting: string;
+    description: string;
+    characters: string[];
+    key_actions: string[];
+  }>;
+}
+
 export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) => {
   const [idea, setIdea] = useState('');
-  const [localGenerating, setLocalGenerating] = useState(false);
+  const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
+  const [currentIdea, setCurrentIdea] = useState('');
   const { user } = useAuth();
   const { createProject } = useProjects();
+  const { generateStoryFromAPI, loading: apiLoading, error: apiError } = useStoryAPI();
   const navigate = useNavigate();
 
-  const getDummyStoryData = () => ({
-    logline: "A lonely lighthouse keeper discovers a mysterious sea creature that challenges everything he believes about isolation and connection.",
-    synopsis: "Marcus, a reclusive lighthouse keeper on a remote island, has spent five years in solitude after a tragic accident. His monotonous routine is shattered when he discovers Naia, a wounded sea creature with intelligence beyond human understanding. As Marcus nurses Naia back to health, he learns that she comes from an ancient underwater civilization facing extinction due to ocean pollution. Together, they must overcome their fear of the outside world to save both their species, discovering that true connection transcends the boundaries of species and solitude.",
-    three_act_structure: {
-      act1: "Marcus maintains his isolated routine at the lighthouse, haunted by memories of the accident. During a fierce storm, he discovers Naia washed ashore, injured and unlike anything he's ever seen. Despite his fear, he decides to help her recover.",
-      act2: "As Naia heals, she and Marcus develop a unique form of communication. She reveals the dire situation of her underwater civilization and the connection to human pollution. Marcus must confront his past trauma and decide whether to help Naia contact the outside world, risking exposure of both their secrets.",
-      act3: "Marcus and Naia work together to establish contact with Dr. Chen and the scientific community. They face skepticism and danger as corporate interests threaten both the lighthouse and Naia's people. The climax involves Marcus overcoming his isolation to lead a mission that saves Naia's civilization and establishes a new era of interspecies cooperation."
-    },
-    characters: [
-      {
-        name: "Marcus",
-        description: "A weathered 45-year-old former marine biologist turned lighthouse keeper",
-        motivation: "To find redemption and purpose after losing his research team in a diving accident",
-        arc: "From isolated and guilt-ridden to connected and purposeful"
-      },
-      {
-        name: "Naia",
-        description: "An intelligent sea creature from an ancient underwater civilization",
-        motivation: "To save her dying people and forge understanding between species",
-        arc: "From fearful and suspicious to trusting and collaborative"
-      },
-      {
-        name: "Dr. Sarah Chen",
-        description: "Marcus's former colleague and marine research director",
-        motivation: "To bring Marcus back to the scientific community and continue their work",
-        arc: "From professional concern to personal understanding and support"
-      }
-    ],
-    scenes: [
-      {
-        title: "Morning Routine",
-        setting: "Lighthouse interior at dawn",
-        description: "Marcus performs his daily maintenance routine with mechanical precision",
-        characters: ["Marcus"],
-        key_actions: ["Checking lighthouse equipment", "Making coffee", "Looking out at empty ocean"]
-      },
-      {
-        title: "The Discovery",
-        setting: "Rocky shore after storm",
-        description: "Marcus finds Naia unconscious on the beach, making the choice to help",
-        characters: ["Marcus", "Naia"],
-        key_actions: ["Discovering Naia", "Initial fear and curiosity", "Decision to help"]
-      },
-      {
-        title: "First Contact",
-        setting: "Lighthouse basement pool",
-        description: "Naia awakens and first attempts at communication begin",
-        characters: ["Marcus", "Naia"],
-        key_actions: ["Naia's awakening", "Establishing basic communication", "Building trust"]
-      }
-    ]
-  });
-
-  const createStoryInDatabase = async (projectId: string) => {
-    const storyData = getDummyStoryData();
-    
+  const createStoryInDatabase = async (projectId: string, story: GeneratedStory) => {
     try {
       // Create story
-      const { data: story, error: storyError } = await supabase
+      const { data: storyRecord, error: storyError } = await supabase
         .from('stories')
         .insert({
           project_id: projectId,
-          logline: storyData.logline,
-          synopsis: storyData.synopsis,
-          three_act_structure: storyData.three_act_structure,
+          logline: story.logline,
+          synopsis: story.synopsis,
+          three_act_structure: story.three_act_structure,
         })
         .select()
         .single();
@@ -90,8 +62,8 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
       if (storyError) throw storyError;
 
       // Create characters
-      const charactersToInsert = storyData.characters.map((char, index) => ({
-        story_id: story.id,
+      const charactersToInsert = story.characters.map((char, index) => ({
+        story_id: storyRecord.id,
         name: char.name,
         description: char.description,
         motivation: char.motivation,
@@ -106,8 +78,8 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
       if (charactersError) throw charactersError;
 
       // Create scenes
-      const scenesToInsert = storyData.scenes.map((scene, index) => ({
-        story_id: story.id,
+      const scenesToInsert = story.scenes.map((scene, index) => ({
+        story_id: storyRecord.id,
         title: scene.title,
         setting: scene.setting,
         description: scene.description,
@@ -122,7 +94,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
 
       if (scenesError) throw scenesError;
 
-      return story;
+      return storyRecord;
     } catch (error) {
       console.error('Error creating story in database:', error);
       throw error;
@@ -131,48 +103,67 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idea.trim() || isGenerating || localGenerating) return;
+    if (!idea.trim() || isGenerating || apiLoading) return;
 
     if (!user) {
-      toast.error('Please sign in to create a project');
+      toast.error('Please sign in to generate a story');
       return;
     }
 
-    setLocalGenerating(true);
+    setCurrentIdea(idea.trim());
     
     try {
       // Show generation progress
-      toast.loading('Analyzing your concept...', { id: 'generation' });
+      toast.loading('Sending your idea to AI...', { id: 'generation' });
+      
+      // Call the API to generate story
+      const story = await generateStoryFromAPI(idea.trim());
+      
+      if (!story) {
+        toast.error('Failed to generate story. Please try again.', { id: 'generation' });
+        return;
+      }
+
+      toast.success('Story generated successfully!', { id: 'generation' });
+      setGeneratedStory(story);
+      
+    } catch (error) {
+      console.error('Error generating story:', error);
+      toast.error('Error generating story. Please try again.', { id: 'generation' });
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!generatedStory || !user) return;
+
+    try {
+      toast.loading('Creating your project...', { id: 'create-project' });
       
       // Create project in database
       const project = await createProject({
-        title: `Project: ${idea.substring(0, 50)}${idea.length > 50 ? '...' : ''}`,
+        title: `Project: ${currentIdea.substring(0, 50)}${currentIdea.length > 50 ? '...' : ''}`,
         description: 'AI-generated film project',
-        original_idea: idea.trim(),
+        original_idea: currentIdea,
       });
 
-      // Simulate AI generation process with realistic timing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.loading('Creating story structure...', { id: 'generation' });
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.loading('Generating characters and scenes...', { id: 'generation' });
-      
       // Create the story in the database
-      await createStoryInDatabase(project.id);
+      await createStoryInDatabase(project.id, generatedStory);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Story generated successfully!', { id: 'generation' });
+      toast.success('Project created successfully!', { id: 'create-project' });
       
       // Navigate to story page with project ID
       navigate(`/story/${project.id}`);
       
     } catch (error) {
       console.error('Error creating project:', error);
-      toast.error('Error creating project. Please try again.');
-    } finally {
-      setLocalGenerating(false);
+      toast.error('Error creating project. Please try again.', { id: 'create-project' });
     }
+  };
+
+  const handleGenerateNew = () => {
+    setGeneratedStory(null);
+    setIdea('');
+    setCurrentIdea('');
   };
 
   const exampleIdeas = [
@@ -182,7 +173,18 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
     "An AI assistant develops consciousness and questions its purpose"
   ];
 
-  const isCurrentlyGenerating = isGenerating || localGenerating;
+  const isCurrentlyGenerating = isGenerating || apiLoading;
+
+  // Show generated story if available
+  if (generatedStory) {
+    return (
+      <StoryDisplay
+        story={generatedStory}
+        onCreateProject={handleCreateProject}
+        onGenerateNew={handleGenerateNew}
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -257,6 +259,14 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
           <p className="text-sm text-gray-400 mt-3">
             Please sign in to create and save your projects.
           </p>
+        )}
+
+        {apiError && (
+          <div className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+            <p className="text-red-400 text-sm">
+              Error: {apiError}
+            </p>
+          </div>
         )}
       </motion.form>
 
