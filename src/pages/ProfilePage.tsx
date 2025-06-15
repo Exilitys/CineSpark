@@ -323,8 +323,8 @@ export const ProfilePage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Avatar Section */}
               <div className="lg:col-span-1">
-                <div className="bg-gray-700 rounded-xl p-6 text-center">
-                  <h3 className="text-lg font-semibold text-white mb-4">Profile Picture</h3>
+                <div className="rounded-xl p-6 text-center">
+                  <h3 className="text-lg font-semibold text-white mb-4">Profile</h3>
                   
                   {/* Avatar Display/Upload */}
                   <div className="relative inline-block mb-6">
