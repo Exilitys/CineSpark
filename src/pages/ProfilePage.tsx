@@ -624,7 +624,7 @@ export const ProfilePage: React.FC = () => {
         >
           <h3 className="text-xl font-semibold text-white mb-4">Quick Actions</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => navigate('/pricing')}
               className="bg-gold-600 hover:bg-gold-700 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
@@ -639,16 +639,6 @@ export const ProfilePage: React.FC = () => {
             >
               <Image className="h-4 w-4" />
               <span>View Projects</span>
-            </button>
-            
-            <button
-              onClick={() => {
-                toast.info('Data export feature coming soon!');
-              }}
-              className="bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              <Upload className="h-4 w-4" />
-              <span>Export Data</span>
             </button>
           </div>
         </motion.div>
