@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check, Upload, AlertCircle, Image } from 'lucide-react';
+import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check, Upload, AlertCircle, Image, Trash2 } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const ProfilePage: React.FC = () => {
-  const { profile, loading, updateProfile, getPlanDisplayName, getPlanColor } = useProfile();
+  const { profile, loading, updateProfile, uploadAvatar, deleteAvatar, getPlanDisplayName, getPlanColor } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -16,6 +16,7 @@ export const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
@@ -61,25 +62,48 @@ export const ProfilePage: React.FC = () => {
       const previewUrl = URL.createObjectURL(file);
       setPreviewImage(previewUrl);
 
-      // Simulate upload process (in production, this would upload to a service like Supabase Storage)
       toast.loading('Uploading image...', { id: 'upload' });
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Upload to Supabase Storage
+      const uploadedUrl = await uploadAvatar(file);
       
-      // For demo purposes, we'll use a placeholder URL
-      // In production, you would upload to your storage service and get back a URL
-      const uploadedUrl = `https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop`;
-      
+      // Update form data with new URL
       setFormData(prev => ({ ...prev, avatar_url: uploadedUrl }));
       setPreviewImage(uploadedUrl);
       
+      // Clean up preview URL
+      URL.revokeObjectURL(previewUrl);
+      
       toast.success('Image uploaded successfully!', { id: 'upload' });
-    } catch (error) {
-      toast.error('Error uploading image. Please try again.', { id: 'upload' });
+    } catch (error: any) {
+      toast.error(error.message || 'Error uploading image. Please try again.', { id: 'upload' });
       console.error('Upload error:', error);
+      
+      // Reset preview on error
+      setPreviewImage(profile?.avatar_url || null);
+      setFormData(prev => ({ ...prev, avatar_url: profile?.avatar_url || '' }));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!profile?.avatar_url) return;
+
+    try {
+      toast.loading('Removing avatar...', { id: 'remove-avatar' });
+      
+      // Delete from storage
+      await deleteAvatar(profile.avatar_url);
+      
+      // Update form data
+      setFormData(prev => ({ ...prev, avatar_url: '' }));
+      setPreviewImage(null);
+      
+      toast.success('Avatar removed successfully!', { id: 'remove-avatar' });
+    } catch (error: any) {
+      toast.error('Error removing avatar', { id: 'remove-avatar' });
+      console.error('Remove avatar error:', error);
     }
   };
 
@@ -92,6 +116,7 @@ export const ProfilePage: React.FC = () => {
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setDragOver(false);
     const file = event.dataTransfer.files[0];
     if (file) {
       handleFileSelect(file);
@@ -100,6 +125,11 @@ export const ProfilePage: React.FC = () => {
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
   };
 
   const triggerFileInput = () => {
@@ -132,8 +162,8 @@ export const ProfilePage: React.FC = () => {
       });
       setIsEditing(false);
       toast.success('Profile updated successfully!');
-    } catch (error) {
-      toast.error('Error updating profile');
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating profile');
     } finally {
       setSaving(false);
     }
@@ -299,12 +329,13 @@ export const ProfilePage: React.FC = () => {
                   {/* Avatar Display/Upload */}
                   <div className="relative inline-block mb-6">
                     <div 
-                      className={`w-32 h-32 rounded-full overflow-hidden border-4 border-gray-600 ${
-                        isEditing ? 'cursor-pointer hover:border-gold-500' : ''
-                      } transition-colors duration-200`}
+                      className={`w-32 h-32 rounded-full overflow-hidden border-4 ${
+                        dragOver ? 'border-gold-500 bg-gold-900/20' : 'border-gray-600'
+                      } ${isEditing ? 'cursor-pointer hover:border-gold-500' : ''} transition-all duration-200`}
                       onClick={isEditing ? triggerFileInput : undefined}
                       onDrop={isEditing ? handleDrop : undefined}
                       onDragOver={isEditing ? handleDragOver : undefined}
+                      onDragLeave={isEditing ? handleDragLeave : undefined}
                     >
                       {uploading ? (
                         <div className="w-full h-full bg-gray-600 flex items-center justify-center">
@@ -318,10 +349,21 @@ export const ProfilePage: React.FC = () => {
                           src={previewImage}
                           alt="Profile"
                           className="w-full h-full object-cover"
+                          onError={() => {
+                            console.error('Failed to load avatar image');
+                            setPreviewImage(null);
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-600 flex items-center justify-center">
                           <User className="h-16 w-16 text-gray-400" />
+                        </div>
+                      )}
+                      
+                      {/* Drag Overlay */}
+                      {dragOver && isEditing && (
+                        <div className="absolute inset-0 bg-gold-500 bg-opacity-20 flex items-center justify-center rounded-full">
+                          <Upload className="h-8 w-8 text-gold-400" />
                         </div>
                       )}
                     </div>
@@ -340,19 +382,33 @@ export const ProfilePage: React.FC = () => {
                   {/* Upload Instructions */}
                   {isEditing && (
                     <div className="space-y-3">
-                      <button
-                        onClick={triggerFileInput}
-                        disabled={uploading}
-                        className="w-full bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>Choose Image</span>
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={triggerFileInput}
+                          disabled={uploading}
+                          className="flex-1 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200"
+                        >
+                          <Upload className="h-4 w-4" />
+                          <span>Choose Image</span>
+                        </button>
+                        
+                        {previewImage && (
+                          <button
+                            onClick={handleRemoveAvatar}
+                            disabled={uploading}
+                            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-700 text-white py-2 px-3 rounded-lg transition-colors duration-200"
+                            title="Remove avatar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                       
                       <div className="text-xs text-gray-400 space-y-1">
                         <p>• JPG, PNG, or GIF format</p>
                         <p>• Maximum size: 5MB</p>
                         <p>• Recommended: 400x400px</p>
+                        <p>• Drag & drop supported</p>
                       </div>
                     </div>
                   )}
