@@ -28,7 +28,8 @@ export const ShotListPage: React.FC = () => {
     updateShot, 
     createShot, 
     deleteShot,
-    generateShots 
+    generateShots,
+    refetch
   } = useShots(projectId || null);
 
   const { generatePhotoboardFromAPI, loading: apiLoading, error: apiError } = usePhotoboardAPI();
@@ -58,6 +59,31 @@ export const ShotListPage: React.FC = () => {
 
   const handleAddShot = () => {
     setShowCreator(true);
+  };
+
+  const handleUpdateShots = async (updatedShots: Shot[]) => {
+    try {
+      // Update each shot in the database
+      for (const shot of updatedShots) {
+        await updateShot(shot.id, {
+          shot_number: shot.shot_number,
+          scene_number: shot.scene_number,
+          shot_type: shot.shot_type,
+          camera_angle: shot.camera_angle,
+          camera_movement: shot.camera_movement,
+          description: shot.description,
+          lens_recommendation: shot.lens_recommendation,
+          estimated_duration: shot.estimated_duration,
+          notes: shot.notes,
+        });
+      }
+      
+      // Refresh the shots data
+      await refetch();
+    } catch (error) {
+      console.error('Error updating shots:', error);
+      throw error;
+    }
   };
 
   const createPhotoboardInDatabase = async (photoboardData: any) => {
@@ -190,15 +216,6 @@ export const ShotListPage: React.FC = () => {
           </button>
         </motion.div>
 
-        {/* API Error Display */}
-        {apiError && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-400">
-              Error generating storyboard: {apiError}
-            </p>
-          </div>
-        )}
-
         {shots.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -228,6 +245,7 @@ export const ShotListPage: React.FC = () => {
             onDeleteShot={handleDeleteShot}
             onAddShot={handleAddShot}
             onApprove={handleApproveShots}
+            onUpdateShots={handleUpdateShots}
           />
         )}
 
