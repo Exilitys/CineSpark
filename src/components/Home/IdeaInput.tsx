@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProjects } from '../../hooks/useProjects';
 import { useStoryAPI } from '../../hooks/useStoryAPI';
-import { StoryDisplay } from './StoryDisplay';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -38,8 +37,7 @@ interface GeneratedStory {
 
 export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) => {
   const [idea, setIdea] = useState('');
-  const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
-  const [currentIdea, setCurrentIdea] = useState('');
+  const [localGenerating, setLocalGenerating] = useState(false);
   const { user } = useAuth();
   const { createProject } = useProjects();
   const { generateStoryFromAPI, loading: apiLoading, error: apiError } = useStoryAPI();
@@ -103,67 +101,51 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idea.trim() || isGenerating || apiLoading) return;
+    if (!idea.trim() || isGenerating || localGenerating || apiLoading) return;
 
     if (!user) {
-      toast.error('Please sign in to generate a story');
+      toast.error('Please sign in to create a project');
       return;
     }
 
-    setCurrentIdea(idea.trim());
+    setLocalGenerating(true);
     
     try {
-      // Show generation progress
+      // Step 1: Generate story from API
       toast.loading('Sending your idea to AI...', { id: 'generation' });
       
-      // Call the API to generate story
-      const story = await generateStoryFromAPI(idea.trim());
+      const generatedStory = await generateStoryFromAPI(idea.trim());
       
-      if (!story) {
+      if (!generatedStory) {
         toast.error('Failed to generate story. Please try again.', { id: 'generation' });
         return;
       }
 
-      toast.success('Story generated successfully!', { id: 'generation' });
-      setGeneratedStory(story);
+      // Step 2: Create project in database
+      toast.loading('Creating your project...', { id: 'generation' });
       
-    } catch (error) {
-      console.error('Error generating story:', error);
-      toast.error('Error generating story. Please try again.', { id: 'generation' });
-    }
-  };
-
-  const handleCreateProject = async () => {
-    if (!generatedStory || !user) return;
-
-    try {
-      toast.loading('Creating your project...', { id: 'create-project' });
-      
-      // Create project in database
       const project = await createProject({
-        title: `Project: ${currentIdea.substring(0, 50)}${currentIdea.length > 50 ? '...' : ''}`,
+        title: `Project: ${idea.substring(0, 50)}${idea.length > 50 ? '...' : ''}`,
         description: 'AI-generated film project',
-        original_idea: currentIdea,
+        original_idea: idea.trim(),
       });
 
-      // Create the story in the database
+      // Step 3: Create the story in the database
+      toast.loading('Setting up your story...', { id: 'generation' });
+      
       await createStoryInDatabase(project.id, generatedStory);
       
-      toast.success('Project created successfully!', { id: 'create-project' });
+      toast.success('Story generated successfully!', { id: 'generation' });
       
-      // Navigate to story page with project ID
+      // Step 4: Navigate to the existing story page where user can edit and continue
       navigate(`/story/${project.id}`);
       
     } catch (error) {
-      console.error('Error creating project:', error);
-      toast.error('Error creating project. Please try again.', { id: 'create-project' });
+      console.error('Error in story generation workflow:', error);
+      toast.error('Error generating story. Please try again.', { id: 'generation' });
+    } finally {
+      setLocalGenerating(false);
     }
-  };
-
-  const handleGenerateNew = () => {
-    setGeneratedStory(null);
-    setIdea('');
-    setCurrentIdea('');
   };
 
   const exampleIdeas = [
@@ -173,18 +155,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
     "An AI assistant develops consciousness and questions its purpose"
   ];
 
-  const isCurrentlyGenerating = isGenerating || apiLoading;
-
-  // Show generated story if available
-  if (generatedStory) {
-    return (
-      <StoryDisplay
-        story={generatedStory}
-        onCreateProject={handleCreateProject}
-        onGenerateNew={handleGenerateNew}
-      />
-    );
-  }
+  const isCurrentlyGenerating = isGenerating || localGenerating || apiLoading;
 
   return (
     <motion.div
