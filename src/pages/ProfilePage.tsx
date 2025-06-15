@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check } from 'lucide-react';
+import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check, Upload, AlertCircle, Image } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,12 @@ export const ProfilePage: React.FC = () => {
   const { profile, loading, updateProfile, getPlanDisplayName, getPlanColor } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
@@ -23,8 +27,84 @@ export const ProfilePage: React.FC = () => {
         full_name: profile.full_name || '',
         avatar_url: profile.avatar_url || '',
       });
+      setPreviewImage(profile.avatar_url || null);
     }
   }, [profile]);
+
+  const validateFile = (file: File): string | null => {
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      return 'Please select a valid image file (JPG, PNG, or GIF)';
+    }
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      return 'File size must be less than 5MB';
+    }
+
+    return null;
+  };
+
+  const handleFileSelect = async (file: File) => {
+    const validationError = validateFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+
+      // Simulate upload process (in production, this would upload to a service like Supabase Storage)
+      toast.loading('Uploading image...', { id: 'upload' });
+      
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // For demo purposes, we'll use a placeholder URL
+      // In production, you would upload to your storage service and get back a URL
+      const uploadedUrl = `https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop`;
+      
+      setFormData(prev => ({ ...prev, avatar_url: uploadedUrl }));
+      setPreviewImage(uploadedUrl);
+      
+      toast.success('Image uploaded successfully!', { id: 'upload' });
+    } catch (error) {
+      toast.error('Error uploading image. Please try again.', { id: 'upload' });
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleSave = async () => {
     // Validate name
@@ -65,6 +145,7 @@ export const ProfilePage: React.FC = () => {
         full_name: profile.full_name || '',
         avatar_url: profile.avatar_url || '',
       });
+      setPreviewImage(profile.avatar_url || null);
     }
     setIsEditing(false);
   };
@@ -159,164 +240,231 @@ export const ProfilePage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-gray-800 rounded-xl p-8 border border-gray-700 mb-8"
+          className="bg-gray-800 rounded-xl border border-gray-700 mb-8 overflow-hidden"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
-              >
-                <Edit3 className="h-4 w-4" />
-                <span>Edit Profile</span>
-              </button>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
-                >
-                  {saving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      <span>Save</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-gray-700 to-gray-800 px-8 py-6 border-b border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
+                <p className="text-gray-400">Manage your account information and preferences</p>
               </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Avatar Section */}
-            <div className="text-center">
-              <div className="relative inline-block mb-4">
-                <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-16 w-16 text-gray-400" />
-                  )}
-                </div>
-                {isEditing && (
-                  <button className="absolute bottom-0 right-0 bg-gold-600 hover:bg-gold-700 text-white p-2 rounded-full transition-colors duration-200">
-                    <Camera className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              
-              {isEditing ? (
-                <div className="space-y-2">
-                  <input
-                    type="url"
-                    value={formData.avatar_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, avatar_url: e.target.value }))}
-                    placeholder="Avatar URL (optional)"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm"
-                  />
-                  <p className="text-xs text-gray-500">Enter a URL for your profile picture</p>
-                </div>
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200 shadow-lg"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  <span>Edit Profile</span>
+                </button>
               ) : (
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-white">
-                    {getDisplayName()}
-                  </h2>
-                  <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPlanBadgeStyle(profile.plan)}`}>
-                    <Crown className="h-4 w-4 mr-1" />
-                    {getPlanDisplayName(profile.plan)} Plan
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || uploading}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200 shadow-lg"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={saving || uploading}
+                    className="text-gray-400 hover:text-white transition-colors duration-200 p-2"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Profile Information */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name *
-                </label>
-                {isEditing ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                      placeholder="Enter your full name"
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-                      maxLength={50}
-                      required
-                    />
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">This name will be displayed in the navigation bar</span>
-                      <span className={`${formData.full_name.length > 40 ? 'text-orange-400' : 'text-gray-500'}`}>
-                        {formData.full_name.length}/50
-                      </span>
+          {/* Profile Content */}
+          <div className="p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Avatar Section */}
+              <div className="lg:col-span-1">
+                <div className="bg-gray-700 rounded-xl p-6 text-center">
+                  <h3 className="text-lg font-semibold text-white mb-4">Profile Picture</h3>
+                  
+                  {/* Avatar Display/Upload */}
+                  <div className="relative inline-block mb-6">
+                    <div 
+                      className={`w-32 h-32 rounded-full overflow-hidden border-4 border-gray-600 ${
+                        isEditing ? 'cursor-pointer hover:border-gold-500' : ''
+                      } transition-colors duration-200`}
+                      onClick={isEditing ? triggerFileInput : undefined}
+                      onDrop={isEditing ? handleDrop : undefined}
+                      onDragOver={isEditing ? handleDragOver : undefined}
+                    >
+                      {uploading ? (
+                        <div className="w-full h-full bg-gray-600 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <p className="text-xs text-gray-400">Uploading...</p>
+                          </div>
+                        </div>
+                      ) : previewImage ? (
+                        <img
+                          src={previewImage}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-600 flex items-center justify-center">
+                          <User className="h-16 w-16 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {isEditing && (
+                      <button
+                        onClick={triggerFileInput}
+                        disabled={uploading}
+                        className="absolute bottom-0 right-0 bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white p-3 rounded-full transition-colors duration-200 shadow-lg"
+                      >
+                        <Camera className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Upload Instructions */}
+                  {isEditing && (
+                    <div className="space-y-3">
+                      <button
+                        onClick={triggerFileInput}
+                        disabled={uploading}
+                        className="w-full bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>Choose Image</span>
+                      </button>
+                      
+                      <div className="text-xs text-gray-400 space-y-1">
+                        <p>• JPG, PNG, or GIF format</p>
+                        <p>• Maximum size: 5MB</p>
+                        <p>• Recommended: 400x400px</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hidden File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                    aria-label="Upload profile picture"
+                  />
+
+                  {/* Current Status */}
+                  {!isEditing && (
+                    <div className="space-y-2">
+                      <h4 className="text-xl font-semibold text-white">
+                        {getDisplayName()}
+                      </h4>
+                      <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPlanBadgeStyle(profile.plan)}`}>
+                        <Crown className="h-4 w-4 mr-1" />
+                        {getPlanDisplayName(profile.plan)} Plan
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Information */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-gray-700 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-6">Personal Information</h3>
+                  
+                  <div className="space-y-6">
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Full Name *
+                      </label>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={formData.full_name}
+                            onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                            placeholder="Enter your full name"
+                            className="w-full px-4 py-3 bg-gray-600 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all duration-200"
+                            maxLength={50}
+                            required
+                            aria-describedby="name-help"
+                          />
+                          <div className="flex items-center justify-between text-xs">
+                            <span id="name-help" className="text-gray-400">This name will be displayed throughout the app</span>
+                            <span className={`${formData.full_name.length > 40 ? 'text-orange-400' : 'text-gray-400'}`}>
+                              {formData.full_name.length}/50
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-3 p-3 bg-gray-600 rounded-lg">
+                          <User className="h-5 w-5 text-gray-400" />
+                          <span className="text-white flex-1">{profile.full_name || 'Not set'}</span>
+                          {profile.full_name && (
+                            <Check className="h-4 w-4 text-green-400" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Email (Read-only) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Email Address
+                      </label>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-600 rounded-lg">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                        <span className="text-white flex-1">{user.email}</span>
+                        <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">Read-only</span>
+                      </div>
+                    </div>
+
+                    {/* Member Since */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Member Since
+                      </label>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-600 rounded-lg">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                        <span className="text-white">{formatDate(profile.created_at)}</span>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <span className="text-white">{profile.full_name || 'Not set'}</span>
-                    {profile.full_name && (
-                      <Check className="h-4 w-4 text-green-400" />
-                    )}
+                </div>
+
+                {/* Name Preview */}
+                {isEditing && formData.full_name.trim() && (
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4">
+                    <div className="flex items-start space-x-3">
+                      <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-blue-400 font-medium text-sm mb-1">Preview</h4>
+                        <p className="text-blue-300 text-sm">
+                          Your name will appear as "<span className="font-medium">{formData.full_name.trim()}</span>" in the navigation bar and throughout the app.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* Email (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                  <span className="text-white">{user.email}</span>
-                  <span className="text-xs bg-gray-600 text-gray-300 px-2 py-1 rounded">Read-only</span>
-                </div>
-              </div>
-
-              {/* Member Since */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Member Since
-                </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                  <span className="text-white">{formatDate(profile.created_at)}</span>
-                </div>
-              </div>
             </div>
           </div>
-
-          {/* Name Display Preview */}
-          {isEditing && formData.full_name.trim() && (
-            <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
-              <h4 className="text-blue-400 font-medium text-sm mb-2">Preview</h4>
-              <p className="text-blue-300 text-sm">
-                Your name will appear as "<span className="font-medium">{formData.full_name.trim()}</span>" in the navigation bar and throughout the app.
-              </p>
-            </div>
-          )}
         </motion.div>
 
         {/* Plan & Credits Information */}
@@ -352,7 +500,7 @@ export const ProfilePage: React.FC = () => {
 
               <button
                 onClick={() => navigate('/pricing')}
-                className="w-full bg-gold-600 hover:bg-gold-700 text-white py-2 rounded-lg font-medium transition-colors duration-200"
+                className="w-full bg-gold-600 hover:bg-gold-700 text-white py-3 rounded-lg font-medium transition-colors duration-200"
               >
                 {profile.plan === 'free' ? 'Upgrade Plan' : 'Manage Plan'}
               </button>
@@ -399,9 +547,12 @@ export const ProfilePage: React.FC = () => {
 
               {profile.credits < 50 && (
                 <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                  <p className="text-red-400 text-sm">
-                    ⚠️ Low credits! Consider upgrading your plan for more credits.
-                  </p>
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-400 text-sm">
+                      Low credits! Consider upgrading your plan for more credits.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -415,31 +566,33 @@ export const ProfilePage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="bg-gray-800 rounded-xl p-6 border border-gray-700 mt-8"
         >
-          <h3 className="text-xl font-semibold text-white mb-4">Account Actions</h3>
+          <h3 className="text-xl font-semibold text-white mb-4">Quick Actions</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => navigate('/pricing')}
-              className="bg-gold-600 hover:bg-gold-700 text-white py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-gold-600 hover:bg-gold-700 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              Upgrade Plan
+              <Crown className="h-4 w-4" />
+              <span>Upgrade Plan</span>
             </button>
             
             <button
               onClick={() => navigate('/projects')}
-              className="bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              View Projects
+              <Image className="h-4 w-4" />
+              <span>View Projects</span>
             </button>
             
             <button
               onClick={() => {
-                // Add export data functionality
                 toast.info('Data export feature coming soon!');
               }}
-              className="bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              Export Data
+              <Upload className="h-4 w-4" />
+              <span>Export Data</span>
             </button>
           </div>
         </motion.div>
