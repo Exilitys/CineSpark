@@ -41,7 +41,8 @@ export const useStoryAPI = () => {
   const [error, setError] = useState<string | null>(null);
 
   const generateStoryFromAPI = async (
-    userIdea: string
+    userIdea: string,
+    story: GeneratedStory | string = " "
   ): Promise<GeneratedStory | null> => {
     setLoading(true);
     setError(null);
@@ -54,7 +55,7 @@ export const useStoryAPI = () => {
         },
         body: JSON.stringify({
           idea: userIdea,
-          story: " ", // optional default or previous story if needed
+          story: story, // optional default or previous story if needed
         }),
       });
 

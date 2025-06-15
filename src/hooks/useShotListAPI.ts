@@ -13,6 +13,29 @@ import { useState } from "react";
 //   timestamp: string;
 // }
 
+interface GeneratedStory {
+  logline: string;
+  synopsis: string;
+  three_act_structure: {
+    act1: string;
+    act2: string;
+    act3: string;
+  };
+  characters: Array<{
+    name: string;
+    description: string;
+    motivation: string;
+    arc: string;
+  }>;
+  scenes: Array<{
+    title: string;
+    setting: string;
+    description: string;
+    characters: string[];
+    key_actions: string[];
+  }>;
+}
+
 interface GeneratedShotList {
   shots: Array<{
     shot_number: number;
@@ -32,7 +55,8 @@ export const useShotListAPI = () => {
   const [error, setError] = useState<string | null>(null);
 
   const generateShotListFromAPI = async (
-    storyData: any
+    storyData: GeneratedStory,
+    idea: string = " "
   ): Promise<GeneratedShotList | null> => {
     setLoading(true);
     setError(null);
@@ -44,7 +68,7 @@ export const useShotListAPI = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          idea: " ", // default value for idea
+          idea: idea, // default value for idea
           story: JSON.stringify(storyData), // serialize the storyData
         }),
       });
