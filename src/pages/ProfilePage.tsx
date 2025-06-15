@@ -323,14 +323,12 @@ export const ProfilePage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Avatar Section */}
               <div className="lg:col-span-1">
-                <div className="rounded-xl p-6 text-center">
-                  <h3 className="text-lg font-semibold text-white mb-4">Profile</h3>
-                  
+                <div className="text-center">
                   {/* Avatar Display/Upload */}
                   <div className="relative inline-block mb-6">
                     <div 
                       className={`w-32 h-32 rounded-full overflow-hidden border-4 ${
-                        dragOver ? 'border-gold-500 bg-gold-900/20' : 'border-gray-600'
+                        dragOver ? 'border-gold-500' : 'border-gray-600'
                       } ${isEditing ? 'cursor-pointer hover:border-gold-500' : ''} transition-all duration-200`}
                       onClick={isEditing ? triggerFileInput : undefined}
                       onDrop={isEditing ? handleDrop : undefined}
