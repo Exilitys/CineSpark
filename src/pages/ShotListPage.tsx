@@ -5,7 +5,8 @@ import { ShotEditor } from '../components/ShotList/ShotEditor';
 import { ShotCreator } from '../components/ShotList/ShotCreator';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { useShots } from '../hooks/useShots';
-import { usePhotoboard } from '../hooks/usePhotoboard';
+import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
+import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Camera } from 'lucide-react';
@@ -19,6 +20,7 @@ export const ShotListPage: React.FC = () => {
   const [editingShot, setEditingShot] = useState<Shot | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [showCreator, setShowCreator] = useState(false);
+  const [generatingPhotoboard, setGeneratingPhotoboard] = useState(false);
 
   const { 
     shots, 
@@ -29,7 +31,7 @@ export const ShotListPage: React.FC = () => {
     generateShots 
   } = useShots(projectId || null);
 
-  const { generateFrames } = usePhotoboard(projectId || null);
+  const { generatePhotoboardFromAPI, loading: apiLoading, error: apiError } = usePhotoboardAPI();
 
   const handleEditShot = (shot: Shot) => {
     setEditingShot(shot);
@@ -58,7 +60,39 @@ export const ShotListPage: React.FC = () => {
     setShowCreator(true);
   };
 
+  const createPhotoboardInDatabase = async (photoboardData: any) => {
+    try {
+      const framesToInsert = photoboardData.frames.map((frame: any) => {
+        // Find the corresponding shot in our database
+        const correspondingShot = shots.find(shot => shot.shot_number === frame.shot_number);
+        
+        return {
+          project_id: projectId,
+          shot_id: correspondingShot?.id || null,
+          description: frame.description,
+          style: frame.style,
+          annotations: frame.annotations,
+          image_url: frame.image_url,
+        };
+      });
+
+      const { data, error } = await supabase
+        .from('photoboard_frames')
+        .insert(framesToInsert)
+        .select();
+
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error creating photoboard in database:', error);
+      throw error;
+    }
+  };
+
   const handleApproveShots = async () => {
+    setGeneratingPhotoboard(true);
+    
     try {
       // If no shots exist, generate them first
       if (shots.length === 0) {
@@ -67,16 +101,46 @@ export const ShotListPage: React.FC = () => {
         toast.success('Shot list generated successfully!', { id: 'generate-shots' });
       }
       
-      // Generate photoboard frames (only if they don't already exist)
-      toast.loading('Generating storyboard frames...', { id: 'generate-frames' });
-      await generateFrames();
-      toast.success('Storyboard frames generated successfully!', { id: 'generate-frames' });
+      // Step 1: Send shot list data to API for photoboard generation
+      toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-photoboard' });
       
-      // Navigate to photoboard page
+      const shotListData = {
+        shots: shots.map(shot => ({
+          id: shot.id,
+          shot_number: shot.shot_number,
+          scene_number: shot.scene_number,
+          shot_type: shot.shot_type,
+          camera_angle: shot.camera_angle,
+          camera_movement: shot.camera_movement,
+          description: shot.description,
+          lens_recommendation: shot.lens_recommendation,
+          estimated_duration: shot.estimated_duration,
+          notes: shot.notes
+        }))
+      };
+
+      const generatedPhotoboard = await generatePhotoboardFromAPI(shotListData);
+      
+      if (!generatedPhotoboard) {
+        toast.error('Failed to generate storyboard. Please try again.', { id: 'generate-photoboard' });
+        return;
+      }
+
+      // Step 2: Save photoboard to database
+      toast.loading('Creating storyboard frames in your project...', { id: 'generate-photoboard' });
+      
+      await createPhotoboardInDatabase(generatedPhotoboard);
+      
+      toast.success('Storyboard generated successfully!', { id: 'generate-photoboard' });
+      
+      // Step 3: Navigate to photoboard page
       navigate(`/photoboard/${projectId}`);
+      
     } catch (error) {
-      console.error('Error in approval process:', error);
-      toast.error('Error generating storyboard. Please try again.');
+      console.error('Error in photoboard generation process:', error);
+      toast.error('Error generating storyboard. Please try again.', { id: 'generate-photoboard' });
+    } finally {
+      setGeneratingPhotoboard(false);
     }
   };
 
@@ -90,6 +154,8 @@ export const ShotListPage: React.FC = () => {
       toast.error('Error generating shots. Please try again.', { id: 'generate-shots' });
     }
   };
+
+  const isCurrentlyGenerating = generatingPhotoboard || apiLoading;
 
   if (loading) {
     return (
@@ -123,6 +189,15 @@ export const ShotListPage: React.FC = () => {
             <span>Back to Projects</span>
           </button>
         </motion.div>
+
+        {/* API Error Display */}
+        {apiError && (
+          <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
+            <p className="text-red-400">
+              Error generating storyboard: {apiError}
+            </p>
+          </div>
+        )}
 
         {shots.length === 0 ? (
           <motion.div

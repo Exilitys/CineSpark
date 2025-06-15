@@ -4,6 +4,8 @@ import { PhotoboardView } from '../components/Photoboard/PhotoboardView';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { usePhotoboard } from '../hooks/usePhotoboard';
 import { useShots } from '../hooks/useShots';
+import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
+import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,7 +18,6 @@ export const PhotoboardPage: React.FC = () => {
     frames, 
     loading: framesLoading, 
     uploading,
-    generateFrames,
     uploadImage, 
     updateFrame, 
     regenerateFrame 
@@ -26,6 +27,8 @@ export const PhotoboardPage: React.FC = () => {
     shots, 
     loading: shotsLoading 
   } = useShots(projectId || null);
+
+  const { generatePhotoboardFromAPI, loading: apiLoading } = usePhotoboardAPI();
 
   const loading = framesLoading || shotsLoading;
 
@@ -59,11 +62,71 @@ export const PhotoboardPage: React.FC = () => {
     navigate(`/export/${projectId}`);
   };
 
+  const createPhotoboardInDatabase = async (photoboardData: any) => {
+    try {
+      const framesToInsert = photoboardData.frames.map((frame: any) => {
+        // Find the corresponding shot in our database
+        const correspondingShot = shots.find(shot => shot.shot_number === frame.shot_number);
+        
+        return {
+          project_id: projectId,
+          shot_id: correspondingShot?.id || null,
+          description: frame.description,
+          style: frame.style,
+          annotations: frame.annotations,
+          image_url: frame.image_url,
+        };
+      });
+
+      const { data, error } = await supabase
+        .from('photoboard_frames')
+        .insert(framesToInsert)
+        .select();
+
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error creating photoboard in database:', error);
+      throw error;
+    }
+  };
+
   const handleGenerateFrames = async () => {
     try {
-      toast.loading('Generating storyboard frames...', { id: 'generate-frames' });
-      await generateFrames();
+      toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-frames' });
+      
+      const shotListData = {
+        shots: shots.map(shot => ({
+          id: shot.id,
+          shot_number: shot.shot_number,
+          scene_number: shot.scene_number,
+          shot_type: shot.shot_type,
+          camera_angle: shot.camera_angle,
+          camera_movement: shot.camera_movement,
+          description: shot.description,
+          lens_recommendation: shot.lens_recommendation,
+          estimated_duration: shot.estimated_duration,
+          notes: shot.notes
+        }))
+      };
+
+      const generatedPhotoboard = await generatePhotoboardFromAPI(shotListData);
+      
+      if (!generatedPhotoboard) {
+        toast.error('Failed to generate storyboard. Please try again.', { id: 'generate-frames' });
+        return;
+      }
+
+      toast.loading('Creating storyboard frames in your project...', { id: 'generate-frames' });
+      
+      await createPhotoboardInDatabase(generatedPhotoboard);
+      
       toast.success('Storyboard frames generated successfully!', { id: 'generate-frames' });
+      
+      // Refresh the page to show new frames
+      window.location.reload();
+      
     } catch (error) {
       toast.error('Error generating frames', { id: 'generate-frames' });
     }
@@ -118,10 +181,20 @@ export const PhotoboardPage: React.FC = () => {
             </p>
             <button
               onClick={handleGenerateFrames}
-              className="bg-gradient-to-r from-cinema-500 to-cinema-600 hover:from-cinema-600 hover:to-cinema-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
+              disabled={apiLoading}
+              className="bg-gradient-to-r from-cinema-500 to-cinema-600 hover:from-cinema-600 hover:to-cinema-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
             >
-              <ImageIcon className="h-5 w-5" />
-              <span>Generate Storyboard</span>
+              {apiLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-5 w-5" />
+                  <span>Generate Storyboard</span>
+                </>
+              )}
             </button>
           </motion.div>
         ) : (

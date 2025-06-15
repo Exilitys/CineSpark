@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Edit3, Plus, Filter, Download, Check, Trash2 } from 'lucide-react';
+import { Camera, Edit3, Plus, Filter, Download, Check, Trash2, Image } from 'lucide-react';
 import { Database } from '../../types/database';
 
 type Shot = Database['public']['Tables']['shots']['Row'];
@@ -122,8 +122,8 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
               onClick={onApprove}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
             >
-              <Check className="h-4 w-4" />
-              <span>Approve & Continue</span>
+              <Image className="h-4 w-4" />
+              <span>Generate Storyboard</span>
             </button>
           )}
         </div>
