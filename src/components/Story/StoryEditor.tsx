@@ -4,7 +4,9 @@ import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2, Camera } from 'luc
 import { StoryWithDetails } from '../../hooks/useStory';
 import { useShotListAPI } from '../../hooks/useShotListAPI';
 import { useStoryAPI } from '../../hooks/useStoryAPI';
+import { useCredits } from '../../hooks/useCredits';
 import { AIChatbox } from '../AI/AIChatbox';
+import { CreditGuard } from '../Credits/CreditGuard';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -29,10 +31,12 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   const [editingScene, setEditingScene] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [generatingShots, setGeneratingShots] = useState(false);
+  const [showCreditGuard, setShowCreditGuard] = useState(false);
 
   const navigate = useNavigate();
   const { generateShotListFromAPI, loading: apiLoading, error: apiError } = useShotListAPI();
   const { generateStoryFromAPI, loading: storyApiLoading, error: storyApiError } = useStoryAPI();
+  const { canPerformAction, refetch: refetchCredits } = useCredits();
 
   // Get project ID from story
   const projectId = story.project_id;
@@ -135,9 +139,20 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   };
 
   const handleApproveStory = async () => {
+    // Check if user can perform the action
+    const canProceed = await canPerformAction('SHOT_LIST_GENERATION');
+    if (!canProceed) {
+      setShowCreditGuard(true);
+      return;
+    }
+
+    await generateShotList();
+  };
+
+  const generateShotList = async () => {
     setGeneratingShots(true);
     try {
-      // Step 1: Send story data to API for shot list generation
+      // Step 1: Send story data to API for shot list generation (credits will be deducted inside the hook)
       toast.loading('Sending story to AI for shot list generation...', { id: 'generate-shots' });
       
       const storyData = {
@@ -172,6 +187,9 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
       await createShotListInDatabase(generatedShotList);
       
       toast.success('Shot list generated successfully!', { id: 'generate-shots' });
+      
+      // Refresh credits display
+      await refetchCredits();
       
       // Step 3: Navigate to shot list page
       navigate(`/shots/${projectId}`);
@@ -208,7 +226,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         }))
       };
 
-      // Call API with suggestion and current story
+      // Call API with suggestion and current story (credits will be deducted inside the hook)
       const updatedStory = await generateStoryFromAPI(suggestion, currentStoryData);
       
       if (!updatedStory) {
@@ -270,6 +288,9 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
       }
 
       toast.success('Story updated based on your suggestion!', { id: 'ai-suggestion' });
+      
+      // Refresh credits display
+      await refetchCredits();
       
     } catch (error) {
       console.error('Error processing AI suggestion:', error);
@@ -705,6 +726,19 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         loading={storyApiLoading}
         placeholder="Ask AI to modify the story, characters, or scenes..."
         title="Story AI Assistant"
+      />
+
+      {/* Credit Guard Modal */}
+      <CreditGuard
+        action="SHOT_LIST_GENERATION"
+        showModal={showCreditGuard}
+        onProceed={generateShotList}
+        onCancel={() => setShowCreditGuard(false)}
+        metadata={{
+          story_logline: logline,
+          characters_count: characters.length,
+          scenes_count: scenes.length
+        }}
       />
     </>
   );

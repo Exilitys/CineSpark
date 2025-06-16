@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List, Check, Upload, X } from 'lucide-react';
 import { Database } from '../../types/database';
+import { useCredits } from '../../hooks/useCredits';
+import toast from 'react-hot-toast';
 
 type PhotoboardFrame = Database['public']['Tables']['photoboard_frames']['Row'];
 
@@ -27,6 +29,9 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedScene, setSelectedScene] = useState('all');
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
+  
+  const { canPerformAction, getCreditCost, refetch: refetchCredits } = useCredits();
 
   // Get unique scenes from shots
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
@@ -76,6 +81,28 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
     } catch (error) {
       console.error('Upload error:', error);
       alert('Error uploading image. Please try again.');
+    }
+  };
+
+  const handleRegenerateFrame = async (frame: PhotoboardFrame) => {
+    if (!onRegenerateFrame) return;
+
+    // Check if user can perform regeneration
+    const canRegenerate = await canPerformAction('PHOTOBOARD_REGENERATION');
+    if (!canRegenerate) {
+      toast.error(`Insufficient credits. You need ${getCreditCost('PHOTOBOARD_REGENERATION')} credits to regenerate a frame.`);
+      return;
+    }
+
+    setRegenerating(frame.id);
+    try {
+      await onRegenerateFrame(frame);
+      // Refresh credits display
+      await refetchCredits();
+    } catch (error) {
+      console.error('Regeneration error:', error);
+    } finally {
+      setRegenerating(null);
     }
   };
 
@@ -216,6 +243,11 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                       <p className="text-xs text-gray-400">Uploading...</p>
                     </div>
+                  ) : regenerating === frame.id ? (
+                    <div className="text-center p-4">
+                      <div className="w-8 h-8 border-2 border-cinema-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">Regenerating...</p>
+                    </div>
                   ) : frame.image_url ? (
                     <img 
                       src={frame.image_url} 
@@ -255,10 +287,12 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       )}
                       {onRegenerateFrame && (
                         <button
-                          onClick={() => onRegenerateFrame(frame)}
-                          className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
+                          onClick={() => handleRegenerateFrame(frame)}
+                          disabled={regenerating === frame.id}
+                          className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={`Regenerate frame (${getCreditCost('PHOTOBOARD_REGENERATION')} credits)`}
                         >
-                          <RefreshCw className="h-4 w-4 text-white" />
+                          <RefreshCw className={`h-4 w-4 text-white ${regenerating === frame.id ? 'animate-spin' : ''}`} />
                         </button>
                       )}
                       <button className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200">
@@ -310,8 +344,6 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       )}
                     </div>
                   )}
-                  
-                  {/* Removed Frame Annotations - No longer displaying tags */}
                 </div>
               </motion.div>
             );
@@ -343,6 +375,11 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                       <div className="text-center">
                         <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-1" />
                         <p className="text-xs text-gray-500">Uploading...</p>
+                      </div>
+                    ) : regenerating === frame.id ? (
+                      <div className="text-center">
+                        <div className="w-6 h-6 border-2 border-cinema-500 border-t-transparent rounded-full animate-spin mx-auto mb-1" />
+                        <p className="text-xs text-gray-500">Regenerating...</p>
                       </div>
                     ) : frame.image_url ? (
                       <img 
@@ -412,10 +449,12 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                         )}
                         {onRegenerateFrame && (
                           <button
-                            onClick={() => onRegenerateFrame(frame)}
-                            className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                            onClick={() => handleRegenerateFrame(frame)}
+                            disabled={regenerating === frame.id}
+                            className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={`Regenerate frame (${getCreditCost('PHOTOBOARD_REGENERATION')} credits)`}
                           >
-                            <RefreshCw className="h-4 w-4" />
+                            <RefreshCw className={`h-4 w-4 ${regenerating === frame.id ? 'animate-spin' : ''}`} />
                           </button>
                         )}
                       </div>
@@ -444,8 +483,6 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                         )}
                       </div>
                     )}
-                    
-                    {/* Removed Frame Annotations - No longer displaying tags */}
                   </div>
                 </div>
               </motion.div>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
+import { useCredits } from './useCredits';
+import toast from 'react-hot-toast';
 
 type PhotoboardFrame = Database['public']['Tables']['photoboard_frames']['Row'];
 type PhotoboardFrameInsert = Database['public']['Tables']['photoboard_frames']['Insert'];
@@ -9,6 +11,7 @@ export const usePhotoboard = (projectId: string | null) => {
   const [frames, setFrames] = useState<PhotoboardFrame[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
+  const { deductCredits, validateCredits, refetch: refetchCredits } = useCredits();
 
   useEffect(() => {
     if (projectId) {
@@ -88,6 +91,13 @@ export const usePhotoboard = (projectId: string | null) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
+      // Check credits before generation
+      const validation = await validateCredits('PHOTOBOARD_GENERATION');
+      if (!validation.isValid) {
+        toast.error(validation.message || 'Insufficient credits');
+        throw new Error(validation.message || 'Insufficient credits');
+      }
+
       // First check if photoboard frames already exist for this project
       const { data: existingFrames, error: checkError } = await supabase
         .from('photoboard_frames')
@@ -139,6 +149,22 @@ export const usePhotoboard = (projectId: string | null) => {
         .select();
 
       if (error) throw error;
+
+      // Deduct credits after successful generation
+      const deductionResult = await deductCredits('PHOTOBOARD_GENERATION', {
+        project_id: projectId,
+        frames_generated: framesToInsert.length,
+        shots_count: shots.length
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Photoboard generated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Photoboard generated successfully! ${validation.requiredCredits} credits deducted.`);
+        // Refresh credits display
+        await refetchCredits();
+      }
       
       setFrames(data || []);
       return data || [];
@@ -248,6 +274,13 @@ export const usePhotoboard = (projectId: string | null) => {
 
   const regenerateFrame = async (frameId: string) => {
     try {
+      // Check credits before regeneration
+      const validation = await validateCredits('PHOTOBOARD_REGENERATION');
+      if (!validation.isValid) {
+        toast.error(validation.message || 'Insufficient credits');
+        throw new Error(validation.message || 'Insufficient credits');
+      }
+
       // Simulate AI regeneration by updating with a new dummy image
       const dummyImages = [
         'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -258,7 +291,25 @@ export const usePhotoboard = (projectId: string | null) => {
       
       const randomImage = dummyImages[Math.floor(Math.random() * dummyImages.length)];
       
-      return await updateFrame(frameId, { image_url: randomImage });
+      const result = await updateFrame(frameId, { image_url: randomImage });
+
+      // Deduct credits after successful regeneration
+      const deductionResult = await deductCredits('PHOTOBOARD_REGENERATION', {
+        frame_id: frameId,
+        project_id: projectId,
+        regeneration_type: 'single_frame'
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Frame regenerated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Frame regenerated! ${validation.requiredCredits} credits deducted.`);
+        // Refresh credits display
+        await refetchCredits();
+      }
+
+      return result;
     } catch (error) {
       console.error('Error regenerating frame:', error);
       throw error;

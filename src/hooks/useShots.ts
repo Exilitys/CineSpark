@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
+import { useCredits } from './useCredits';
+import toast from 'react-hot-toast';
 
 type Shot = Database['public']['Tables']['shots']['Row'];
 type ShotInsert = Database['public']['Tables']['shots']['Insert'];
@@ -8,6 +10,7 @@ type ShotInsert = Database['public']['Tables']['shots']['Insert'];
 export const useShots = (projectId: string | null) => {
   const [shots, setShots] = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);
+  const { deductCredits, validateCredits, refetch: refetchCredits } = useCredits();
 
   useEffect(() => {
     if (projectId) {
@@ -163,6 +166,13 @@ export const useShots = (projectId: string | null) => {
     if (!projectId) throw new Error('Project ID required');
 
     try {
+      // Check credits before generation
+      const validation = await validateCredits('SHOT_LIST_GENERATION');
+      if (!validation.isValid) {
+        toast.error(validation.message || 'Insufficient credits');
+        throw new Error(validation.message || 'Insufficient credits');
+      }
+
       // First check if shots already exist for this project
       const { data: existingShots, error: checkError } = await supabase
         .from('shots')
@@ -201,6 +211,21 @@ export const useShots = (projectId: string | null) => {
         .select();
 
       if (error) throw error;
+
+      // Deduct credits after successful generation
+      const deductionResult = await deductCredits('SHOT_LIST_GENERATION', {
+        project_id: projectId,
+        shots_generated: shotsToInsert.length
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Shot list generated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Shot list generated successfully! ${validation.requiredCredits} credits deducted.`);
+        // Refresh credits display
+        await refetchCredits();
+      }
       
       setShots(data || []);
       return data || [];
