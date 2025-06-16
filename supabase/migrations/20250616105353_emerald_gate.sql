@@ -71,12 +71,12 @@ CREATE INDEX IF NOT EXISTS idx_credit_transactions_action_type ON credit_transac
 CREATE INDEX IF NOT EXISTS idx_credit_transactions_created_at ON credit_transactions(created_at DESC);
 
 -- Add unique constraint for transaction_id only if it doesn't exist
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint 
-    WHERE conname = 'credit_transactions_transaction_id_key'
-  ) THEN
-    ALTER TABLE credit_transactions ADD CONSTRAINT credit_transactions_transaction_id_key UNIQUE (transaction_id);
-  END IF;
-END $$;
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1 FROM pg_constraint 
+--     WHERE conname = 'credit_transactions_transaction_id_key'
+--   ) THEN
+--     ALTER TABLE credit_transactions ADD CONSTRAINT credit_transactions_transaction_id_key UNIQUE (transaction_id);
+--   END IF;
+-- END $$;
