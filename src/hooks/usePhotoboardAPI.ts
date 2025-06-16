@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useCredits } from './useCredits';
+import toast from 'react-hot-toast';
 
 interface PhotoboardAPIResponse {
   success: boolean;
@@ -34,12 +36,21 @@ interface GeneratedPhotoboard {
 export const usePhotoboardAPI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { deductCredits, validateCredits } = useCredits();
 
   const generatePhotoboardFromAPI = async (shotListData: any): Promise<GeneratedPhotoboard | null> => {
     setLoading(true);
     setError(null);
 
     try {
+      // Validate credits before making API call
+      const validation = await validateCredits('PHOTOBOARD_GENERATION');
+      if (!validation.isValid) {
+        setError(validation.message || 'Insufficient credits');
+        toast.error(validation.message || 'Insufficient credits');
+        return null;
+      }
+
       // Simulate API call with realistic timing
       await new Promise(resolve => setTimeout(resolve, 4000));
 
@@ -60,6 +71,20 @@ export const usePhotoboardAPI = () => {
         throw new Error(mockResponse.error || 'Failed to generate photoboard');
       }
 
+      // Deduct credits after successful generation
+      const deductionResult = await deductCredits('PHOTOBOARD_GENERATION', {
+        shots_count: shotListData.shots?.length || 0,
+        photoboard_id: mockResponse.data.photoboard_id,
+        api_response_size: JSON.stringify(mockResponse).length
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Photoboard generated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Photoboard generated successfully! ${validation.requiredCredits} credits deducted.`);
+      }
+
       const generatedPhotoboard = JSON.parse(mockResponse.data.generated_content) as GeneratedPhotoboard;
       return generatedPhotoboard;
 
@@ -67,9 +92,51 @@ export const usePhotoboardAPI = () => {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
       console.error('Photoboard generation error:', err);
+      toast.error(`Photoboard generation failed: ${errorMessage}`);
       return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const regenerateFrame = async (frameData: any): Promise<string | null> => {
+    try {
+      // Validate credits for frame regeneration
+      const validation = await validateCredits('PHOTOBOARD_REGENERATION');
+      if (!validation.isValid) {
+        toast.error(validation.message || 'Insufficient credits');
+        return null;
+      }
+
+      // Simulate frame regeneration
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Deduct credits for regeneration
+      const deductionResult = await deductCredits('PHOTOBOARD_REGENERATION', {
+        frame_id: frameData.id,
+        regeneration_type: 'single_frame'
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Frame regenerated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Frame regenerated! ${validation.requiredCredits} credits deducted.`);
+      }
+
+      // Return new image URL
+      const imageLibrary = [
+        'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800',
+      ];
+      
+      return imageLibrary[Math.floor(Math.random() * imageLibrary.length)];
+    } catch (err) {
+      console.error('Frame regeneration error:', err);
+      toast.error('Frame regeneration failed');
+      return null;
     }
   };
 
@@ -188,6 +255,7 @@ export const usePhotoboardAPI = () => {
 
   return {
     generatePhotoboardFromAPI,
+    regenerateFrame,
     loading,
     error
   };

@@ -1,17 +1,6 @@
 import { useState } from "react";
-
-// interface ShotListAPIResponse {
-//   success: boolean;
-//   data?: {
-//     shot_list_id: string;
-//     story_input: string;
-//     generated_content: string;
-//     timestamp: string;
-//     status: "draft" | "published";
-//   };
-//   error?: string;
-//   timestamp: string;
-// }
+import { useCredits } from './useCredits';
+import toast from 'react-hot-toast';
 
 interface GeneratedStory {
   logline: string;
@@ -53,6 +42,7 @@ interface GeneratedShotList {
 export const useShotListAPI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { deductCredits, validateCredits } = useCredits();
 
   const generateShotListFromAPI = async (
     storyData: GeneratedStory,
@@ -62,14 +52,27 @@ export const useShotListAPI = () => {
     setError(null);
 
     try {
+      // Determine the action type based on whether this is a modification or new generation
+      const isModification = idea.trim() !== " " && idea.trim() !== "";
+      const action = isModification ? 'SHOT_LIST_MODIFICATION' : 'SHOT_LIST_GENERATION';
+
+      // Validate credits before making API call
+      const validation = await validateCredits(action);
+      if (!validation.isValid) {
+        setError(validation.message || 'Insufficient credits');
+        toast.error(validation.message || 'Insufficient credits');
+        return null;
+      }
+
+      // Make API call
       const response = await fetch("http://127.0.0.1:8000/generate_shot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          idea: idea, // default value for idea
-          story: JSON.stringify(storyData), // serialize the storyData
+          idea: idea,
+          story: JSON.stringify(storyData),
         }),
       });
 
@@ -84,6 +87,22 @@ export const useShotListAPI = () => {
         throw new Error("Invalid response format");
       }
 
+      // Deduct credits after successful generation
+      const deductionResult = await deductCredits(action, {
+        story_logline: storyData.logline,
+        modification_request: idea,
+        is_modification: isModification,
+        shots_generated: result.shot.length,
+        api_response_size: JSON.stringify(result).length
+      });
+
+      if (!deductionResult.success) {
+        console.error('Credit deduction failed:', deductionResult.error);
+        toast.error('Shot list generated but credit deduction failed. Please contact support.');
+      } else {
+        toast.success(`Shot list ${isModification ? 'modified' : 'generated'} successfully! ${validation.requiredCredits} credits deducted.`);
+      }
+
       const generatedShotList: GeneratedShotList = {
         shots: result.shot,
       };
@@ -94,165 +113,12 @@ export const useShotListAPI = () => {
         err instanceof Error ? err.message : "Unknown error occurred";
       setError(errorMessage);
       console.error("Shot list generation error:", err);
+      toast.error(`Shot list generation failed: ${errorMessage}`);
       return null;
     } finally {
       setLoading(false);
     }
   };
-
-  // const generateMockShotList = (storyData: any): GeneratedShotList => {
-  //   // Generate contextual shot list based on story content
-  //   const sceneCount = storyData.scenes?.length || 3;
-  //   const isLighthouseStory = storyData.logline?.toLowerCase().includes('lighthouse') ||
-  //                            storyData.synopsis?.toLowerCase().includes('lighthouse');
-
-  //   if (isLighthouseStory) {
-  //     return {
-  //       shots: [
-  //         {
-  //           shot_number: 1,
-  //           scene_number: 1,
-  //           shot_type: 'Wide Shot',
-  //           camera_angle: 'High Angle',
-  //           camera_movement: 'Static',
-  //           description: 'Establishing shot of the lighthouse at dawn, surrounded by mist and crashing waves',
-  //           lens_recommendation: '24mm wide-angle lens',
-  //           estimated_duration: 8,
-  //           notes: 'Golden hour lighting, emphasize isolation'
-  //         },
-  //         {
-  //           shot_number: 2,
-  //           scene_number: 1,
-  //           shot_type: 'Medium Shot',
-  //           camera_angle: 'Eye-level',
-  //           camera_movement: 'Pan',
-  //           description: 'Marcus moving through lighthouse interior, checking equipment methodically',
-  //           lens_recommendation: '50mm standard lens',
-  //           estimated_duration: 12,
-  //           notes: 'Handheld for intimate feel'
-  //         },
-  //         {
-  //           shot_number: 3,
-  //           scene_number: 1,
-  //           shot_type: 'Close-up',
-  //           camera_angle: 'Eye-level',
-  //           camera_movement: 'Static',
-  //           description: 'Close-up of Marcus\'s weathered hands adjusting lighthouse mechanism',
-  //           lens_recommendation: '85mm portrait lens',
-  //           estimated_duration: 4,
-  //           notes: 'Focus on texture and routine'
-  //         },
-  //         {
-  //           shot_number: 4,
-  //           scene_number: 2,
-  //           shot_type: 'Wide Shot',
-  //           camera_angle: 'Low Angle',
-  //           camera_movement: 'Dolly',
-  //           description: 'Marcus walking down rocky shore, storm debris scattered around',
-  //           lens_recommendation: '35mm lens',
-  //           estimated_duration: 10,
-  //           notes: 'Steadicam for smooth movement'
-  //         },
-  //         {
-  //           shot_number: 5,
-  //           scene_number: 2,
-  //           shot_type: 'Extreme Close-up',
-  //           camera_angle: 'High Angle',
-  //           camera_movement: 'Static',
-  //           description: 'Marcus\'s eyes widening as he first sees Naia',
-  //           lens_recommendation: '100mm macro lens',
-  //           estimated_duration: 3,
-  //           notes: 'Capture moment of discovery'
-  //         },
-  //         {
-  //           shot_number: 6,
-  //           scene_number: 2,
-  //           shot_type: 'POV',
-  //           camera_angle: 'Eye-level',
-  //           camera_movement: 'Handheld',
-  //           description: 'Naia\'s perspective as she awakens in the makeshift pool',
-  //           lens_recommendation: '28mm wide lens',
-  //           estimated_duration: 6,
-  //           notes: 'Underwater housing for partial submersion'
-  //         },
-  //         {
-  //           shot_number: 7,
-  //           scene_number: 3,
-  //           shot_type: 'Over Shoulder',
-  //           camera_angle: 'Eye-level',
-  //           camera_movement: 'Static',
-  //           description: 'Over Marcus\'s shoulder as he first communicates with Naia',
-  //           lens_recommendation: '85mm portrait lens',
-  //           estimated_duration: 8,
-  //           notes: 'Shallow depth of field to isolate subjects'
-  //         },
-  //         {
-  //           shot_number: 8,
-  //           scene_number: 3,
-  //           shot_type: 'Medium Shot',
-  //           camera_angle: 'Low Angle',
-  //           camera_movement: 'Crane',
-  //           description: 'Marcus and Naia working together to establish communication',
-  //           lens_recommendation: '50mm standard lens',
-  //           estimated_duration: 15,
-  //           notes: 'Crane movement to show collaboration'
-  //         }
-  //       ]
-  //     };
-  //   }
-
-  //   // Generate generic shot list based on story structure
-  //   const shots = [];
-  //   let shotNumber = 1;
-
-  //   for (let sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++) {
-  //     const sceneNumber = sceneIndex + 1;
-  //     const scene = storyData.scenes?.[sceneIndex];
-
-  //     // Establishing shot for each scene
-  //     shots.push({
-  //       shot_number: shotNumber++,
-  //       scene_number: sceneNumber,
-  //       shot_type: 'Wide Shot',
-  //       camera_angle: 'Eye-level',
-  //       camera_movement: 'Static',
-  //       description: `Establishing shot of ${scene?.setting || 'the scene location'}`,
-  //       lens_recommendation: '24mm wide-angle lens',
-  //       estimated_duration: 6,
-  //       notes: 'Set the scene and location'
-  //     });
-
-  //     // Character introduction/action shot
-  //     shots.push({
-  //       shot_number: shotNumber++,
-  //       scene_number: sceneNumber,
-  //       shot_type: 'Medium Shot',
-  //       camera_angle: 'Eye-level',
-  //       camera_movement: 'Pan',
-  //       description: scene?.description || `Characters interact in scene ${sceneNumber}`,
-  //       lens_recommendation: '50mm standard lens',
-  //       estimated_duration: 10,
-  //       notes: 'Focus on character interaction'
-  //     });
-
-  //     // Close-up for emotional moments
-  //     if (sceneIndex === Math.floor(sceneCount / 2) || sceneIndex === sceneCount - 1) {
-  //       shots.push({
-  //         shot_number: shotNumber++,
-  //         scene_number: sceneNumber,
-  //         shot_type: 'Close-up',
-  //         camera_angle: 'Eye-level',
-  //         camera_movement: 'Static',
-  //         description: `Close-up reaction shot capturing emotional moment in scene ${sceneNumber}`,
-  //         lens_recommendation: '85mm portrait lens',
-  //         estimated_duration: 4,
-  //         notes: 'Capture emotional intensity'
-  //       });
-  //     }
-  //   }
-
-  //   return { shots };
-  // };
 
   return {
     generateShotListFromAPI,

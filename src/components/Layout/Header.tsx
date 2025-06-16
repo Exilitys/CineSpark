@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
+import { CreditDisplay } from '../Credits/CreditDisplay';
 import { AuthModal } from '../Auth/AuthModal';
 import toast from 'react-hot-toast';
 
@@ -32,13 +33,6 @@ export const Header: React.FC = () => {
       toast.success('Signed out successfully');
     }
     setShowUserMenu(false);
-  };
-
-  const getCreditsColor = (credits: number) => {
-    if (credits >= 500) return 'text-green-400';
-    if (credits >= 100) return 'text-gold-400';
-    if (credits >= 50) return 'text-orange-400';
-    return 'text-red-400';
   };
 
   const getPlanBadge = (plan: string) => {
@@ -140,13 +134,7 @@ export const Header: React.FC = () => {
               {user ? (
                 <div className="flex items-center space-x-4">
                   {/* Credits Display */}
-                  <div className="flex items-center space-x-2 bg-gray-700 px-3 py-1 rounded-lg">
-                    <Zap className="h-4 w-4 text-gold-400" />
-                    <span className={`text-sm font-medium ${getCreditsColor(profile?.credits || 0)}`}>
-                      {profileLoading ? '...' : (profile?.credits || 0).toLocaleString()}
-                    </span>
-                    <span className="text-xs text-gray-400">credits</span>
-                  </div>
+                  <CreditDisplay />
 
                   {/* User Menu */}
                   <div className="relative">
@@ -169,22 +157,19 @@ export const Header: React.FC = () => {
                           <div className="px-4 py-3 text-sm border-b border-gray-700">
                             <div className="font-medium text-white">{getDisplayName()}</div>
                             <div className="text-gray-400 text-xs">{user.email}</div>
-                            <div className="flex items-center justify-between mt-2">
-                              <div className="flex items-center space-x-2">
-                                <Zap className="h-3 w-3 text-gold-400" />
-                                <span className={`text-xs font-medium ${getCreditsColor(profile?.credits || 0)}`}>
-                                  {(profile?.credits || 0).toLocaleString()} credits
-                                </span>
-                              </div>
-                              {profile?.plan && (
+                            <div className="mt-2">
+                              <CreditDisplay showDetails={false} />
+                            </div>
+                            {profile?.plan && (
+                              <div className="mt-1">
                                 <span className={`text-xs px-2 py-1 rounded ${
                                   profile.plan === 'pro' ? 'bg-gold-600' : 
                                   profile.plan === 'enterprise' ? 'bg-purple-600' : 'bg-gray-600'
                                 } text-white`}>
                                   {getPlanBadge(profile.plan).label}
                                 </span>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                           <Link
                             to="/profile"
