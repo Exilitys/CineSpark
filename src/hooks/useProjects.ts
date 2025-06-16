@@ -26,7 +26,7 @@ export const useProjects = () => {
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: true }); // Order by creation time for sequential numbering
 
       if (error) throw error;
       setProjects(data || []);
@@ -37,14 +37,33 @@ export const useProjects = () => {
     }
   };
 
-  const createProject = async (projectData: Omit<ProjectInsert, 'user_id'>) => {
+  const getNextProjectNumber = () => {
+    // Find the highest project number from existing titles
+    let maxNumber = 0;
+    projects.forEach(project => {
+      const match = project.title.match(/^Project #(\d+)/);
+      if (match) {
+        const number = parseInt(match[1], 10);
+        if (number > maxNumber) {
+          maxNumber = number;
+        }
+      }
+    });
+    return maxNumber + 1;
+  };
+
+  const createProject = async (projectData: Omit<ProjectInsert, 'user_id' | 'title'> & { title?: string }) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Generate sequential title if not provided
+      const title = projectData.title || `Project #${getNextProjectNumber()}`;
+      
       const { data, error } = await supabase
         .from('projects')
         .insert({
           ...projectData,
+          title,
           user_id: user.id,
         })
         .select()
@@ -52,7 +71,7 @@ export const useProjects = () => {
 
       if (error) throw error;
       
-      setProjects(prev => [data, ...prev]);
+      setProjects(prev => [...prev, data]);
       return data;
     } catch (error) {
       console.error('Error creating project:', error);
@@ -64,7 +83,10 @@ export const useProjects = () => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select()
         .single();
@@ -77,6 +99,23 @@ export const useProjects = () => {
       console.error('Error updating project:', error);
       throw error;
     }
+  };
+
+  const updateProjectTitle = async (id: string, newTitle: string) => {
+    if (!newTitle.trim()) {
+      throw new Error('Project title cannot be empty');
+    }
+
+    // Check for duplicate titles (excluding current project)
+    const duplicateExists = projects.some(p => 
+      p.id !== id && p.title.toLowerCase() === newTitle.trim().toLowerCase()
+    );
+
+    if (duplicateExists) {
+      throw new Error('A project with this name already exists');
+    }
+
+    return updateProject(id, { title: newTitle.trim() });
   };
 
   const deleteProject = async (id: string) => {
@@ -99,13 +138,30 @@ export const useProjects = () => {
     return projects.find(p => p.id === id);
   };
 
+  const getProjectDisplayNumber = (project: Project) => {
+    // Extract number from title or use index + 1 as fallback
+    const match = project.title.match(/^Project #(\d+)/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    
+    // Fallback: find index in chronologically ordered list
+    const sortedProjects = [...projects].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const index = sortedProjects.findIndex(p => p.id === project.id);
+    return index + 1;
+  };
+
   return {
     projects,
     loading,
     createProject,
     updateProject,
+    updateProjectTitle,
     deleteProject,
     getProjectById,
+    getProjectDisplayNumber,
     refetch: fetchProjects,
   };
 };

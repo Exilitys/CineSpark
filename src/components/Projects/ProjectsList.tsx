@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight, CheckCircle, Circle, Clock } from 'lucide-react';
+import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight, CheckCircle, Circle, Clock, Check, X, Save } from 'lucide-react';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +8,12 @@ import { useProjectStatus } from '../../hooks/useProjectStatus';
 import toast from 'react-hot-toast';
 
 export const ProjectsList: React.FC = () => {
-  const { projects, loading, deleteProject } = useProjects();
+  const { projects, loading, deleteProject, updateProjectTitle } = useProjects();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [editingProject, setEditingProject] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const handleDeleteProject = async (id: string, title: string) => {
     if (window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
@@ -25,6 +28,43 @@ export const ProjectsList: React.FC = () => {
 
   const handleOpenProject = (projectId: string) => {
     navigate(`/story/${projectId}`);
+  };
+
+  const handleStartEdit = (project: any) => {
+    setEditingProject(project.id);
+    setEditingTitle(project.title);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProject(null);
+    setEditingTitle('');
+  };
+
+  const handleSaveEdit = async (projectId: string) => {
+    if (!editingTitle.trim()) {
+      toast.error('Project name cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateProjectTitle(projectId, editingTitle);
+      setEditingProject(null);
+      setEditingTitle('');
+      toast.success('Project name updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating project name');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, projectId: string) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit(projectId);
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -91,8 +131,16 @@ export const ProjectsList: React.FC = () => {
             key={project.id}
             project={project}
             index={index}
+            isEditing={editingProject === project.id}
+            editingTitle={editingTitle}
+            saving={saving}
             onOpen={() => handleOpenProject(project.id)}
             onDelete={() => handleDeleteProject(project.id, project.title)}
+            onStartEdit={() => handleStartEdit(project)}
+            onCancelEdit={handleCancelEdit}
+            onSaveEdit={() => handleSaveEdit(project.id)}
+            onTitleChange={setEditingTitle}
+            onKeyPress={(e) => handleKeyPress(e, project.id)}
             formatDate={formatDate}
           />
         ))}
@@ -104,16 +152,32 @@ export const ProjectsList: React.FC = () => {
 interface ProjectCardProps {
   project: any;
   index: number;
+  isEditing: boolean;
+  editingTitle: string;
+  saving: boolean;
   onOpen: () => void;
   onDelete: () => void;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  onTitleChange: (title: string) => void;
+  onKeyPress: (e: React.KeyboardEvent) => void;
   formatDate: (date: string) => string;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ 
   project, 
   index, 
+  isEditing,
+  editingTitle,
+  saving,
   onOpen, 
-  onDelete, 
+  onDelete,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onTitleChange,
+  onKeyPress,
   formatDate 
 }) => {
   const { status, loading } = useProjectStatus(project.id);
@@ -159,8 +223,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
-      className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group cursor-pointer"
-      onClick={onOpen}
+      className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-gold-500 transition-all duration-200 group"
     >
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -168,30 +231,89 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             <Film className="h-5 w-5 text-white" />
           </div>
           <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                // Add edit functionality here
-              }}
-              className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
-            >
-              <Edit3 className="h-4 w-4" />
-            </button>
+            {!isEditing && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartEdit();
+                }}
+                className="p-2 text-gray-400 hover:text-gold-400 transition-colors duration-200"
+                title="Edit project name"
+              >
+                <Edit3 className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
               className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
+              title="Delete project"
             >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>
         
-        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">
-          {project.title}
-        </h3>
+        {/* Project Title - Editable */}
+        <div className="mb-4">
+          {isEditing ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={editingTitle}
+                onChange={(e) => onTitleChange(e.target.value)}
+                onKeyDown={onKeyPress}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent text-lg font-semibold"
+                placeholder="Enter project name"
+                autoFocus
+                maxLength={100}
+                disabled={saving}
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={onSaveEdit}
+                    disabled={saving || !editingTitle.trim()}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm flex items-center space-x-1 transition-colors duration-200"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3 w-3" />
+                        <span>Save</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={onCancelEdit}
+                    disabled={saving}
+                    className="text-gray-400 hover:text-white disabled:opacity-50 px-2 py-1 text-sm transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <span className={`text-xs ${editingTitle.length > 80 ? 'text-orange-400' : 'text-gray-500'}`}>
+                  {editingTitle.length}/100
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">Press Enter to save, Escape to cancel</p>
+            </div>
+          ) : (
+            <h3 
+              className="text-lg font-semibold text-white line-clamp-2 group-hover:text-gold-400 transition-colors duration-200 cursor-pointer"
+              onClick={onOpen}
+              title="Click to open project"
+            >
+              {project.title}
+            </h3>
+          )}
+        </div>
         
         <p className="text-gray-400 text-sm mb-4 line-clamp-3">
           {project.original_idea}
@@ -264,10 +386,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               <span className="text-gray-500">Status unavailable</span>
             )}
           </div>
-          <div className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200">
-            <span>Open</span>
-            <ArrowRight className="h-3 w-3" />
-          </div>
+          {!isEditing && (
+            <div 
+              className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200 cursor-pointer"
+              onClick={onOpen}
+            >
+              <span>Open</span>
+              <ArrowRight className="h-3 w-3" />
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

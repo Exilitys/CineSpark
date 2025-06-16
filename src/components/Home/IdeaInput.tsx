@@ -136,13 +136,13 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
         return;
       }
 
-      // Step 2: Create project in database
+      // Step 2: Create project in database with sequential naming
       toast.loading('Creating your project...', { id: 'generation' });
       
       const project = await createProject({
-        title: `Project: ${idea.substring(0, 50)}${idea.length > 50 ? '...' : ''}`,
         description: 'AI-generated film project',
         original_idea: idea.trim(),
+        // Title will be auto-generated as sequential number in createProject
       });
 
       // Step 3: Create the story in the database
@@ -290,7 +290,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
               </motion.button>
             ))}
           </div>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Credit Guard Modal */}
