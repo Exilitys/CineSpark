@@ -20,7 +20,7 @@ import {
   getPricingSession,
   clearPricingSession,
 } from "../utils/sessionStorage";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
@@ -230,8 +230,6 @@ export const PricingPage: React.FC = () => {
     { action: "Story generation", credits: 10 },
     { action: "Shot list creation", credits: 15 },
     { action: "Photoboard generation", credits: 20 },
-    { action: "Frame regeneration", credits: 3 },
-    { action: "AI enhancement", credits: 2 },
   ];
 
   // Show loading state while auth is loading or not initialized
@@ -341,13 +339,13 @@ export const PricingPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-gray-800 rounded-xl p-6 mb-12 border border-gray-700"
+          className="bg-gray-800 rounded-xl p-6 mb-12 border border-gray-700 "
         >
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center text-center ">
             <Zap className="h-5 w-5 text-gold-400 mr-2" />
             How Credits Work
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 justify-center text-center ">
             {creditUsageExamples.map((example, index) => (
               <div
                 key={index}

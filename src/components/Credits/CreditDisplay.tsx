@@ -1,41 +1,48 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, Clock } from 'lucide-react';
-import { useCredits } from '../../hooks/useCredits';
-import { useAuth } from '../../hooks/useAuth';
+import React from "react";
+import { motion } from "framer-motion";
+import { Zap, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { useCredits } from "../../hooks/useCredits";
+import { useAuth } from "../../hooks/useAuth";
 
 interface CreditDisplayProps {
   showDetails?: boolean;
   className?: string;
 }
 
-export const CreditDisplay: React.FC<CreditDisplayProps> = ({ 
-  showDetails = false, 
-  className = '' 
+export const CreditDisplay: React.FC<CreditDisplayProps> = ({
+  showDetails = false,
+  className = "",
 }) => {
   const { credits, plan, getCreditCost, CREDIT_COSTS } = useCredits();
   const { initialized, loading } = useAuth();
 
   const getCreditColor = (credits: number) => {
-    if (credits >= 500) return 'text-green-400';
-    if (credits >= 100) return 'text-gold-400';
-    if (credits >= 50) return 'text-orange-400';
-    return 'text-red-400';
+    if (credits >= 500) return "text-green-400";
+    if (credits >= 100) return "text-gold-400";
+    if (credits >= 50) return "text-orange-400";
+    return "text-red-400";
   };
 
   const getPlanColor = (plan: string) => {
     switch (plan) {
-      case 'pro': return 'text-gold-400';
-      case 'enterprise': return 'text-purple-400';
-      default: return 'text-gray-400';
+      case "pro":
+        return "text-gold-400";
+      case "enterprise":
+        return "text-purple-400";
+      default:
+        return "text-gray-400";
     }
   };
 
   const getUsageEstimate = () => {
-    const storyGenerations = Math.floor(credits / CREDIT_COSTS.STORY_GENERATION);
+    const storyGenerations = Math.floor(
+      credits / CREDIT_COSTS.STORY_GENERATION
+    );
     const shotLists = Math.floor(credits / CREDIT_COSTS.SHOT_LIST_GENERATION);
-    const photoboards = Math.floor(credits / CREDIT_COSTS.PHOTOBOARD_GENERATION);
-    
+    const photoboards = Math.floor(
+      credits / CREDIT_COSTS.PHOTOBOARD_GENERATION
+    );
+
     return { storyGenerations, shotLists, photoboards };
   };
 
@@ -75,10 +82,15 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
           <Zap className="h-5 w-5 text-gold-400 mr-2" />
           Credit Balance
         </h3>
-        <span className={`text-xs px-2 py-1 rounded ${
-          plan === 'pro' ? 'bg-gold-600' : 
-          plan === 'enterprise' ? 'bg-purple-600' : 'bg-gray-600'
-        } text-white`}>
+        <span
+          className={`text-xs px-2 py-1 rounded ${
+            plan === "pro"
+              ? "bg-gold-600"
+              : plan === "enterprise"
+              ? "bg-purple-600"
+              : "bg-gray-600"
+          } text-white`}
+        >
           {plan.toUpperCase()}
         </span>
       </div>
@@ -92,7 +104,7 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
 
       <div className="space-y-3 mb-6">
         <h4 className="text-sm font-medium text-gray-300">Usage Estimates</h4>
-        
+
         <div className="grid grid-cols-1 gap-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-400">Story Generations:</span>
@@ -118,15 +130,15 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Shots:</span>
-            <span className="text-white">{CREDIT_COSTS.SHOT_LIST_GENERATION}</span>
+            <span className="text-white">
+              {CREDIT_COSTS.SHOT_LIST_GENERATION}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Board:</span>
-            <span className="text-white">{CREDIT_COSTS.PHOTOBOARD_GENERATION}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Frame:</span>
-            <span className="text-white">{CREDIT_COSTS.PHOTOBOARD_FRAME}</span>
+            <span className="text-white">
+              {CREDIT_COSTS.PHOTOBOARD_GENERATION}
+            </span>
           </div>
         </div>
       </div>
@@ -135,7 +147,9 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
         <div className="mt-4 bg-red-900/20 border border-red-700 rounded-lg p-3">
           <div className="flex items-center space-x-2">
             <TrendingDown className="h-4 w-4 text-red-400" />
-            <span className="text-red-400 text-sm font-medium">Low Credits</span>
+            <span className="text-red-400 text-sm font-medium">
+              Low Credits
+            </span>
           </div>
           <p className="text-red-300 text-xs mt-1">
             Consider upgrading your plan for more credits.

@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useProfile } from './useProfile';
-import { supabase } from '../lib/supabase';
-import { useAuth } from './useAuth';
+import { useState } from "react";
+import { useProfile } from "./useProfile";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "./useAuth";
 
 interface CreditTransaction {
   id: string;
@@ -34,10 +34,6 @@ export const CREDIT_COSTS = {
   STORY_GENERATION: 10,
   SHOT_LIST_GENERATION: 15,
   PHOTOBOARD_GENERATION: 20,
-  PHOTOBOARD_FRAME: 5,
-  PHOTOBOARD_REGENERATION: 3,
-  AI_ENHANCEMENT: 2,
-  EXPORT_PREMIUM: 5,
 } as const;
 
 export type CreditAction = keyof typeof CREDIT_COSTS;
@@ -59,14 +55,16 @@ export const useCredits = () => {
   /**
    * Validate if user has sufficient credits for an action
    */
-  const validateCredits = async (action: CreditAction): Promise<CreditValidationResult> => {
+  const validateCredits = async (
+    action: CreditAction
+  ): Promise<CreditValidationResult> => {
     // Wait for auth to be initialized
     if (!initialized) {
       return {
         isValid: false,
         currentCredits: 0,
         requiredCredits: CREDIT_COSTS[action],
-        message: 'Authentication loading...'
+        message: "Authentication loading...",
       };
     }
 
@@ -75,7 +73,7 @@ export const useCredits = () => {
         isValid: false,
         currentCredits: 0,
         requiredCredits: CREDIT_COSTS[action],
-        message: 'User not authenticated'
+        message: "User not authenticated",
       };
     }
 
@@ -87,7 +85,7 @@ export const useCredits = () => {
         isValid: false,
         currentCredits,
         requiredCredits,
-        message: `Insufficient credits. You need ${requiredCredits} credits but only have ${currentCredits}.`
+        message: `Insufficient credits. You need ${requiredCredits} credits but only have ${currentCredits}.`,
       };
     }
 
@@ -96,14 +94,15 @@ export const useCredits = () => {
         isValid: false,
         currentCredits: 0,
         requiredCredits,
-        message: 'Your credit balance is 0. Please upgrade your plan to continue.'
+        message:
+          "Your credit balance is 0. Please upgrade your plan to continue.",
       };
     }
 
     return {
       isValid: true,
       currentCredits,
-      requiredCredits
+      requiredCredits,
     };
   };
 
@@ -122,7 +121,7 @@ export const useCredits = () => {
 
     try {
       const { data, error } = await supabase
-        .from('credit_transactions')
+        .from("credit_transactions")
         .insert({
           user_id: user.id,
           action_type: action,
@@ -130,19 +129,19 @@ export const useCredits = () => {
           credits_before: creditsBefore,
           credits_after: creditsAfter,
           transaction_id: transactionId,
-          metadata
+          metadata,
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Error logging credit transaction:', error);
+        console.error("Error logging credit transaction:", error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error logging credit transaction:', error);
+      console.error("Error logging credit transaction:", error);
       return null;
     }
   };
@@ -157,14 +156,14 @@ export const useCredits = () => {
     if (!initialized) {
       return {
         success: false,
-        error: 'Authentication not initialized'
+        error: "Authentication not initialized",
       };
     }
 
     if (!user || !profile) {
       return {
         success: false,
-        error: 'User not authenticated'
+        error: "User not authenticated",
       };
     }
 
@@ -176,7 +175,7 @@ export const useCredits = () => {
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.message
+          error: validation.message,
         };
       }
 
@@ -187,30 +186,31 @@ export const useCredits = () => {
 
       // Step 2: Start atomic transaction
       const { data: updatedProfile, error: updateError } = await supabase
-        .from('user_profiles')
+        .from("user_profiles")
         .update({
           credits: creditsAfter,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
-        .eq('credits', creditsBefore) // Optimistic locking
+        .eq("user_id", user.id)
+        .eq("credits", creditsBefore) // Optimistic locking
         .select()
         .single();
 
       if (updateError) {
-        console.error('Error updating user credits:', updateError);
-        
+        console.error("Error updating user credits:", updateError);
+
         // Check if it's a concurrency issue
-        if (updateError.code === 'PGRST116') {
+        if (updateError.code === "PGRST116") {
           return {
             success: false,
-            error: 'Credit balance was modified by another operation. Please try again.'
+            error:
+              "Credit balance was modified by another operation. Please try again.",
           };
         }
 
         return {
           success: false,
-          error: 'Failed to deduct credits. Please try again.'
+          error: "Failed to deduct credits. Please try again.",
         };
       }
 
@@ -224,7 +224,7 @@ export const useCredits = () => {
         {
           ...metadata,
           user_email: user.email,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }
       );
 
@@ -236,20 +236,19 @@ export const useCredits = () => {
         creditsDeducted: creditsToDeduct,
         creditsBefore,
         creditsAfter,
-        transactionId
+        transactionId,
       });
 
       return {
         success: true,
         transaction: transaction || undefined,
-        newBalance: creditsAfter
+        newBalance: creditsAfter,
       };
-
     } catch (error) {
-      console.error('Error in credit deduction:', error);
+      console.error("Error in credit deduction:", error);
       return {
         success: false,
-        error: 'An unexpected error occurred during credit deduction'
+        error: "An unexpected error occurred during credit deduction",
       };
     } finally {
       setProcessing(false);
@@ -259,25 +258,27 @@ export const useCredits = () => {
   /**
    * Get user's credit transaction history
    */
-  const getTransactionHistory = async (limit: number = 50): Promise<CreditTransaction[]> => {
+  const getTransactionHistory = async (
+    limit: number = 50
+  ): Promise<CreditTransaction[]> => {
     if (!user) return [];
 
     try {
       const { data, error } = await supabase
-        .from('credit_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .from("credit_transactions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching transaction history:', error);
+        console.error("Error fetching transaction history:", error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error fetching transaction history:', error);
+      console.error("Error fetching transaction history:", error);
       return [];
     }
   };
@@ -302,13 +303,9 @@ export const useCredits = () => {
    */
   const getActionDisplayName = (action: CreditAction): string => {
     const displayNames: Record<CreditAction, string> = {
-      STORY_GENERATION: 'Story Generation',
-      SHOT_LIST_GENERATION: 'Shot List Generation',
-      PHOTOBOARD_GENERATION: 'Photoboard Generation',
-      PHOTOBOARD_FRAME: 'Photoboard Frame',
-      PHOTOBOARD_REGENERATION: 'Frame Regeneration',
-      AI_ENHANCEMENT: 'AI Enhancement',
-      EXPORT_PREMIUM: 'Premium Export'
+      STORY_GENERATION: "Story Generation",
+      SHOT_LIST_GENERATION: "Shot List Generation",
+      PHOTOBOARD_GENERATION: "Photoboard Generation",
     };
     return displayNames[action];
   };
@@ -316,7 +313,7 @@ export const useCredits = () => {
   return {
     // State
     credits: profile?.credits || 0,
-    plan: profile?.plan || 'free',
+    plan: profile?.plan || "free",
     processing,
 
     // Core functions
@@ -329,20 +326,22 @@ export const useCredits = () => {
 
     // Utility
     CREDIT_COSTS,
-    
+
     // Legacy compatibility
     consumeCredits: async (amount: number) => {
-      console.warn('consumeCredits is deprecated. Use deductCredits with specific action instead.');
-      if (!profile) throw new Error('Profile not loaded');
+      console.warn(
+        "consumeCredits is deprecated. Use deductCredits with specific action instead."
+      );
+      if (!profile) throw new Error("Profile not loaded");
       return updateProfile({ credits: Math.max(profile.credits - amount, 0) });
     },
     addCredits: async (amount: number) => {
-      if (!profile) throw new Error('Profile not loaded');
+      if (!profile) throw new Error("Profile not loaded");
       return updateProfile({ credits: profile.credits + amount });
     },
     checkCredits: (requiredAmount: number) => {
       return profile ? profile.credits >= requiredAmount : false;
     },
-    refetch
+    refetch,
   };
 };
