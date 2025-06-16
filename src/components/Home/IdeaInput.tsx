@@ -291,8 +291,8 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
             ))}
           </div>
          
-        </div>
-         </motion.div>
+        </motion.div>
+         
       </motion.div>
 
       {/* Credit Guard Modal */}
