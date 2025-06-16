@@ -63,10 +63,14 @@ export const useAuth = () => {
       });
       
       if (mounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Prevent flash by only updating if we're already initialized
+        // or if this is the first auth state change
+        if (initialized || event === 'INITIAL_SESSION') {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
         
-        // Only set initialized to true after the first auth state change
+        // Always mark as initialized after first auth state change
         if (!initialized) {
           setInitialized(true);
         }

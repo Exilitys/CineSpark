@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useCredits } from '../../hooks/useCredits';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CreditDisplayProps {
   showDetails?: boolean;
@@ -13,6 +14,7 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
   className = '' 
 }) => {
   const { credits, plan, getCreditCost, CREDIT_COSTS } = useCredits();
+  const { initialized, loading } = useAuth();
 
   const getCreditColor = (credits: number) => {
     if (credits >= 500) return 'text-green-400';
@@ -36,6 +38,17 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
     
     return { storyGenerations, shotLists, photoboards };
   };
+
+  // Show loading state while auth is initializing
+  if (!initialized || loading) {
+    return (
+      <div className={`flex items-center space-x-2 ${className}`}>
+        <Zap className="h-4 w-4 text-gold-400" />
+        <div className="w-8 h-4 bg-gray-600 rounded animate-pulse" />
+        <span className="text-xs text-gray-400">credits</span>
+      </div>
+    );
+  }
 
   if (!showDetails) {
     return (

@@ -45,7 +45,7 @@ export const CREDIT_COSTS = {
 export type CreditAction = keyof typeof CREDIT_COSTS;
 
 export const useCredits = () => {
-  const { user } = useAuth();
+  const { user, initialized } = useAuth();
   const { profile, updateProfile, refetch } = useProfile();
   const [processing, setProcessing] = useState(false);
 
@@ -62,6 +62,16 @@ export const useCredits = () => {
    * Validate if user has sufficient credits for an action
    */
   const validateCredits = async (action: CreditAction): Promise<CreditValidationResult> => {
+    // Wait for auth to be initialized
+    if (!initialized) {
+      return {
+        isValid: false,
+        currentCredits: 0,
+        requiredCredits: CREDIT_COSTS[action],
+        message: 'Authentication loading...'
+      };
+    }
+
     if (!user || !profile) {
       return {
         isValid: false,
@@ -146,6 +156,13 @@ export const useCredits = () => {
     action: CreditAction,
     metadata: Record<string, any> = {}
   ): Promise<CreditDeductionResult> => {
+    if (!initialized) {
+      return {
+        success: false,
+        error: 'Authentication not initialized'
+      };
+    }
+
     if (!user || !profile) {
       return {
         success: false,

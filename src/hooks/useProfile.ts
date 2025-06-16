@@ -9,16 +9,19 @@ type UserProfileUpdate = Database['public']['Tables']['user_profiles']['Update']
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, initialized } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-    } else {
-      setProfile(null);
-      setLoading(false);
+    // Only fetch profile if auth is initialized and user exists
+    if (initialized) {
+      if (user) {
+        fetchProfile();
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
     }
-  }, [user]);
+  }, [user, initialized]);
 
   const fetchProfile = async () => {
     if (!user) return;
