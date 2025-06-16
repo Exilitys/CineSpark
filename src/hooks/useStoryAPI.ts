@@ -38,9 +38,8 @@ export const useStoryAPI = () => {
     setError(null);
 
     try {
-      // Determine the action type based on whether this is a new story or modification
-      const isModification = typeof story === 'object' && story.logline;
-      const action = isModification ? 'STORY_MODIFICATION' : 'STORY_GENERATION';
+      // Use STORY_GENERATION for both new stories and modifications
+      const action = 'STORY_GENERATION';
 
       // Validate credits before making API call
       const validation = await validateCredits(action);
@@ -74,6 +73,7 @@ export const useStoryAPI = () => {
       }
 
       // Deduct credits after successful generation
+      const isModification = typeof story === 'object' && story.logline;
       const deductionResult = await deductCredits(action, {
         user_idea: userIdea,
         is_modification: isModification,
