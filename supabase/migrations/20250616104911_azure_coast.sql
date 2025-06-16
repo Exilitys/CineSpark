@@ -53,4 +53,4 @@ CREATE INDEX IF NOT EXISTS idx_credit_transactions_action_type ON credit_transac
 CREATE INDEX IF NOT EXISTS idx_credit_transactions_created_at ON credit_transactions(created_at DESC);
 
 -- Add constraint for unique transaction_id
-ALTER TABLE credit_transactions ADD CONSTRAINT credit_transactions_transaction_id_key UNIQUE (transaction_id);
+-- ALTER TABLE credit_transactions ADD CONSTRAINT credit_transactions_transaction_id_key UNIQUE (transaction_id);
