@@ -1,31 +1,51 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageCircle, X, Sparkles, Loader } from 'lucide-react';
+import { useCredits } from '../../hooks/useCredits';
+import { CreditGuard } from '../Credits/CreditGuard';
 
 interface AIChatboxProps {
   onSendSuggestion: (suggestion: string) => Promise<void>;
   loading?: boolean;
   placeholder?: string;
   title?: string;
+  creditAction?: 'STORY_GENERATION' | 'SHOT_LIST_GENERATION';
 }
 
 export const AIChatbox: React.FC<AIChatboxProps> = ({
   onSendSuggestion,
   loading = false,
   placeholder = "Ask AI to make changes or improvements...",
-  title = "AI Assistant"
+  title = "AI Assistant",
+  creditAction = 'STORY_GENERATION'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestion, setSuggestion] = useState('');
   const [sending, setSending] = useState(false);
+  const [showCreditGuard, setShowCreditGuard] = useState(false);
+  const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null);
+
+  const { canPerformAction, getCreditCost } = useCredits();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!suggestion.trim() || sending || loading) return;
 
+    // Check if user can perform the action
+    const canProceed = await canPerformAction(creditAction);
+    if (!canProceed) {
+      setPendingSuggestion(suggestion.trim());
+      setShowCreditGuard(true);
+      return;
+    }
+
+    await processSuggestion(suggestion.trim());
+  };
+
+  const processSuggestion = async (suggestionText: string) => {
     setSending(true);
     try {
-      await onSendSuggestion(suggestion.trim());
+      await onSendSuggestion(suggestionText);
       setSuggestion('');
       setIsOpen(false);
     } catch (error) {
@@ -35,9 +55,32 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
     }
   };
 
+  const handleCreditGuardProceed = () => {
+    if (pendingSuggestion) {
+      processSuggestion(pendingSuggestion);
+      setPendingSuggestion(null);
+    }
+  };
+
+  const handleCreditGuardCancel = () => {
+    setShowCreditGuard(false);
+    setPendingSuggestion(null);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       handleSubmit(e);
+    }
+  };
+
+  const getActionDisplayName = () => {
+    switch (creditAction) {
+      case 'STORY_GENERATION':
+        return 'Story Modification';
+      case 'SHOT_LIST_GENERATION':
+        return 'Shot List Modification';
+      default:
+        return 'AI Modification';
     }
   };
 
@@ -119,6 +162,17 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                     </p>
                   </div>
 
+                  {/* Credit Cost Display */}
+                  <div className="bg-gold-900/20 border border-gold-700 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gold-400 text-sm font-medium">Credit Cost:</span>
+                      <span className="text-gold-300 text-sm">{getCreditCost(creditAction)} credits</span>
+                    </div>
+                    <p className="text-gold-300 text-xs mt-1">
+                      This modification will use the same credits as generation
+                    </p>
+                  </div>
+
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500">
                       {suggestion.length}/500 characters
@@ -146,7 +200,7 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                         ) : (
                           <>
                             <Send className="h-4 w-4" />
-                            <span>Send</span>
+                            <span>Send ({getCreditCost(creditAction)} credits)</span>
                           </>
                         )}
                       </motion.button>
@@ -160,10 +214,21 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                 <div className="bg-gray-700/50 rounded-lg p-3">
                   <h4 className="text-xs font-medium text-gray-300 mb-2">Example suggestions:</h4>
                   <div className="space-y-1 text-xs text-gray-400">
-                    <p>• "Make the story more dramatic"</p>
-                    <p>• "Add more character development"</p>
-                    <p>• "Include more action sequences"</p>
-                    <p>• "Change the setting to modern day"</p>
+                    {creditAction === 'STORY_GENERATION' ? (
+                      <>
+                        <p>• "Make the story more dramatic"</p>
+                        <p>• "Add more character development"</p>
+                        <p>• "Include more action sequences"</p>
+                        <p>• "Change the setting to modern day"</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>• "Add more close-up shots"</p>
+                        <p>• "Include more camera movement"</p>
+                        <p>• "Focus on emotional moments"</p>
+                        <p>• "Add establishing shots for each scene"</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -171,6 +236,20 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Credit Guard Modal */}
+      <CreditGuard
+        action={creditAction}
+        showModal={showCreditGuard}
+        onProceed={handleCreditGuardProceed}
+        onCancel={handleCreditGuardCancel}
+        title={getActionDisplayName()}
+        description="Use AI to modify your content based on your suggestions."
+        metadata={{
+          suggestion: pendingSuggestion,
+          action_type: creditAction
+        }}
+      />
     </>
   );
 };

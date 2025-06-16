@@ -106,7 +106,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
     }
 
     // Check if user can perform the action
-    const canProceed = await canPerformAction('SHOT_LIST_MODIFICATION');
+    const canProceed = await canPerformAction('SHOT_LIST_GENERATION');
     if (!canProceed) {
       setPendingAISuggestion(suggestion);
       setShowCreditGuard(true);
@@ -442,13 +442,14 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
       <AIChatbox
         onSendSuggestion={handleAISuggestion}
         loading={shotApiLoading}
-        placeholder="Ask AI to modify shots, add new ones, or change cinematography..."
+        placeholder={`Ask AI to modify shots, add new ones, or change cinematography... (${getCreditCost('SHOT_LIST_GENERATION')} credits)`}
         title="Shot List AI Assistant"
+        creditAction="SHOT_LIST_GENERATION"
       />
 
       {/* Credit Guard Modal */}
       <CreditGuard
-        action="SHOT_LIST_MODIFICATION"
+        action="SHOT_LIST_GENERATION"
         showModal={showCreditGuard}
         onProceed={handleCreditGuardProceed}
         onCancel={handleCreditGuardCancel}

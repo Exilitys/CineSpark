@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import { User, Mail, Calendar, Zap, Crown, Edit3, Save, X, Camera, ArrowLeft, Check, Upload, AlertCircle, Image, Trash2 } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
+import { useCredits } from '../hooks/useCredits';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const ProfilePage: React.FC = () => {
   const { profile, loading, updateProfile, uploadAvatar, deleteAvatar, getPlanDisplayName, getPlanColor } = useProfile();
   const { user } = useAuth();
+  const { getTransactionHistory, CREDIT_COSTS } = useCredits();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -17,6 +19,8 @@ export const ProfilePage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
@@ -31,6 +35,24 @@ export const ProfilePage: React.FC = () => {
       setPreviewImage(profile.avatar_url || null);
     }
   }, [profile]);
+
+  React.useEffect(() => {
+    if (user) {
+      loadTransactionHistory();
+    }
+  }, [user]);
+
+  const loadTransactionHistory = async () => {
+    setLoadingTransactions(true);
+    try {
+      const history = await getTransactionHistory(10);
+      setTransactions(history);
+    } catch (error) {
+      console.error('Error loading transaction history:', error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
 
   const validateFile = (file: File): string | null => {
     // Check file type
@@ -217,6 +239,14 @@ export const ProfilePage: React.FC = () => {
     }
     return 'User';
   };
+
+  const creditUsageExamples = [
+    { action: 'Story generation', credits: CREDIT_COSTS.STORY_GENERATION },
+    { action: 'Shot list creation', credits: CREDIT_COSTS.SHOT_LIST_GENERATION },
+    { action: 'Photoboard generation', credits: CREDIT_COSTS.PHOTOBOARD_GENERATION },
+    { action: 'Frame regeneration', credits: CREDIT_COSTS.PHOTOBOARD_REGENERATION },
+    { action: 'AI enhancement', credits: CREDIT_COSTS.AI_ENHANCEMENT }
+  ];
 
   if (loading) {
     return (
@@ -584,18 +614,12 @@ export const ProfilePage: React.FC = () => {
               <div className="bg-gray-700 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-300 mb-2">Credit Usage</h4>
                 <div className="space-y-2 text-sm text-gray-400">
-                  <div className="flex justify-between">
-                    <span>Story generation:</span>
-                    <span>10 credits</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Shot list creation:</span>
-                    <span>15 credits</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Storyboard frame:</span>
-                    <span>5 credits</span>
-                  </div>
+                  {creditUsageExamples.map((example, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span>{example.action}:</span>
+                      <span>{example.credits} credits</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -612,6 +636,55 @@ export const ProfilePage: React.FC = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Credit Transaction History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="bg-gray-800 rounded-xl p-6 border border-gray-700 mt-8"
+        >
+          <h3 className="text-xl font-semibold text-white mb-4">Recent Credit Usage</h3>
+          
+          {loadingTransactions ? (
+            <div className="text-center py-8">
+              <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Loading transaction history...</p>
+            </div>
+          ) : transactions.length > 0 ? (
+            <div className="space-y-3">
+              {transactions.map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Zap className="h-4 w-4 text-gold-400" />
+                    <div>
+                      <p className="text-white text-sm font-medium">
+                        {transaction.action_type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-red-400 text-sm font-medium">
+                      -{transaction.credits_deducted} credits
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      Balance: {transaction.credits_after}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Zap className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+              <p className="text-gray-400">No credit transactions yet</p>
+              <p className="text-gray-500 text-sm">Start creating to see your usage history</p>
+            </div>
+          )}
+        </motion.div>
 
         {/* Account Actions */}
         <motion.div

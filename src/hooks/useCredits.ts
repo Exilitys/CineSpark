@@ -29,12 +29,10 @@ interface CreditDeductionResult {
   error?: string;
 }
 
-// Credit costs for different actions
+// Simplified credit costs - modifications use same cost as generations
 export const CREDIT_COSTS = {
   STORY_GENERATION: 10,
-  STORY_MODIFICATION: 5,
   SHOT_LIST_GENERATION: 15,
-  SHOT_LIST_MODIFICATION: 8,
   PHOTOBOARD_GENERATION: 20,
   PHOTOBOARD_FRAME: 5,
   PHOTOBOARD_REGENERATION: 3,
@@ -305,9 +303,7 @@ export const useCredits = () => {
   const getActionDisplayName = (action: CreditAction): string => {
     const displayNames: Record<CreditAction, string> = {
       STORY_GENERATION: 'Story Generation',
-      STORY_MODIFICATION: 'Story Modification',
       SHOT_LIST_GENERATION: 'Shot List Generation',
-      SHOT_LIST_MODIFICATION: 'Shot List Modification',
       PHOTOBOARD_GENERATION: 'Photoboard Generation',
       PHOTOBOARD_FRAME: 'Photoboard Frame',
       PHOTOBOARD_REGENERATION: 'Frame Regeneration',

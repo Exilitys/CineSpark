@@ -227,10 +227,10 @@ export const PricingPage: React.FC = () => {
   };
 
   const creditUsageExamples = [
-    { action: "Generate story structure", credits: 10 },
-    { action: "Create shot list", credits: 15 },
-    { action: "Generate storyboard frame", credits: 5 },
-    { action: "Regenerate content", credits: 3 },
+    { action: "Story generation", credits: 10 },
+    { action: "Shot list creation", credits: 15 },
+    { action: "Photoboard generation", credits: 20 },
+    { action: "Frame regeneration", credits: 3 },
     { action: "AI enhancement", credits: 2 },
   ];
 
@@ -361,8 +361,9 @@ export const PricingPage: React.FC = () => {
             ))}
           </div>
           <p className="text-gray-400 text-sm mt-4">
-            Credits are consumed when using AI features. Unused credits roll
-            over each month for Pro and Enterprise plans.
+            Credits are consumed when using AI features. Story and shot list
+            modifications use the same credits as generation. Unused credits
+            roll over each month for Pro and Enterprise plans.
           </p>
         </motion.div>
 
@@ -437,8 +438,9 @@ export const PricingPage: React.FC = () => {
               </h4>
               <p className="text-gray-400">
                 Credits are consumed when using AI features like story
-                generation, shot list creation, and storyboard frame generation.
-                Each action has a different credit cost.
+                generation (10 credits), shot list creation (15 credits), and
+                storyboard generation (20 credits). Modifications use the same
+                amount as initial generation.
               </p>
             </div>
             <div>

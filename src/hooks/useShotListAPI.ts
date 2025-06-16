@@ -52,9 +52,8 @@ export const useShotListAPI = () => {
     setError(null);
 
     try {
-      // Determine the action type based on whether this is a modification or new generation
-      const isModification = idea.trim() !== " " && idea.trim() !== "";
-      const action = isModification ? 'SHOT_LIST_MODIFICATION' : 'SHOT_LIST_GENERATION';
+      // Use SHOT_LIST_GENERATION for both new shot lists and modifications
+      const action = 'SHOT_LIST_GENERATION';
 
       // Validate credits before making API call
       const validation = await validateCredits(action);
@@ -88,6 +87,7 @@ export const useShotListAPI = () => {
       }
 
       // Deduct credits after successful generation
+      const isModification = idea.trim() !== " " && idea.trim() !== "";
       const deductionResult = await deductCredits(action, {
         story_logline: storyData.logline,
         modification_request: idea,
