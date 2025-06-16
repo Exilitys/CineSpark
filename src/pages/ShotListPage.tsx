@@ -3,9 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ShotListView } from '../components/ShotList/ShotListView';
 import { ShotEditor } from '../components/ShotList/ShotEditor';
 import { ShotCreator } from '../components/ShotList/ShotCreator';
+import { CreditGuard } from '../components/Credits/CreditGuard';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { useShots } from '../hooks/useShots';
 import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
+import { useCredits } from '../hooks/useCredits';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
 import { motion } from 'framer-motion';
@@ -20,6 +22,7 @@ export const ShotListPage: React.FC = () => {
   const [editingShot, setEditingShot] = useState<Shot | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [showCreator, setShowCreator] = useState(false);
+  const [showCreditGuard, setShowCreditGuard] = useState(false);
   const [generatingPhotoboard, setGeneratingPhotoboard] = useState(false);
 
   const { 
@@ -33,6 +36,7 @@ export const ShotListPage: React.FC = () => {
   } = useShots(projectId || null);
 
   const { generatePhotoboardFromAPI, loading: apiLoading, error: apiError } = usePhotoboardAPI();
+  const { canPerformAction } = useCredits();
 
   const handleEditShot = (shot: Shot) => {
     setEditingShot(shot);
@@ -117,6 +121,17 @@ export const ShotListPage: React.FC = () => {
   };
 
   const handleApproveShots = async () => {
+    // Check if user can perform the action
+    const canProceed = await canPerformAction('PHOTOBOARD_GENERATION');
+    if (!canProceed) {
+      setShowCreditGuard(true);
+      return;
+    }
+
+    await generatePhotoboard();
+  };
+
+  const generatePhotoboard = async () => {
     setGeneratingPhotoboard(true);
     
     try {
@@ -127,7 +142,7 @@ export const ShotListPage: React.FC = () => {
         toast.success('Shot list generated successfully!', { id: 'generate-shots' });
       }
       
-      // Step 1: Send shot list data to API for photoboard generation
+      // Step 1: Send shot list data to API for photoboard generation (credits will be deducted inside the hook)
       toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-photoboard' });
       
       const shotListData = {
@@ -264,6 +279,20 @@ export const ShotListPage: React.FC = () => {
           onClose={() => setShowCreator(false)}
           onCreateShot={handleCreateShot}
           existingShots={shots}
+        />
+
+        {/* Credit Guard Modal */}
+        <CreditGuard
+          action="PHOTOBOARD_GENERATION"
+          showModal={showCreditGuard}
+          onProceed={generatePhotoboard}
+          onCancel={() => setShowCreditGuard(false)}
+          title="Generate Storyboard"
+          description="Create visual storyboard frames based on your shot list."
+          metadata={{
+            shots_count: shots.length,
+            project_id: projectId
+          }}
         />
       </div>
     </div>

@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { Camera, Edit3, Plus, Filter, Download, Check, Trash2, Image } from 'lucide-react';
 import { Database } from '../../types/database';
 import { AIChatbox } from '../AI/AIChatbox';
+import { CreditGuard } from '../Credits/CreditGuard';
 import { useShotListAPI } from '../../hooks/useShotListAPI';
 import { useStory } from '../../hooks/useStory';
+import { useCredits } from '../../hooks/useCredits';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -30,9 +32,12 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
   const { projectId } = useParams<{ projectId: string }>();
   const [selectedScene, setSelectedScene] = useState('all');
   const [deletingShot, setDeletingShot] = useState<string | null>(null);
+  const [showCreditGuard, setShowCreditGuard] = useState(false);
+  const [pendingAISuggestion, setPendingAISuggestion] = useState<string | null>(null);
   
   const { generateShotListFromAPI, loading: shotApiLoading, error: shotApiError } = useShotListAPI();
   const { story } = useStory(projectId || null);
+  const { canPerformAction, getCreditCost } = useCredits();
 
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
   uniqueScenes.sort((a, b) => a - b);
@@ -100,6 +105,20 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
       return;
     }
 
+    // Check if user can perform the action
+    const canProceed = await canPerformAction('SHOT_LIST_MODIFICATION');
+    if (!canProceed) {
+      setPendingAISuggestion(suggestion);
+      setShowCreditGuard(true);
+      return;
+    }
+
+    await processAISuggestion(suggestion);
+  };
+
+  const processAISuggestion = async (suggestion: string) => {
+    if (!story || !onUpdateShots) return;
+
     try {
       toast.loading('AI is processing your suggestion...', { id: 'ai-suggestion' });
       
@@ -123,7 +142,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         }))
       };
 
-      // Call API with suggestion and current story
+      // Call API with suggestion and current story (credits will be deducted inside the hook)
       const updatedShotList = await generateShotListFromAPI(storyData, suggestion);
       
       if (!updatedShotList) {
@@ -157,6 +176,18 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
       console.error('Error processing AI suggestion:', error);
       toast.error('Error processing suggestion. Please try again.', { id: 'ai-suggestion' });
     }
+  };
+
+  const handleCreditGuardProceed = () => {
+    if (pendingAISuggestion) {
+      processAISuggestion(pendingAISuggestion);
+      setPendingAISuggestion(null);
+    }
+  };
+
+  const handleCreditGuardCancel = () => {
+    setShowCreditGuard(false);
+    setPendingAISuggestion(null);
   };
 
   return (
@@ -413,6 +444,20 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         loading={shotApiLoading}
         placeholder="Ask AI to modify shots, add new ones, or change cinematography..."
         title="Shot List AI Assistant"
+      />
+
+      {/* Credit Guard Modal */}
+      <CreditGuard
+        action="SHOT_LIST_MODIFICATION"
+        showModal={showCreditGuard}
+        onProceed={handleCreditGuardProceed}
+        onCancel={handleCreditGuardCancel}
+        title="AI Shot List Modification"
+        description="Use AI to modify your shot list based on your suggestions."
+        metadata={{
+          suggestion: pendingAISuggestion,
+          shots_count: shots.length
+        }}
       />
     </>
   );

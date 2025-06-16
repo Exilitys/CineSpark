@@ -1,10 +1,12 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PhotoboardView } from '../components/Photoboard/PhotoboardView';
+import { CreditGuard } from '../components/Credits/CreditGuard';
 import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
 import { usePhotoboard } from '../hooks/usePhotoboard';
 import { useShots } from '../hooks/useShots';
 import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
+import { useCredits } from '../hooks/useCredits';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
@@ -13,6 +15,7 @@ import toast from 'react-hot-toast';
 export const PhotoboardPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [showCreditGuard, setShowCreditGuard] = useState(false);
 
   const { 
     frames, 
@@ -29,6 +32,7 @@ export const PhotoboardPage: React.FC = () => {
   } = useShots(projectId || null);
 
   const { generatePhotoboardFromAPI, loading: apiLoading } = usePhotoboardAPI();
+  const { canPerformAction } = useCredits();
 
   const loading = framesLoading || shotsLoading;
 
@@ -93,6 +97,17 @@ export const PhotoboardPage: React.FC = () => {
   };
 
   const handleGenerateFrames = async () => {
+    // Check if user can perform the action
+    const canProceed = await canPerformAction('PHOTOBOARD_GENERATION');
+    if (!canProceed) {
+      setShowCreditGuard(true);
+      return;
+    }
+
+    await generateFrames();
+  };
+
+  const generateFrames = async () => {
     try {
       toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-frames' });
       
@@ -208,6 +223,20 @@ export const PhotoboardPage: React.FC = () => {
             onApprove={handleApproveStoryboard}
           />
         )}
+
+        {/* Credit Guard Modal */}
+        <CreditGuard
+          action="PHOTOBOARD_GENERATION"
+          showModal={showCreditGuard}
+          onProceed={generateFrames}
+          onCancel={() => setShowCreditGuard(false)}
+          title="Generate Storyboard"
+          description="Create visual storyboard frames based on your shot list."
+          metadata={{
+            shots_count: shots.length,
+            project_id: projectId
+          }}
+        />
       </div>
     </div>
   );
