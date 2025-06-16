@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useCredits } from './useCredits';
-import toast from 'react-hot-toast';
+import { useCredits } from "./useCredits";
+import toast from "react-hot-toast";
 
 interface GeneratedStory {
   logline: string;
@@ -39,14 +39,14 @@ export const useStoryAPI = () => {
 
     try {
       // Determine the action type based on whether this is a new story or modification
-      const isModification = typeof story === 'object' && story.logline;
-      const action = isModification ? 'STORY_MODIFICATION' : 'STORY_GENERATION';
+      const isModification = typeof story === "object" && story.logline;
+      const action = isModification ? "STORY_MODIFICATION" : "STORY_GENERATION";
 
       // Validate credits before making API call
       const validation = await validateCredits(action);
       if (!validation.isValid) {
-        setError(validation.message || 'Insufficient credits');
-        toast.error(validation.message || 'Insufficient credits');
+        setError(validation.message || "Insufficient credits");
+        toast.error(validation.message || "Insufficient credits");
         return null;
       }
 
@@ -67,7 +67,7 @@ export const useStoryAPI = () => {
       }
 
       const result = await response.json();
-      console.log('Story API Result:', result);
+      console.log("Story API Result:", result);
 
       if (!result || !result.story) {
         throw new Error("Invalid response format");
@@ -77,14 +77,20 @@ export const useStoryAPI = () => {
       const deductionResult = await deductCredits(action, {
         user_idea: userIdea,
         is_modification: isModification,
-        api_response_size: JSON.stringify(result).length
+        api_response_size: JSON.stringify(result).length,
       });
 
       if (!deductionResult.success) {
-        console.error('Credit deduction failed:', deductionResult.error);
-        toast.error('Story generated but credit deduction failed. Please contact support.');
+        console.error("Credit deduction failed:", deductionResult.error);
+        toast.error(
+          "Story generated but credit deduction failed. Please contact support."
+        );
       } else {
-        toast.success(`Story ${isModification ? 'modified' : 'generated'} successfully! ${validation.requiredCredits} credits deducted.`);
+        toast.success(
+          `Story ${isModification ? "modified" : "generated"} successfully! ${
+            validation.requiredCredits
+          } credits deducted.`
+        );
       }
 
       const generatedStory = result.story as GeneratedStory;

@@ -1,14 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Zap, Crown, Sparkles, Shield, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useProfile } from '../hooks/useProfile';
-import { AuthModal } from '../components/Auth/AuthModal';
-import { PricingCard } from '../components/Pricing/PricingCard';
-import { createCheckoutSession, STRIPE_PRODUCTS } from '../lib/stripe';
-import { storePricingSession, getPricingSession, clearPricingSession } from '../utils/sessionStorage';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  Zap,
+  Crown,
+  Sparkles,
+  Shield,
+  AlertCircle,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { useProfile } from "../hooks/useProfile";
+import { AuthModal } from "../components/Auth/AuthModal";
+import { PricingCard } from "../components/Pricing/PricingCard";
+import { createCheckoutSession, STRIPE_PRODUCTS } from "../lib/stripe";
+import {
+  storePricingSession,
+  getPricingSession,
+  clearPricingSession,
+} from "../utils/sessionStorage";
+import toast from "react-hot-toast";
 
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
@@ -23,9 +35,12 @@ export const PricingPage: React.FC = () => {
   useEffect(() => {
     const storedSession = getPricingSession();
     if (storedSession && user) {
-      console.log('🔄 Found stored pricing session for authenticated user:', storedSession);
+      console.log(
+        "🔄 Found stored pricing session for authenticated user:",
+        storedSession
+      );
       toast.success(`Resuming ${storedSession.planName} plan selection...`);
-      
+
       // Auto-redirect to payment after a short delay
       setTimeout(() => {
         navigate(`/payment/${storedSession.planId}`);
@@ -36,113 +51,113 @@ export const PricingPage: React.FC = () => {
 
   const plans = [
     {
-      id: 'free',
-      name: 'Free',
-      description: 'Perfect for getting started with AI filmmaking',
+      id: "free",
+      name: "Free",
+      description: "Perfect for getting started with AI filmmaking",
       monthlyPrice: 0,
       annualPrice: 0,
       credits: 100,
       icon: Sparkles,
-      color: 'from-gray-500 to-gray-600',
-      borderColor: 'border-gray-600',
+      color: "from-gray-500 to-gray-600",
+      borderColor: "border-gray-600",
       popular: false,
       features: [
-        '100 AI generation credits',
-        '3 projects per month',
-        'Basic story generation',
-        'Standard shot lists',
-        'Basic storyboard frames',
-        'PDF export',
-        'Community support'
+        "100 AI generation credits",
+        "3 projects per month",
+        "Basic story generation",
+        "Standard shot lists",
+        "Basic storyboard frames",
+        "PDF export",
+        "Community support",
       ],
       limitations: [
-        'Limited to 3 projects',
-        'Basic AI models only',
-        'Standard image quality'
-      ]
+        "Limited to 3 projects",
+        "Basic AI models only",
+        "Standard image quality",
+      ],
     },
     {
-      id: 'pro',
-      name: 'Pro',
-      description: 'Advanced features for professional filmmakers',
+      id: "pro",
+      name: "Pro",
+      description: "Advanced features for professional filmmakers",
       monthlyPrice: 29,
       annualPrice: 290,
       credits: 1000,
       icon: Zap,
-      color: 'from-gold-500 to-gold-600',
-      borderColor: 'border-gold-500',
+      color: "from-gold-500 to-gold-600",
+      borderColor: "border-gold-500",
       popular: true,
       features: [
-        '1,000 AI generation credits',
-        'Unlimited projects',
-        'Advanced story generation',
-        'Professional shot lists',
-        'High-quality storyboards',
-        'Multiple export formats',
-        'Priority support',
-        'Advanced editing tools',
-        'Collaboration features',
-        'Custom templates'
+        "1,000 AI generation credits",
+        "Unlimited projects",
+        "Advanced story generation",
+        "Professional shot lists",
+        "High-quality storyboards",
+        "Multiple export formats",
+        "Priority support",
+        "Advanced editing tools",
+        "Collaboration features",
+        "Custom templates",
       ],
-      limitations: []
+      limitations: [],
     },
     {
-      id: 'enterprise',
-      name: 'Enterprise',
-      description: 'Complete solution for studios and teams',
+      id: "enterprise",
+      name: "Enterprise",
+      description: "Complete solution for studios and teams",
       monthlyPrice: 99,
       annualPrice: 990,
       credits: 5000,
       icon: Crown,
-      color: 'from-purple-500 to-purple-600',
-      borderColor: 'border-purple-500',
+      color: "from-purple-500 to-purple-600",
+      borderColor: "border-purple-500",
       popular: false,
       features: [
-        '5,000 AI generation credits',
-        'Unlimited projects',
-        'Premium AI models',
-        'Cinema-grade shot lists',
-        '4K storyboard generation',
-        'All export formats',
-        'Dedicated support',
-        'Team collaboration',
-        'Custom branding',
-        'API access',
-        'Advanced analytics',
-        'Priority processing'
+        "5,000 AI generation credits",
+        "Unlimited projects",
+        "Premium AI models",
+        "Cinema-grade shot lists",
+        "4K storyboard generation",
+        "All export formats",
+        "Dedicated support",
+        "Team collaboration",
+        "Custom branding",
+        "API access",
+        "Advanced analytics",
+        "Priority processing",
       ],
-      limitations: []
-    }
+      limitations: [],
+    },
   ];
 
   const handleSelectPlan = async (planId: string, annual: boolean) => {
-    console.log('💳 handleSelectPlan called:', {
+    console.log("💳 handleSelectPlan called:", {
       planId,
       annual,
-      user: user?.email || 'None',
+      user: user?.email || "None",
       authLoading,
       initialized,
     });
 
     // Wait for auth to finish loading and be initialized
     if (authLoading || !initialized) {
-      console.log('⏳ Auth still loading or not initialized, waiting...');
-      toast.error('Please wait while we load your account information');
+      console.log("⏳ Auth still loading or not initialized, waiting...");
+      toast.error("Please wait while we load your account information");
       return;
     }
 
-    const selectedPlan = plans.find(p => p.id === planId);
+    const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan) {
-      toast.error('Invalid plan selected');
+      toast.error("Invalid plan selected");
       return;
     }
 
     // Handle free plan
-    if (planId === 'free') {
+    if (planId === "free") {
       if (user) {
-        toast.success('You\'re already on the free plan!');
+        toast.success("You're already on the free plan!");
       } else {
-        toast.info('Sign up to get started with the free plan');
+        toast.info("Sign up to get started with the free plan");
         setShowAuthModal(true);
       }
       return;
@@ -150,51 +165,57 @@ export const PricingPage: React.FC = () => {
 
     // Check authentication for paid plans
     if (!user) {
-      console.log('🚫 No user found, storing pricing session and showing auth modal');
-      
+      console.log(
+        "🚫 No user found, storing pricing session and showing auth modal"
+      );
+
       // Store pricing session securely
-      const price = annual ? selectedPlan.annualPrice : selectedPlan.monthlyPrice;
+      const price = annual
+        ? selectedPlan.annualPrice
+        : selectedPlan.monthlyPrice;
       storePricingSession(planId, selectedPlan.name, price);
-      
+
       // Set pending plan for UI feedback
       setPendingPlanId(planId);
-      
+
       // Show auth modal with payment context
       setShowAuthModal(true);
-      
-      toast.info('Please sign in or create an account to complete your purchase');
+
+      toast.info(
+        "Please sign in or create an account to complete your purchase"
+      );
       return;
     }
 
-    console.log('✅ User is authenticated, proceeding with Stripe checkout');
+    console.log("✅ User is authenticated, proceeding with Stripe checkout");
     setProcessingPlan(planId);
 
     try {
       // Get the appropriate price ID based on plan and billing cycle
-      const priceId = annual 
+      const priceId = annual
         ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.annual
         : STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.monthly;
 
       if (!priceId) {
-        throw new Error('Price ID not found for selected plan');
+        throw new Error("Price ID not found for selected plan");
       }
 
       // Create Stripe checkout session with user's access token
       const { sessionId, url } = await createCheckoutSession(
-        priceId, 
-        profile?.id, 
+        priceId,
+        profile?.id,
         session?.access_token
       );
-      
+
       if (url) {
         // Redirect to Stripe Checkout
         window.location.href = url;
       } else {
-        throw new Error('No checkout URL received');
+        throw new Error("No checkout URL received");
       }
     } catch (error) {
-      console.error('💥 Stripe checkout error:', error);
-      toast.error('Failed to start checkout process. Please try again.');
+      console.error("💥 Stripe checkout error:", error);
+      toast.error("Failed to start checkout process. Please try again.");
     } finally {
       setProcessingPlan(null);
     }
@@ -206,11 +227,11 @@ export const PricingPage: React.FC = () => {
   };
 
   const creditUsageExamples = [
-    { action: 'Generate story structure', credits: 10 },
-    { action: 'Create shot list', credits: 15 },
-    { action: 'Generate storyboard frame', credits: 5 },
-    { action: 'Regenerate content', credits: 3 },
-    { action: 'AI enhancement', credits: 2 }
+    { action: "Generate story structure", credits: 10 },
+    { action: "Create shot list", credits: 15 },
+    { action: "Generate storyboard frame", credits: 5 },
+    { action: "Regenerate content", credits: 3 },
+    { action: "AI enhancement", credits: 2 },
   ];
 
   // Show loading state while auth is loading or not initialized
@@ -236,15 +257,23 @@ export const PricingPage: React.FC = () => {
           className="text-center mb-16"
         >
           <h1 className="text-4xl font-bold text-white mb-4">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">Creative Plan</span>
+            Choose Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">
+              Creative Plan
+            </span>
           </h1>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-8">
-            Unlock the full potential of AI-powered filmmaking with flexible pricing designed for creators at every level.
+            Unlock the full potential of AI-powered filmmaking with flexible
+            pricing designed for creators at every level.
           </p>
-          
+
           {/* Billing Toggle */}
           <div className="flex items-center justify-center space-x-4 mb-8">
-            <span className={`text-sm font-medium ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-medium ${
+                !isAnnual ? "text-white" : "text-gray-400"
+              }`}
+            >
               Monthly
             </span>
             <button
@@ -257,7 +286,11 @@ export const PricingPage: React.FC = () => {
                 <ToggleLeft className="h-8 w-8 text-gray-400" />
               )}
             </button>
-            <span className={`text-sm font-medium ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-medium ${
+                isAnnual ? "text-white" : "text-gray-400"
+              }`}
+            >
               Annual
             </span>
             {isAnnual && (
@@ -266,7 +299,7 @@ export const PricingPage: React.FC = () => {
               </span>
             )}
           </div>
-          
+
           {/* Auth Status */}
           <div className="mt-6">
             {user ? (
@@ -316,14 +349,20 @@ export const PricingPage: React.FC = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {creditUsageExamples.map((example, index) => (
-              <div key={index} className="bg-gray-700 rounded-lg p-3 text-center">
-                <div className="text-gold-400 font-bold text-lg">{example.credits}</div>
+              <div
+                key={index}
+                className="bg-gray-700 rounded-lg p-3 text-center"
+              >
+                <div className="text-gold-400 font-bold text-lg">
+                  {example.credits}
+                </div>
                 <div className="text-gray-300 text-sm">{example.action}</div>
               </div>
             ))}
           </div>
           <p className="text-gray-400 text-sm mt-4">
-            Credits are consumed when using AI features. Unused credits roll over each month for Pro and Enterprise plans.
+            Credits are consumed when using AI features. Unused credits roll
+            over each month for Pro and Enterprise plans.
           </p>
         </motion.div>
 
@@ -348,22 +387,35 @@ export const PricingPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="bg-gray-800 rounded-xl p-8 border border-gray-700 mb-16"
         >
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">Secure & Trusted</h3>
+          <h3 className="text-2xl font-bold text-white mb-8 text-center">
+            Secure & Trusted
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <Shield className="h-12 w-12 text-green-400 mx-auto mb-4" />
-              <h4 className="font-semibold text-white mb-2">Bank-Level Security</h4>
-              <p className="text-gray-400">Your payment information is encrypted and secure with industry-standard SSL protection.</p>
+              <h4 className="font-semibold text-white mb-2">
+                Bank-Level Security
+              </h4>
+              <p className="text-gray-400">
+                Your payment information is encrypted and secure with
+                industry-standard SSL protection.
+              </p>
             </div>
             <div className="text-center">
               <Zap className="h-12 w-12 text-gold-400 mx-auto mb-4" />
               <h4 className="font-semibold text-white mb-2">Instant Access</h4>
-              <p className="text-gray-400">Get immediate access to your plan features as soon as your payment is processed.</p>
+              <p className="text-gray-400">
+                Get immediate access to your plan features as soon as your
+                payment is processed.
+              </p>
             </div>
             <div className="text-center">
               <Crown className="h-12 w-12 text-purple-400 mx-auto mb-4" />
               <h4 className="font-semibold text-white mb-2">Cancel Anytime</h4>
-              <p className="text-gray-400">No long-term commitments. Cancel or change your plan anytime from your account settings.</p>
+              <p className="text-gray-400">
+                No long-term commitments. Cancel or change your plan anytime
+                from your account settings.
+              </p>
             </div>
           </div>
         </motion.div>
@@ -375,31 +427,65 @@ export const PricingPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="bg-gray-800 rounded-xl p-8 border border-gray-700"
         >
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">Frequently Asked Questions</h3>
+          <h3 className="text-2xl font-bold text-white mb-8 text-center">
+            Frequently Asked Questions
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold text-white mb-2">What are credits used for?</h4>
-              <p className="text-gray-400">Credits are consumed when using AI features like story generation, shot list creation, and storyboard frame generation. Each action has a different credit cost.</p>
+              <h4 className="font-semibold text-white mb-2">
+                What are credits used for?
+              </h4>
+              <p className="text-gray-400">
+                Credits are consumed when using AI features like story
+                generation, shot list creation, and storyboard frame generation.
+                Each action has a different credit cost.
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">Do unused credits expire?</h4>
-              <p className="text-gray-400">For Pro and Enterprise plans, unused credits roll over to the next month. Free plan credits reset monthly.</p>
+              <h4 className="font-semibold text-white mb-2">
+                Do unused credits expire?
+              </h4>
+              <p className="text-gray-400">
+                For Pro and Enterprise plans, unused credits roll over to the
+                next month. Free plan credits reset monthly.
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">Can I upgrade or downgrade anytime?</h4>
-              <p className="text-gray-400">Yes! You can change your plan at any time. Upgrades take effect immediately, while downgrades take effect at the next billing cycle.</p>
+              <h4 className="font-semibold text-white mb-2">
+                Can I upgrade or downgrade anytime?
+              </h4>
+              <p className="text-gray-400">
+                Yes! You can change your plan at any time. Upgrades take effect
+                immediately, while downgrades take effect at the next billing
+                cycle.
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">Is there a free trial?</h4>
-              <p className="text-gray-400">Every new user starts with 100 free credits to explore all features. No credit card required to get started.</p>
+              <h4 className="font-semibold text-white mb-2">
+                Is there a free trial?
+              </h4>
+              <p className="text-gray-400">
+                Every new user starts with 100 free credits to explore all
+                features. No credit card required to get started.
+              </p>
             </div>
             <div>
-              <h4 className="font-semibent text-white mb-2">What payment methods do you accept?</h4>
-              <p className="text-gray-400">We accept all major credit cards, debit cards, and digital wallets through our secure Stripe payment processor.</p>
+              <h4 className="font-semibent text-white mb-2">
+                What payment methods do you accept?
+              </h4>
+              <p className="text-gray-400">
+                We accept all major credit cards, debit cards, and digital
+                wallets through our secure Stripe payment processor.
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-2">Is my payment information secure?</h4>
-              <p className="text-gray-400">Yes! We use Stripe for payment processing, which is PCI DSS compliant and trusted by millions of businesses worldwide.</p>
+              <h4 className="font-semibold text-white mb-2">
+                Is my payment information secure?
+              </h4>
+              <p className="text-gray-400">
+                Yes! We use Stripe for payment processing, which is PCI DSS
+                compliant and trusted by millions of businesses worldwide.
+              </p>
             </div>
           </div>
         </motion.div>
@@ -411,10 +497,15 @@ export const PricingPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="text-center mt-16"
         >
-          <h3 className="text-2xl font-bold text-white mb-4">Ready to Create Your Next Masterpiece?</h3>
-          <p className="text-gray-400 mb-8">Join thousands of filmmakers using CineSpark AI to bring their visions to life.</p>
+          <h3 className="text-2xl font-bold text-white mb-4">
+            Ready to Create Your Next Masterpiece?
+          </h3>
+          <p className="text-gray-400 mb-8">
+            Join thousands of filmmakers using CineSpark AI to bring their
+            visions to life.
+          </p>
           {!user && (
-            <button 
+            <button
               onClick={() => setShowAuthModal(true)}
               className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
             >
@@ -426,8 +517,8 @@ export const PricingPage: React.FC = () => {
       </div>
 
       {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
+      <AuthModal
+        isOpen={showAuthModal}
         onClose={handleAuthModalClose}
         showReturnMessage={!!pendingPlanId}
       />

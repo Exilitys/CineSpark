@@ -1,35 +1,33 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { PhotoboardView } from '../components/Photoboard/PhotoboardView';
-import { CreditGuard } from '../components/Credits/CreditGuard';
-import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
-import { usePhotoboard } from '../hooks/usePhotoboard';
-import { useShots } from '../hooks/useShots';
-import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
-import { useCredits } from '../hooks/useCredits';
-import { supabase } from '../lib/supabase';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { PhotoboardView } from "../components/Photoboard/PhotoboardView";
+import { CreditGuard } from "../components/Credits/CreditGuard";
+import { WorkflowTracker } from "../components/Layout/WorkflowTracker";
+import { usePhotoboard } from "../hooks/usePhotoboard";
+import { useShots } from "../hooks/useShots";
+import { usePhotoboardAPI } from "../hooks/usePhotoboardAPI";
+import { useCredits } from "../hooks/useCredits";
+import { supabase } from "../lib/supabase";
+import { motion } from "framer-motion";
+import { ArrowLeft, Image as ImageIcon } from "lucide-react";
+import toast from "react-hot-toast";
+import { useState } from "react";
 
 export const PhotoboardPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [showCreditGuard, setShowCreditGuard] = useState(false);
 
-  const { 
-    frames, 
-    loading: framesLoading, 
+  const {
+    frames,
+    loading: framesLoading,
     uploading,
-    uploadImage, 
-    updateFrame, 
-    regenerateFrame 
+    uploadImage,
+    updateFrame,
+    regenerateFrame,
   } = usePhotoboard(projectId || null);
 
-  const { 
-    shots, 
-    loading: shotsLoading 
-  } = useShots(projectId || null);
+  const { shots, loading: shotsLoading } = useShots(projectId || null);
 
   const { generatePhotoboardFromAPI, loading: apiLoading } = usePhotoboardAPI();
   const { canPerformAction } = useCredits();
@@ -37,32 +35,32 @@ export const PhotoboardPage: React.FC = () => {
   const loading = framesLoading || shotsLoading;
 
   const handleEditFrame = (frame: any) => {
-    console.log('Edit frame:', frame);
+    console.log("Edit frame:", frame);
     // TODO: Implement frame editing modal
   };
 
   const handleRegenerateFrame = async (frame: any) => {
     try {
-      toast.loading('Regenerating frame...', { id: 'regenerate' });
+      toast.loading("Regenerating frame...", { id: "regenerate" });
       await regenerateFrame(frame.id);
-      toast.success('Frame regenerated successfully!', { id: 'regenerate' });
+      toast.success("Frame regenerated successfully!", { id: "regenerate" });
     } catch (error) {
-      toast.error('Error regenerating frame', { id: 'regenerate' });
+      toast.error("Error regenerating frame", { id: "regenerate" });
     }
   };
 
   const handleUploadImage = async (frameId: string, file: File) => {
     try {
-      toast.loading('Uploading image...', { id: 'upload' });
+      toast.loading("Uploading image...", { id: "upload" });
       await uploadImage(frameId, file);
-      toast.success('Image uploaded successfully!', { id: 'upload' });
+      toast.success("Image uploaded successfully!", { id: "upload" });
     } catch (error) {
-      toast.error('Error uploading image', { id: 'upload' });
+      toast.error("Error uploading image", { id: "upload" });
     }
   };
 
   const handleApproveStoryboard = () => {
-    toast.success('Storyboard approved! Ready for export.');
+    toast.success("Storyboard approved! Ready for export.");
     navigate(`/export/${projectId}`);
   };
 
@@ -70,8 +68,10 @@ export const PhotoboardPage: React.FC = () => {
     try {
       const framesToInsert = photoboardData.frames.map((frame: any) => {
         // Find the corresponding shot in our database
-        const correspondingShot = shots.find(shot => shot.shot_number === frame.shot_number);
-        
+        const correspondingShot = shots.find(
+          (shot) => shot.shot_number === frame.shot_number
+        );
+
         return {
           project_id: projectId,
           shot_id: correspondingShot?.id || null,
@@ -83,22 +83,22 @@ export const PhotoboardPage: React.FC = () => {
       });
 
       const { data, error } = await supabase
-        .from('photoboard_frames')
+        .from("photoboard_frames")
         .insert(framesToInsert)
         .select();
 
       if (error) throw error;
-      
+
       return data || [];
     } catch (error) {
-      console.error('Error creating photoboard in database:', error);
+      console.error("Error creating photoboard in database:", error);
       throw error;
     }
   };
 
   const handleGenerateFrames = async () => {
     // Check if user can perform the action
-    const canProceed = await canPerformAction('PHOTOBOARD_GENERATION');
+    const canProceed = await canPerformAction("PHOTOBOARD_GENERATION");
     if (!canProceed) {
       setShowCreditGuard(true);
       return;
@@ -109,10 +109,12 @@ export const PhotoboardPage: React.FC = () => {
 
   const generateFrames = async () => {
     try {
-      toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-frames' });
-      
+      toast.loading("Sending shot list to AI for storyboard generation...", {
+        id: "generate-frames",
+      });
+
       const shotListData = {
-        shots: shots.map(shot => ({
+        shots: shots.map((shot) => ({
           id: shot.id,
           shot_number: shot.shot_number,
           scene_number: shot.scene_number,
@@ -122,28 +124,33 @@ export const PhotoboardPage: React.FC = () => {
           description: shot.description,
           lens_recommendation: shot.lens_recommendation,
           estimated_duration: shot.estimated_duration,
-          notes: shot.notes
-        }))
+          notes: shot.notes,
+        })),
       };
 
       const generatedPhotoboard = await generatePhotoboardFromAPI(shotListData);
-      
+
       if (!generatedPhotoboard) {
-        toast.error('Failed to generate storyboard. Please try again.', { id: 'generate-frames' });
+        toast.error("Failed to generate storyboard. Please try again.", {
+          id: "generate-frames",
+        });
         return;
       }
 
-      toast.loading('Creating storyboard frames in your project...', { id: 'generate-frames' });
-      
+      toast.loading("Creating storyboard frames in your project...", {
+        id: "generate-frames",
+      });
+
       await createPhotoboardInDatabase(generatedPhotoboard);
-      
-      toast.success('Storyboard frames generated successfully!', { id: 'generate-frames' });
-      
+
+      toast.success("Storyboard frames generated successfully!", {
+        id: "generate-frames",
+      });
+
       // Refresh the page to show new frames
       window.location.reload();
-      
     } catch (error) {
-      toast.error('Error generating frames', { id: 'generate-frames' });
+      toast.error("Error generating frames", { id: "generate-frames" });
     }
   };
 
@@ -172,7 +179,7 @@ export const PhotoboardPage: React.FC = () => {
           className="mb-6"
         >
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -190,9 +197,12 @@ export const PhotoboardPage: React.FC = () => {
             <div className="w-16 h-16 bg-cinema-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <ImageIcon className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Generate Storyboard</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Generate Storyboard
+            </h2>
             <p className="text-gray-400 mb-8 max-w-md mx-auto">
-              Ready to visualize your shots? We'll generate a professional storyboard with AI-created images based on your shot list.
+              Ready to visualize your shots? We'll generate a professional
+              storyboard with AI-created images based on your shot list.
             </p>
             <button
               onClick={handleGenerateFrames}
@@ -213,7 +223,7 @@ export const PhotoboardPage: React.FC = () => {
             </button>
           </motion.div>
         ) : (
-          <PhotoboardView 
+          <PhotoboardView
             frames={frames}
             shots={shots}
             uploading={uploading}
@@ -234,7 +244,7 @@ export const PhotoboardPage: React.FC = () => {
           description="Create visual storyboard frames based on your shot list."
           metadata={{
             shots_count: shots.length,
-            project_id: projectId
+            project_id: projectId,
           }}
         />
       </div>
