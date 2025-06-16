@@ -726,6 +726,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         loading={storyApiLoading}
         placeholder="Ask AI to modify the story, characters, or scenes..."
         title="Story AI Assistant"
+        creditAction="STORY_GENERATION"
       />
 
       {/* Credit Guard Modal */}

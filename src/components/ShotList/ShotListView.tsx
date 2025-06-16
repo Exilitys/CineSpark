@@ -444,6 +444,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         loading={shotApiLoading}
         placeholder={`Ask AI to modify shots, add new ones, or change cinematography... (${getCreditCost('SHOT_LIST_GENERATION')} credits)`}
         title="Shot List AI Assistant"
+        creditAction="SHOT_LIST_GENERATION"
       />
 
       {/* Credit Guard Modal */}
