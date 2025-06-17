@@ -80,7 +80,8 @@ export const usePDFExport = () => {
       
     } catch (error) {
       console.error('Error exporting story PDF:', error);
-      toast.error('Failed to export story PDF. Please try again.', { id: 'export-story' });
+      // toast.error('Failed to export story PDF. Please try again.', { id: 'export-story' });
+      throw error;
     } finally {
       setExportingStory(false);
     }
@@ -115,7 +116,8 @@ export const usePDFExport = () => {
       
     } catch (error) {
       console.error('Error exporting shots PDF:', error);
-      toast.error('Failed to export shot list PDF. Please try again.', { id: 'export-shots' });
+      // toast.error('Failed to export shot list PDF. Please try again.', { id: 'export-shots' });
+      throw error;
     } finally {
       setExportingShots(false);
     }
