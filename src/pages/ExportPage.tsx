@@ -152,6 +152,7 @@ export const ExportPage: React.FC = () => {
       }
 
       // Set export result based on success/failure
+      console.log('failedExports')
       const result: ExportResult = {
         success: successCount === totalExports && failedExports.length === 0,
         successCount,
