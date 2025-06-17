@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings } from 'lucide-react';
+import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings, Info } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import { CreditDisplay } from '../Credits/CreditDisplay';
@@ -18,6 +18,7 @@ export const Header: React.FC = () => {
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
+    { path: '/about', icon: Info, label: 'About' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: `/story/${projectId}`, icon: FileText, label: 'Story' },
     { path: `/shots/${projectId}`, icon: Camera, label: 'Shot List' },
@@ -77,8 +78,8 @@ export const Header: React.FC = () => {
 
             <nav className="hidden md:flex space-x-8">
               {navItems.map(({ path, icon: Icon, label }) => {
-                // Show Home and Projects for everyone
-                if (path === '/' || path === '/projects') {
+                // Show Home, About, and Projects for everyone
+                if (path === '/' || path === '/about' || path === '/projects') {
                   return (
                     <Link
                       key={path}

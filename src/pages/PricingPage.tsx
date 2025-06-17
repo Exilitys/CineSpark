@@ -63,7 +63,7 @@ export const PricingPage: React.FC = () => {
       popular: false,
       features: [
         "100 AI generation credits",
-        "3 projects per month",
+        "3 projects",
         "Basic story generation",
         "Standard shot lists",
         "Basic storyboard frames",
