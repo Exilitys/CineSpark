@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, FileText, Camera, Image, Check, Package, ArrowLeft, Home, CheckCircle } from 'lucide-react';
+import { Download, FileText, Camera, Image, Check, Package, ArrowLeft, Home, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { usePDFExport } from '../hooks/usePDFExport';
 import { useProjects } from '../hooks/useProjects';
 import { useStory } from '../hooks/useStory';
@@ -9,12 +9,19 @@ import { useShots } from '../hooks/useShots';
 import { usePhotoboard } from '../hooks/usePhotoboard';
 import toast from 'react-hot-toast';
 
+interface ExportResult {
+  success: boolean;
+  successCount: number;
+  totalExports: number;
+  failedExports: string[];
+}
+
 export const ExportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['story-pdf']);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportComplete, setExportComplete] = useState(false);
+  const [exportResult, setExportResult] = useState<ExportResult | null>(null);
 
   // Hooks for data and export functionality
   const { projects } = useProjects();
@@ -80,6 +87,7 @@ export const ExportPage: React.FC = () => {
     setIsExporting(true);
     let successCount = 0;
     let totalExports = selectedFormats.length;
+    let failedExports: string[] = [];
 
     try {
       // Export Story PDF
@@ -108,6 +116,7 @@ export const ExportPage: React.FC = () => {
           successCount++;
         } catch (error) {
           console.error('Error exporting story PDF:', error);
+          failedExports.push('Story PDF');
           toast.error('Failed to export story PDF');
         }
       }
@@ -131,6 +140,7 @@ export const ExportPage: React.FC = () => {
           successCount++;
         } catch (error) {
           console.error('Error exporting shots PDF:', error);
+          failedExports.push('Shot List PDF');
           toast.error('Failed to export shot list PDF');
         }
       }
@@ -141,19 +151,36 @@ export const ExportPage: React.FC = () => {
         successCount++; // Count as success for demo purposes
       }
 
-      // Show completion status
-      if (successCount === totalExports) {
+      // Set export result based on success/failure
+      const result: ExportResult = {
+        success: successCount === totalExports && failedExports.length === 0,
+        successCount,
+        totalExports,
+        failedExports
+      };
+
+      setExportResult(result);
+
+      // Show appropriate toast messages
+      if (result.success) {
         toast.success(`All ${successCount} exports completed successfully!`);
-        setExportComplete(true);
       } else if (successCount > 0) {
         toast.success(`${successCount} of ${totalExports} exports completed successfully`);
-        setExportComplete(true);
       } else {
         toast.error('All exports failed. Please try again.');
       }
 
     } catch (error) {
       console.error('Export error:', error);
+      setExportResult({
+        success: false,
+        successCount: 0,
+        totalExports,
+        failedExports: selectedFormats.map(formatId => {
+          const option = exportOptions.find(opt => opt.id === formatId);
+          return option?.name || 'Unknown';
+        })
+      });
       toast.error('Export process failed. Please try again.');
     } finally {
       setIsExporting(false);
@@ -162,6 +189,10 @@ export const ExportPage: React.FC = () => {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleTryAgain = () => {
+    setExportResult(null);
   };
 
   // Loading state
@@ -176,8 +207,12 @@ export const ExportPage: React.FC = () => {
     );
   }
 
-  // Export Success Screen
-  if (exportComplete) {
+  // Export Complete Screen (Success or Failure)
+  if (exportResult) {
+    const isSuccess = exportResult.success;
+    const isPartialSuccess = exportResult.successCount > 0 && !exportResult.success;
+    const isCompleteFailure = exportResult.successCount === 0;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -190,9 +225,21 @@ export const ExportPage: React.FC = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6"
+            className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              isSuccess 
+                ? 'bg-green-600' 
+                : isPartialSuccess 
+                ? 'bg-orange-600' 
+                : 'bg-red-600'
+            }`}
           >
-            <CheckCircle className="h-10 w-10 text-white" />
+            {isSuccess ? (
+              <CheckCircle className="h-10 w-10 text-white" />
+            ) : isPartialSuccess ? (
+              <AlertTriangle className="h-10 w-10 text-white" />
+            ) : (
+              <XCircle className="h-10 w-10 text-white" />
+            )}
           </motion.div>
           
           <motion.h1
@@ -201,7 +248,12 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-3xl font-bold text-white mb-4"
           >
-            Export Successful!
+            {isSuccess 
+              ? 'Export Successful!' 
+              : isPartialSuccess 
+              ? 'Partial Export Success' 
+              : 'Export Failed'
+            }
           </motion.h1>
           
           <motion.p
@@ -210,7 +262,12 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="text-gray-400 mb-8 leading-relaxed"
           >
-            Your project PDFs have been successfully generated and downloaded to your device. They're ready for production use.
+            {isSuccess 
+              ? 'Your project PDFs have been successfully generated and downloaded to your device. They\'re ready for production use.'
+              : isPartialSuccess
+              ? `${exportResult.successCount} of ${exportResult.totalExports} exports completed successfully. Some exports failed and may need to be retried.`
+              : 'All export attempts failed. Please check your connection and try again.'
+            }
           </motion.p>
 
           <motion.div
@@ -219,32 +276,80 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700"
           >
-            <h3 className="text-sm font-medium text-gray-300 mb-3">Exported Files:</h3>
-            <div className="space-y-2">
-              {selectedFormats.map(formatId => {
-                const option = exportOptions.find(opt => opt.id === formatId);
-                return (
-                  <div key={formatId} className="flex items-center text-sm text-gray-400">
-                    <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0" />
-                    <span>{option?.name}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Export Results:</h3>
+            
+            {/* Successful Exports */}
+            {exportResult.successCount > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-medium text-green-400 mb-2">Successful Exports:</h4>
+                <div className="space-y-2">
+                  {selectedFormats.map(formatId => {
+                    const option = exportOptions.find(opt => opt.id === formatId);
+                    const wasSuccessful = !exportResult.failedExports.includes(option?.name || '');
+                    
+                    if (wasSuccessful) {
+                      return (
+                        <div key={formatId} className="flex items-center text-sm text-gray-400">
+                          <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0" />
+                          <span>{option?.name}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Failed Exports */}
+            {exportResult.failedExports.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-red-400 mb-2">Failed Exports:</h4>
+                <div className="space-y-2">
+                  {exportResult.failedExports.map((failedExport, index) => (
+                    <div key={index} className="flex items-center text-sm text-gray-400">
+                      <XCircle className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" />
+                      <span>{failedExport}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
 
-          <motion.button
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            onClick={handleBackToHome}
-            className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="space-y-4"
           >
-            <Home className="h-5 w-5" />
-            <span>Back to Home</span>
-          </motion.button>
+            {isSuccess ? (
+              <button
+                onClick={handleBackToHome}
+                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Home className="h-5 w-5" />
+                <span>Back to Home</span>
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={handleTryAgain}
+                  className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Download className="h-5 w-5" />
+                  <span>Try Again</span>
+                </button>
+                <button
+                  onClick={handleBackToHome}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Home className="h-5 w-5" />
+                  <span>Back to Home</span>
+                </button>
+              </div>
+            )}
+          </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
@@ -252,7 +357,10 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.7 }}
             className="text-xs text-gray-500 mt-4"
           >
-            Ready to start your next project? Create a new film concept from the home page.
+            {isSuccess 
+              ? 'Ready to start your next project? Create a new film concept from the home page.'
+              : 'If problems persist, please check your internet connection and ensure the API server is running.'
+            }
           </motion.p>
         </div>
       </motion.div>
