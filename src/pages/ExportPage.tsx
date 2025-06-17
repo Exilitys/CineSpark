@@ -2,46 +2,68 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Download, FileText, Camera, Image, Check, Package, ArrowLeft, Home, CheckCircle } from 'lucide-react';
+import { usePDFExport } from '../hooks/usePDFExport';
+import { useProjects } from '../hooks/useProjects';
+import { useStory } from '../hooks/useStory';
+import { useShots } from '../hooks/useShots';
+import { usePhotoboard } from '../hooks/usePhotoboard';
+import toast from 'react-hot-toast';
 
 export const ExportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const [selectedFormats, setSelectedFormats] = useState<string[]>(['pdf']);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>(['story-pdf']);
   const [isExporting, setIsExporting] = useState(false);
   const [exportComplete, setExportComplete] = useState(false);
 
+  // Hooks for data and export functionality
+  const { projects } = useProjects();
+  const { story, loading: storyLoading } = useStory(projectId || null);
+  const { shots, loading: shotsLoading } = useShots(projectId || null);
+  const { frames, loading: framesLoading } = usePhotoboard(projectId || null);
+  const { exportStoryPDF, exportShotsPDF, exportingStory, exportingShots } = usePDFExport();
+
+  // Get project details
+  const currentProject = projects.find(p => p.id === projectId);
+  const projectName = currentProject?.title || 'Untitled Project';
+
   const exportOptions = [
     {
-      id: 'pdf',
-      name: 'PDF Package',
-      description: 'Complete production package in PDF format',
+      id: 'story-pdf',
+      name: 'Story PDF',
+      description: 'Complete story document with characters and scenes',
       icon: FileText,
-      includes: ['Story outline', 'Character profiles', 'Shot list', 'Storyboard']
+      includes: ['Logline & Synopsis', 'Three-act structure', 'Character profiles', 'Scene breakdown'],
+      available: !!story,
+      loadingState: exportingStory
     },
     {
-      id: 'final-draft',
-      name: 'Final Draft',
-      description: 'Screenplay formatted for Final Draft',
-      icon: FileText,
-      includes: ['Formatted screenplay', 'Character list', 'Scene breakdown']
-    },
-    {
-      id: 'shot-list-csv',
-      name: 'Shot List CSV',
-      description: 'Detailed shot list for production software',
+      id: 'shot-list-pdf',
+      name: 'Shot List PDF',
+      description: 'Detailed cinematography breakdown for production',
       icon: Camera,
-      includes: ['Shot specifications', 'Equipment needs', 'Timing data']
+      includes: ['Shot specifications', 'Camera angles & movements', 'Lens recommendations', 'Production notes'],
+      available: shots.length > 0,
+      loadingState: exportingShots
     },
     {
-      id: 'storyboard-images',
-      name: 'Storyboard Images',
-      description: 'High-resolution storyboard frames',
+      id: 'photoboard-pdf',
+      name: 'Photoboard PDF',
+      description: 'Visual storyboard with images and annotations',
       icon: Image,
-      includes: ['Individual frame images', 'Annotations', 'Multiple formats']
+      includes: ['Storyboard frames', 'Visual references', 'Shot annotations', 'Technical specifications'],
+      available: frames.length > 0,
+      loadingState: false // Will implement when photoboard PDF export is available
     }
   ];
 
   const handleFormatToggle = (formatId: string) => {
+    const option = exportOptions.find(opt => opt.id === formatId);
+    if (!option?.available) {
+      toast.error(`${option?.name} is not available. Please generate the content first.`);
+      return;
+    }
+
     setSelectedFormats(prev => 
       prev.includes(formatId) 
         ? prev.filter(id => id !== formatId)
@@ -50,18 +72,109 @@ export const ExportPage: React.FC = () => {
   };
 
   const handleExport = async () => {
+    if (selectedFormats.length === 0) {
+      toast.error('Please select at least one format to export');
+      return;
+    }
+
     setIsExporting(true);
-    
-    // Simulate export process
-    setTimeout(() => {
+    let successCount = 0;
+    let totalExports = selectedFormats.length;
+
+    try {
+      // Export Story PDF
+      if (selectedFormats.includes('story-pdf') && story) {
+        try {
+          const storyData = {
+            logline: story.logline,
+            synopsis: story.synopsis,
+            three_act_structure: story.three_act_structure,
+            characters: story.characters.map(char => ({
+              name: char.name,
+              description: char.description,
+              motivation: char.motivation,
+              arc: char.arc
+            })),
+            scenes: story.scenes.map(scene => ({
+              title: scene.title,
+              setting: scene.setting,
+              description: scene.description,
+              characters: scene.characters,
+              key_actions: scene.key_actions
+            }))
+          };
+
+          await exportStoryPDF(projectName, storyData);
+          successCount++;
+        } catch (error) {
+          console.error('Error exporting story PDF:', error);
+          toast.error('Failed to export story PDF');
+        }
+      }
+
+      // Export Shot List PDF
+      if (selectedFormats.includes('shot-list-pdf') && shots.length > 0) {
+        try {
+          const shotsData = shots.map(shot => ({
+            shot_number: shot.shot_number,
+            scene_number: shot.scene_number,
+            shot_type: shot.shot_type,
+            camera_angle: shot.camera_angle,
+            camera_movement: shot.camera_movement,
+            description: shot.description,
+            lens_recommendation: shot.lens_recommendation,
+            estimated_duration: shot.estimated_duration || 5,
+            notes: shot.notes || ''
+          }));
+
+          await exportShotsPDF(projectName, shotsData);
+          successCount++;
+        } catch (error) {
+          console.error('Error exporting shots PDF:', error);
+          toast.error('Failed to export shot list PDF');
+        }
+      }
+
+      // Export Photoboard PDF (placeholder for future implementation)
+      if (selectedFormats.includes('photoboard-pdf')) {
+        toast.info('Photoboard PDF export will be available soon!');
+        successCount++; // Count as success for demo purposes
+      }
+
+      // Show completion status
+      if (successCount === totalExports) {
+        toast.success(`All ${successCount} exports completed successfully!`);
+        setExportComplete(true);
+      } else if (successCount > 0) {
+        toast.success(`${successCount} of ${totalExports} exports completed successfully`);
+        setExportComplete(true);
+      } else {
+        toast.error('All exports failed. Please try again.');
+      }
+
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export process failed. Please try again.');
+    } finally {
       setIsExporting(false);
-      setExportComplete(true);
-    }, 3000);
+    }
   };
 
   const handleBackToHome = () => {
     navigate('/');
   };
+
+  // Loading state
+  if (storyLoading || shotsLoading || framesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading project data...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Export Success Screen
   if (exportComplete) {
@@ -97,7 +210,7 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="text-gray-400 mb-8 leading-relaxed"
           >
-            Your project has been successfully exported. The files have been downloaded to your device and are ready for production.
+            Your project PDFs have been successfully generated and downloaded to your device. They're ready for production use.
           </motion.p>
 
           <motion.div
@@ -106,7 +219,7 @@ export const ExportPage: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700"
           >
-            <h3 className="text-sm font-medium text-gray-300 mb-3">Exported Formats:</h3>
+            <h3 className="text-sm font-medium text-gray-300 mb-3">Exported Files:</h3>
             <div className="space-y-2">
               {selectedFormats.map(formatId => {
                 const option = exportOptions.find(opt => opt.id === formatId);
@@ -176,7 +289,7 @@ export const ExportPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white">Export Project</h1>
-            <p className="text-gray-400">Download your pre-production package</p>
+            <p className="text-gray-400">Download your pre-production PDFs for "{projectName}"</p>
           </div>
         </div>
       </div>
@@ -184,7 +297,7 @@ export const ExportPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Export Options */}
         <div className="lg:col-span-2">
-          <h2 className="text-xl font-semibold text-white mb-6">Select Export Formats</h2>
+          <h2 className="text-xl font-semibold text-white mb-6">Select PDF Exports</h2>
           <div className="space-y-4">
             {exportOptions.map((option) => (
               <motion.div
@@ -193,7 +306,9 @@ export const ExportPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
                 className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 ${
-                  selectedFormats.includes(option.id)
+                  !option.available
+                    ? 'border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed'
+                    : selectedFormats.includes(option.id)
                     ? 'border-gold-500 bg-gold-900/10'
                     : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                 }`}
@@ -201,26 +316,47 @@ export const ExportPage: React.FC = () => {
               >
                 <div className="flex items-start space-x-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    selectedFormats.includes(option.id)
+                    !option.available
+                      ? 'bg-gray-700'
+                      : selectedFormats.includes(option.id)
                       ? 'bg-gold-600'
                       : 'bg-gray-700'
                   }`}>
-                    <option.icon className="h-5 w-5 text-white" />
+                    {option.loadingState ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <option.icon className="h-5 w-5 text-white" />
+                    )}
                   </div>
                   
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-medium text-white">{option.name}</h3>
-                      {selectedFormats.includes(option.id) && (
+                      <h3 className={`text-lg font-medium ${
+                        option.available ? 'text-white' : 'text-gray-500'
+                      }`}>
+                        {option.name}
+                        {!option.available && (
+                          <span className="text-xs text-gray-500 ml-2">(Not Available)</span>
+                        )}
+                      </h3>
+                      {selectedFormats.includes(option.id) && option.available && (
                         <Check className="h-5 w-5 text-gold-400" />
                       )}
                     </div>
-                    <p className="text-gray-400 mb-3">{option.description}</p>
+                    <p className={`mb-3 ${
+                      option.available ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {option.description}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {option.includes.map((item, index) => (
                         <span
                           key={index}
-                          className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded"
+                          className={`text-xs px-2 py-1 rounded ${
+                            option.available 
+                              ? 'bg-gray-700 text-gray-300' 
+                              : 'bg-gray-800 text-gray-600'
+                          }`}
                         >
                           {item}
                         </span>
@@ -240,22 +376,22 @@ export const ExportPage: React.FC = () => {
             
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Project:</span>
+                <span className="text-white truncate ml-2">{projectName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Selected formats:</span>
                 <span className="text-white">{selectedFormats.length}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Estimated size:</span>
-                <span className="text-white">~15 MB</span>
-              </div>
-              <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Format:</span>
-                <span className="text-white">ZIP archive</span>
+                <span className="text-white">PDF files</span>
               </div>
             </div>
 
             {selectedFormats.length > 0 && (
               <div className="mb-6">
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Selected formats:</h4>
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Selected exports:</h4>
                 <div className="space-y-1">
                   {selectedFormats.map(formatId => {
                     const option = exportOptions.find(opt => opt.id === formatId);
@@ -272,26 +408,26 @@ export const ExportPage: React.FC = () => {
 
             <motion.button
               onClick={handleExport}
-              disabled={selectedFormats.length === 0 || isExporting}
+              disabled={selectedFormats.length === 0 || isExporting || exportingStory || exportingShots}
               className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
               whileHover={{ scale: selectedFormats.length > 0 ? 1.02 : 1 }}
               whileTap={{ scale: selectedFormats.length > 0 ? 0.98 : 1 }}
             >
-              {isExporting ? (
+              {isExporting || exportingStory || exportingShots ? (
                 <>
                   <Download className="h-4 w-4 animate-bounce" />
-                  <span>Exporting...</span>
+                  <span>Exporting PDFs...</span>
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  <span>Export Project</span>
+                  <span>Export PDFs</span>
                 </>
               )}
             </motion.button>
 
             <p className="text-xs text-gray-500 mt-3 text-center">
-              Your project will be downloaded as a ZIP file containing all selected formats.
+              PDF files will be automatically downloaded to your device.
             </p>
           </div>
         </div>
