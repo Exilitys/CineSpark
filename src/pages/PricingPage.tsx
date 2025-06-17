@@ -20,7 +20,7 @@ import {
   getPricingSession,
   clearPricingSession,
 } from "../utils/sessionStorage";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
@@ -192,13 +192,14 @@ export const PricingPage: React.FC = () => {
 
     try {
       // Check if we're in demo mode
-      const isDemoMode = !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-                         import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === 'pk_test_demo';
+      const isDemoMode =
+        !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === "pk_test_demo";
 
       if (isDemoMode) {
         console.log("🎭 Demo mode: Redirecting to demo payment page");
         toast.success("Demo mode: Redirecting to payment simulation...");
-        
+
         // In demo mode, redirect to our payment page
         setTimeout(() => {
           navigate(`/payment/${planId}`);
@@ -218,7 +219,7 @@ export const PricingPage: React.FC = () => {
       // Create Stripe checkout session with user's access token
       const { sessionId, url, demo } = await createCheckoutSession(
         priceId,
-        profile?.stripe_customer_id,
+        // profile?.stripe_customer_id,
         session?.access_token
       );
 
@@ -284,16 +285,19 @@ export const PricingPage: React.FC = () => {
           </p>
 
           {/* Demo Mode Notice */}
-          {(!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-            import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === 'pk_test_demo') && (
+          {(!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+            import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === "pk_test_demo") && (
             <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
               <div className="flex items-center justify-center space-x-2">
                 <AlertCircle className="h-5 w-5 text-blue-400" />
-                <span className="text-blue-400 font-medium">Demo Mode Active</span>
+                <span className="text-blue-400 font-medium">
+                  Demo Mode Active
+                </span>
               </div>
               <p className="text-blue-300 text-sm mt-1">
-                This is a demonstration. No actual payments will be processed. 
-                Payment simulation will upgrade your account for testing purposes.
+                This is a demonstration. No actual payments will be processed.
+                Payment simulation will upgrade your account for testing
+                purposes.
               </p>
             </div>
           )}

@@ -259,7 +259,7 @@ export const useCredits = () => {
    * Get user's credit transaction history
    */
   const getTransactionHistory = async (
-    limit: number = 50
+    limit: number = 10
   ): Promise<CreditTransaction[]> => {
     if (!user) return [];
 
