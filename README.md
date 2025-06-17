@@ -71,6 +71,18 @@ supabase secrets set STRIPE_SECRET_KEY=sk_test_your_secret_key
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
 
+## Demo Mode
+
+The application includes a demo mode that activates when:
+- No Stripe publishable key is provided
+- The key is set to `pk_test_demo`
+
+In demo mode:
+- No actual payments are processed
+- Users can test the complete flow
+- Account upgrades work for testing
+- Clear indicators show it's a demo
+
 ## Security Features
 
 ### PCI Compliance

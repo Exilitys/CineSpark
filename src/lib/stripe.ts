@@ -13,7 +13,7 @@ export const STRIPE_CONFIG = {
   locale: 'en' as const,
 };
 
-// Product and price IDs (UPDATE THESE WITH YOUR ACTUAL STRIPE PRICE IDs)
+// Product and price IDs - These are demo IDs, replace with your actual Stripe Price IDs
 export const STRIPE_PRODUCTS = {
   pro: {
     productId: 'prod_cinespark_pro',
@@ -27,6 +27,10 @@ export const STRIPE_PRODUCTS = {
   },
 };
 
+// Demo mode for development
+const isDemoMode = !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+                   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === 'pk_test_demo';
+
 // Stripe API helpers
 export const createCheckoutSession = async (priceId: string, customerId?: string, accessToken?: string) => {
   try {
@@ -35,6 +39,21 @@ export const createCheckoutSession = async (priceId: string, customerId?: string
     
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase configuration missing');
+    }
+
+    // In demo mode, simulate the checkout process
+    if (isDemoMode) {
+      console.log('🎭 Demo mode: Simulating Stripe checkout');
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Return mock session data
+      return {
+        sessionId: `cs_demo_${Date.now()}`,
+        url: null, // No URL in demo mode, we'll handle locally
+        demo: true
+      };
     }
 
     // Use access token for authenticated requests, fallback to anon key
@@ -74,6 +93,14 @@ export const createCustomerPortalSession = async (customerId: string, accessToke
     
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase configuration missing');
+    }
+
+    // In demo mode, redirect to profile page
+    if (isDemoMode) {
+      return {
+        url: `${window.location.origin}/profile`,
+        demo: true
+      };
     }
 
     // Use access token for authenticated requests, fallback to anon key

@@ -20,7 +20,7 @@ import {
   getPricingSession,
   clearPricingSession,
 } from "../utils/sessionStorage";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
@@ -187,10 +187,25 @@ export const PricingPage: React.FC = () => {
       return;
     }
 
-    console.log("✅ User is authenticated, proceeding with Stripe checkout");
+    console.log("✅ User is authenticated, proceeding with checkout");
     setProcessingPlan(planId);
 
     try {
+      // Check if we're in demo mode
+      const isDemoMode = !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+                         import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === 'pk_test_demo';
+
+      if (isDemoMode) {
+        console.log("🎭 Demo mode: Redirecting to demo payment page");
+        toast.success("Demo mode: Redirecting to payment simulation...");
+        
+        // In demo mode, redirect to our payment page
+        setTimeout(() => {
+          navigate(`/payment/${planId}`);
+        }, 1000);
+        return;
+      }
+
       // Get the appropriate price ID based on plan and billing cycle
       const priceId = annual
         ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.annual
@@ -201,20 +216,23 @@ export const PricingPage: React.FC = () => {
       }
 
       // Create Stripe checkout session with user's access token
-      const { sessionId, url } = await createCheckoutSession(
+      const { sessionId, url, demo } = await createCheckoutSession(
         priceId,
-        profile?.id,
+        profile?.stripe_customer_id,
         session?.access_token
       );
 
-      if (url) {
-        // Redirect to Stripe Checkout
+      if (demo) {
+        // Demo mode - redirect to our payment page
+        navigate(`/payment/${planId}`);
+      } else if (url) {
+        // Production mode - redirect to Stripe Checkout
         window.location.href = url;
       } else {
         throw new Error("No checkout URL received");
       }
     } catch (error) {
-      console.error("💥 Stripe checkout error:", error);
+      console.error("💥 Checkout error:", error);
       toast.error("Failed to start checkout process. Please try again.");
     } finally {
       setProcessingPlan(null);
@@ -264,6 +282,21 @@ export const PricingPage: React.FC = () => {
             Unlock the full potential of AI-powered filmmaking with flexible
             pricing designed for creators at every level.
           </p>
+
+          {/* Demo Mode Notice */}
+          {(!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+            import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === 'pk_test_demo') && (
+            <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
+              <div className="flex items-center justify-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-blue-400" />
+                <span className="text-blue-400 font-medium">Demo Mode Active</span>
+              </div>
+              <p className="text-blue-300 text-sm mt-1">
+                This is a demonstration. No actual payments will be processed. 
+                Payment simulation will upgrade your account for testing purposes.
+              </p>
+            </div>
+          )}
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center space-x-4 mb-8">
