@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2, Camera } from 'lucide-react';
+import { FileText, Users, Play, Edit3, Save, X, Plus, Trash2, Camera, Download } from 'lucide-react';
 import { StoryWithDetails } from '../../hooks/useStory';
 import { useShotListAPI } from '../../hooks/useShotListAPI';
 import { useStoryAPI } from '../../hooks/useStoryAPI';
 import { useCredits } from '../../hooks/useCredits';
+import { usePDFExport } from '../../hooks/usePDFExport';
 import { AIChatbox } from '../AI/AIChatbox';
 import { CreditGuard } from '../Credits/CreditGuard';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useProjects } from '../../hooks/useProjects';
 import toast from 'react-hot-toast';
 
 interface StoryEditorProps {
@@ -34,12 +36,18 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   const [showCreditGuard, setShowCreditGuard] = useState(false);
 
   const navigate = useNavigate();
+  const { projects } = useProjects();
   const { generateShotListFromAPI, loading: apiLoading, error: apiError } = useShotListAPI();
   const { generateStoryFromAPI, loading: storyApiLoading, error: storyApiError } = useStoryAPI();
   const { canPerformAction, refetch: refetchCredits } = useCredits();
+  const { exportStoryPDF, exportingStory } = usePDFExport();
 
   // Get project ID from story
   const projectId = story.project_id;
+
+  // Get project details for export
+  const currentProject = projects.find(p => p.id === projectId);
+  const projectName = currentProject?.title || 'Untitled Project';
 
   // Local state for editing
   const [logline, setLogline] = useState(story.logline);
@@ -47,6 +55,34 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
   const [threeActStructure, setThreeActStructure] = useState(story.three_act_structure);
   const [characters, setCharacters] = useState(story.characters);
   const [scenes, setScenes] = useState(story.scenes);
+
+  const handleExportStoryPDF = async () => {
+    try {
+      const storyData = {
+        logline,
+        synopsis,
+        three_act_structure: threeActStructure,
+        characters: characters.map(char => ({
+          name: char.name,
+          description: char.description,
+          motivation: char.motivation,
+          arc: char.arc
+        })),
+        scenes: scenes.map(scene => ({
+          title: scene.title,
+          setting: scene.setting,
+          description: scene.description,
+          characters: scene.characters,
+          key_actions: scene.key_actions
+        }))
+      };
+
+      await exportStoryPDF(projectName, storyData);
+    } catch (error) {
+      console.error('Error exporting story PDF:', error);
+      toast.error('Failed to export story PDF');
+    }
+  };
 
   const handleSaveStory = async () => {
     setSaving(true);
@@ -330,23 +366,42 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               <p className="text-gray-400">Review and refine your AI-generated story</p>
             </div>
           </div>
-          <button
-            onClick={handleApproveStory}
-            disabled={isCurrentlyGenerating}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200"
-          >
-            {isCurrentlyGenerating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Generating Shots...</span>
-              </>
-            ) : (
-              <>
-                <Camera className="h-4 w-4" />
-                <span>Approve & Generate Shots</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleExportStoryPDF}
+              disabled={exportingStory}
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            >
+              {exportingStory ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Export PDF</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleApproveStory}
+              disabled={isCurrentlyGenerating}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            >
+              {isCurrentlyGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Generating Shots...</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="h-4 w-4" />
+                  <span>Approve & Generate Shots</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* API Error Display */}

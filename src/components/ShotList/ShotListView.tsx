@@ -7,6 +7,8 @@ import { CreditGuard } from '../Credits/CreditGuard';
 import { useShotListAPI } from '../../hooks/useShotListAPI';
 import { useStory } from '../../hooks/useStory';
 import { useCredits } from '../../hooks/useCredits';
+import { usePDFExport } from '../../hooks/usePDFExport';
+import { useProjects } from '../../hooks/useProjects';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -38,6 +40,12 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
   const { generateShotListFromAPI, loading: shotApiLoading, error: shotApiError } = useShotListAPI();
   const { story } = useStory(projectId || null);
   const { canPerformAction, getCreditCost } = useCredits();
+  const { exportShotsPDF, exportingShots } = usePDFExport();
+  const { projects } = useProjects();
+
+  // Get project details for export
+  const currentProject = projects.find(p => p.id === projectId);
+  const projectName = currentProject?.title || 'Untitled Project';
 
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
   uniqueScenes.sort((a, b) => a - b);
@@ -46,6 +54,27 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
     if (selectedScene === 'all') return true;
     return shot.scene_number === parseInt(selectedScene);
   });
+
+  const handleExportShotsPDF = async () => {
+    try {
+      const shotsData = shots.map(shot => ({
+        shot_number: shot.shot_number,
+        scene_number: shot.scene_number,
+        shot_type: shot.shot_type,
+        camera_angle: shot.camera_angle,
+        camera_movement: shot.camera_movement,
+        description: shot.description,
+        lens_recommendation: shot.lens_recommendation,
+        estimated_duration: shot.estimated_duration || 5,
+        notes: shot.notes || ''
+      }));
+
+      await exportShotsPDF(projectName, shotsData);
+    } catch (error) {
+      console.error('Error exporting shots PDF:', error);
+      toast.error('Failed to export shot list PDF');
+    }
+  };
 
   const getShotTypeColor = (shotType: string) => {
     const colors = {
@@ -212,9 +241,22 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
           </div>
           
           <div className="flex items-center space-x-4">
-            <button className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
-              <Download className="h-4 w-4" />
-              <span>Export PDF</span>
+            <button
+              onClick={handleExportShotsPDF}
+              disabled={exportingShots}
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            >
+              {exportingShots ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Export PDF</span>
+                </>
+              )}
             </button>
             {onAddShot && (
               <button
