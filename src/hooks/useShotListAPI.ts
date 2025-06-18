@@ -66,8 +66,7 @@ export const useShotListAPI = () => {
         return null;
       }
 
-      // Prepare shot data for API
-      const shotData = currentShots.map((shot) => ({
+      const currentShotsData = currentShots.map((shot) => ({
         shot_number: shot.shot_number,
         scene_number: shot.scene_number,
         shot_type: shot.shot_type,
@@ -75,18 +74,19 @@ export const useShotListAPI = () => {
         camera_movement: shot.camera_movement,
         description: shot.description,
         lens_recommendation: shot.lens_recommendation,
-        estimated_duration: shot.estimated_duration,
-        notes: shot.notes,
+        estimated_duration: shot.estimated_duration || 5,
+        notes: shot.notes || "",
       }));
 
       console.log("📤 Sending to API:", {
         idea,
         story: JSON.stringify(storyData),
-        shot: shotData,
-        shotCount: shotData.length,
+        shot: currentShotsData,
+        shotCount: currentShotsData.length,
       });
 
       // Make API call
+      console.log(currentShotsData);
       const response = await fetch("http://127.0.0.1:8000/generate_shot", {
         method: "POST",
         headers: {
@@ -94,8 +94,8 @@ export const useShotListAPI = () => {
         },
         body: JSON.stringify({
           idea: idea,
-          story: JSON.stringify(storyData),
-          shot: shotData, // Send current shots array instead of string
+          story: storyData,
+          shot: currentShotsData, // Send current shots array instead of string
         }),
       });
 

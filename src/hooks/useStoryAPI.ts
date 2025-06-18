@@ -32,7 +32,7 @@ export const useStoryAPI = () => {
 
   const generateStoryFromAPI = async (
     userIdea: string,
-    story: GeneratedStory | string = " "
+    story?: GeneratedStory
   ): Promise<GeneratedStory | null> => {
     setLoading(true);
     setError(null);
@@ -73,7 +73,8 @@ export const useStoryAPI = () => {
       }
 
       // Deduct credits after successful generation
-      const isModification = typeof story === "object" && story.logline;
+      const isModification =
+        typeof story === "object" && story !== null && "logline" in story;
       const deductionResult = await deductCredits(action, {
         user_idea: userIdea,
         is_modification: isModification,

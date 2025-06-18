@@ -215,10 +215,10 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         notes: shot.notes || "",
       }));
 
-      console.log('🎬 Sending current shots to API:', {
+      console.log("🎬 Sending current shots to API:", {
         shotsCount: currentShotsData.length,
         suggestion,
-        firstShot: currentShotsData[0]
+        firstShot: currentShotsData[0],
       });
 
       // Call API with suggestion, current story, and current shots (credits will be deducted inside the hook)

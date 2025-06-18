@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useCredits } from './useCredits';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useCredits } from "./useCredits";
+import toast from "react-hot-toast";
 
 interface PhotoboardAPIResponse {
   success: boolean;
@@ -9,7 +9,7 @@ interface PhotoboardAPIResponse {
     shot_list_input: string;
     generated_content: string;
     timestamp: string;
-    status: 'draft' | 'published';
+    status: "draft" | "published";
   };
   error?: string;
   timestamp: string;
@@ -38,21 +38,23 @@ export const usePhotoboardAPI = () => {
   const [error, setError] = useState<string | null>(null);
   const { deductCredits, validateCredits } = useCredits();
 
-  const generatePhotoboardFromAPI = async (shotListData: any): Promise<GeneratedPhotoboard | null> => {
+  const generatePhotoboardFromAPI = async (
+    shotListData: any
+  ): Promise<GeneratedPhotoboard | null> => {
     setLoading(true);
     setError(null);
 
     try {
       // Validate credits before making API call
-      const validation = await validateCredits('PHOTOBOARD_GENERATION');
+      const validation = await validateCredits("PHOTOBOARD_GENERATION");
       if (!validation.isValid) {
-        setError(validation.message || 'Insufficient credits');
-        toast.error(validation.message || 'Insufficient credits');
+        setError(validation.message || "Insufficient credits");
+        toast.error(validation.message || "Insufficient credits");
         return null;
       }
 
       // Simulate API call with realistic timing
-      await new Promise(resolve => setTimeout(resolve, 4000));
+      await new Promise((resolve) => setTimeout(resolve, 4000));
 
       // Mock API response - in production, this would be a real API call
       const mockResponse: PhotoboardAPIResponse = {
@@ -60,38 +62,46 @@ export const usePhotoboardAPI = () => {
         data: {
           photoboard_id: `photoboard_${Date.now()}`,
           shot_list_input: JSON.stringify(shotListData),
-          generated_content: JSON.stringify(generateMockPhotoboard(shotListData)),
+          generated_content: JSON.stringify(
+            generateMockPhotoboard(shotListData)
+          ),
           timestamp: new Date().toISOString(),
-          status: 'draft'
+          status: "draft",
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       if (!mockResponse.success || !mockResponse.data) {
-        throw new Error(mockResponse.error || 'Failed to generate photoboard');
+        throw new Error(mockResponse.error || "Failed to generate photoboard");
       }
 
       // Deduct credits after successful generation
-      const deductionResult = await deductCredits('PHOTOBOARD_GENERATION', {
+      const deductionResult = await deductCredits("PHOTOBOARD_GENERATION", {
         shots_count: shotListData.shots?.length || 0,
         photoboard_id: mockResponse.data.photoboard_id,
-        api_response_size: JSON.stringify(mockResponse).length
+        api_response_size: JSON.stringify(mockResponse).length,
       });
 
       if (!deductionResult.success) {
-        console.error('Credit deduction failed:', deductionResult.error);
-        toast.error('Photoboard generated but credit deduction failed. Please contact support.');
+        console.error("Credit deduction failed:", deductionResult.error);
+        toast.error(
+          "Photoboard generated but credit deduction failed. Please contact support."
+        );
       } else {
-        toast.success(`Photoboard generated successfully! ${validation.requiredCredits} credits deducted.`);
+        toast.success(
+          `Photoboard generated successfully! ${validation.requiredCredits} credits deducted.`
+        );
       }
 
-      const generatedPhotoboard = JSON.parse(mockResponse.data.generated_content) as GeneratedPhotoboard;
+      const generatedPhotoboard = JSON.parse(
+        mockResponse.data.generated_content
+      ) as GeneratedPhotoboard;
       return generatedPhotoboard;
-
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
       setError(errorMessage);
-      console.error('Photoboard generation error:', err);
+      console.error("Photoboard generation error:", err);
       toast.error(`Photoboard generation failed: ${errorMessage}`);
       return null;
     } finally {
@@ -102,113 +112,127 @@ export const usePhotoboardAPI = () => {
   const regenerateFrame = async (frameData: any): Promise<string | null> => {
     try {
       // Validate credits for frame regeneration
-      const validation = await validateCredits('PHOTOBOARD_REGENERATION');
+      const validation = await validateCredits("PHOTOBOARD_REGENERATION");
       if (!validation.isValid) {
-        toast.error(validation.message || 'Insufficient credits');
+        toast.error(validation.message || "Insufficient credits");
         return null;
       }
 
       // Simulate frame regeneration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Deduct credits for regeneration
-      const deductionResult = await deductCredits('PHOTOBOARD_REGENERATION', {
+      const deductionResult = await deductCredits("PHOTOBOARD_REGENERATION", {
         frame_id: frameData.id,
-        regeneration_type: 'single_frame'
+        regeneration_type: "single_frame",
       });
 
       if (!deductionResult.success) {
-        console.error('Credit deduction failed:', deductionResult.error);
-        toast.error('Frame regenerated but credit deduction failed. Please contact support.');
+        console.error("Credit deduction failed:", deductionResult.error);
+        toast.error(
+          "Frame regenerated but credit deduction failed. Please contact support."
+        );
       } else {
-        toast.success(`Frame regenerated! ${validation.requiredCredits} credits deducted.`);
+        toast.success(
+          `Frame regenerated! ${validation.requiredCredits} credits deducted.`
+        );
       }
 
       // Return new image URL
       const imageLibrary = [
-        'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800',
+        "https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800",
       ];
-      
+
       return imageLibrary[Math.floor(Math.random() * imageLibrary.length)];
     } catch (err) {
-      console.error('Frame regeneration error:', err);
-      toast.error('Frame regeneration failed');
+      console.error("Frame regeneration error:", err);
+      toast.error("Frame regeneration failed");
       return null;
     }
   };
 
   const generateMockPhotoboard = (shotListData: any): GeneratedPhotoboard => {
     const shots = shotListData.shots || [];
-    
+
     // Curated high-quality images for different shot types and scenes
     const imageLibrary = {
       lighthouse: [
-        'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800'
+        "https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
       wide_shots: [
-        'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800'
+        "https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
       medium_shots: [
-        'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800'
+        "https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
       close_ups: [
-        'https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800'
+        "https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
       pov_shots: [
-        'https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ]
+        "https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg?auto=compress&cs=tinysrgb&w=800",
+      ],
     };
 
     const getImageForShot = (shot: any, index: number): string => {
-      const shotType = shot.shot_type?.toLowerCase().replace(/\s+/g, '_') || 'medium_shot';
-      
+      const shotType =
+        shot.shot_type?.toLowerCase().replace(/\s+/g, "_") || "medium_shot";
+
       // Check if it's a lighthouse story
-      if (shot.description?.toLowerCase().includes('lighthouse') || 
-          shot.description?.toLowerCase().includes('marcus') ||
-          shot.description?.toLowerCase().includes('naia')) {
+      if (
+        shot.description?.toLowerCase().includes("lighthouse") ||
+        shot.description?.toLowerCase().includes("marcus") ||
+        shot.description?.toLowerCase().includes("naia")
+      ) {
         return imageLibrary.lighthouse[index % imageLibrary.lighthouse.length];
       }
 
       // Select based on shot type
-      if (shotType.includes('wide')) {
+      if (shotType.includes("wide")) {
         return imageLibrary.wide_shots[index % imageLibrary.wide_shots.length];
-      } else if (shotType.includes('close')) {
+      } else if (shotType.includes("close")) {
         return imageLibrary.close_ups[index % imageLibrary.close_ups.length];
-      } else if (shotType.includes('pov')) {
+      } else if (shotType.includes("pov")) {
         return imageLibrary.pov_shots[index % imageLibrary.pov_shots.length];
       } else {
-        return imageLibrary.medium_shots[index % imageLibrary.medium_shots.length];
+        return imageLibrary.medium_shots[
+          index % imageLibrary.medium_shots.length
+        ];
       }
     };
 
     const generateFrameDescription = (shot: any): string => {
-      const style = shot.shot_type === 'POV' ? 'First-person perspective' : 
-                   shot.camera_angle === 'High Angle' ? 'Elevated viewpoint' :
-                   shot.camera_angle === 'Low Angle' ? 'Dramatic low angle' : 'Standard composition';
-      
+      const style =
+        shot.shot_type === "POV"
+          ? "First-person perspective"
+          : shot.camera_angle === "High Angle"
+          ? "Elevated viewpoint"
+          : shot.camera_angle === "Low Angle"
+          ? "Dramatic low angle"
+          : "Standard composition";
+
       return `${shot.shot_type} - ${style} - ${shot.description}`;
     };
 
     const generateAnnotations = (shot: any): string[] => {
       const baseAnnotations = [
-        `Shot ${shot.shot_number.toString().padStart(3, '0')}`,
+        `Shot ${shot.shot_number.toString().padStart(3, "0")}`,
         `Scene ${shot.scene_number}`,
         shot.shot_type,
         shot.camera_angle,
-        shot.camera_movement
+        shot.camera_movement,
       ];
 
       // Add technical annotations
@@ -221,13 +245,13 @@ export const usePhotoboardAPI = () => {
       }
 
       // Add contextual annotations based on shot content
-      if (shot.description?.toLowerCase().includes('emotional')) {
-        baseAnnotations.push('Emotional moment');
+      if (shot.description?.toLowerCase().includes("emotional")) {
+        baseAnnotations.push("Emotional moment");
       }
-      if (shot.description?.toLowerCase().includes('action')) {
-        baseAnnotations.push('Action sequence');
+      if (shot.description?.toLowerCase().includes("action")) {
+        baseAnnotations.push("Action sequence");
       }
-      if (shot.camera_movement !== 'Static') {
+      if (shot.camera_movement !== "Static") {
         baseAnnotations.push(`${shot.camera_movement} movement`);
       }
 
@@ -239,15 +263,15 @@ export const usePhotoboardAPI = () => {
       shot_number: shot.shot_number,
       scene_number: shot.scene_number,
       description: generateFrameDescription(shot),
-      style: 'Cinematic',
+      style: "Cinematic",
       image_url: getImageForShot(shot, index),
       annotations: generateAnnotations(shot),
       technical_specs: {
         shot_type: shot.shot_type,
         camera_angle: shot.camera_angle,
         camera_movement: shot.camera_movement,
-        lens_recommendation: shot.lens_recommendation
-      }
+        lens_recommendation: shot.lens_recommendation,
+      },
     }));
 
     return { frames };
@@ -257,6 +281,6 @@ export const usePhotoboardAPI = () => {
     generatePhotoboardFromAPI,
     regenerateFrame,
     loading,
-    error
+    error,
   };
 };

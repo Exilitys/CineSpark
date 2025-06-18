@@ -272,14 +272,18 @@ export const ProfilePage: React.FC = () => {
   };
 
   const creditUsageExamples = [
-    { action: "Story generation", credits: CREDIT_COSTS.STORY_GENERATION },
+    { action: "Story Generation", credits: CREDIT_COSTS.STORY_GENERATION },
     {
-      action: "Shot list creation",
+      action: "Shot List Creation",
       credits: CREDIT_COSTS.SHOT_LIST_GENERATION,
     },
     {
-      action: "Photoboard generation",
+      action: "Photoboard Generation",
       credits: CREDIT_COSTS.PHOTOBOARD_GENERATION,
+    },
+    {
+      action: "Photoboard Regeneration",
+      credits: CREDIT_COSTS.PHOTOBOARD_REGENERATION,
     },
   ];
 

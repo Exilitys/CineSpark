@@ -21,6 +21,7 @@ import {
   clearPricingSession,
 } from "../utils/sessionStorage";
 import { toast } from "react-toastify";
+import { useCredits } from "../hooks/useCredits";
 
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
@@ -30,6 +31,7 @@ export const PricingPage: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const { getTransactionHistory, CREDIT_COSTS } = useCredits();
 
   // Check for stored pricing session on component mount
   useEffect(() => {
@@ -246,9 +248,19 @@ export const PricingPage: React.FC = () => {
   };
 
   const creditUsageExamples = [
-    { action: "Story generation", credits: 10 },
-    { action: "Shot list creation", credits: 15 },
-    { action: "Photoboard generation", credits: 20 },
+    { action: "Story Generation", credits: CREDIT_COSTS.STORY_GENERATION },
+    {
+      action: "Shot List Creation",
+      credits: CREDIT_COSTS.SHOT_LIST_GENERATION,
+    },
+    {
+      action: "Photoboard Generation",
+      credits: CREDIT_COSTS.PHOTOBOARD_GENERATION,
+    },
+    {
+      action: "Photoboard Regeneration",
+      credits: CREDIT_COSTS.PHOTOBOARD_REGENERATION,
+    },
   ];
 
   // Show loading state while auth is loading or not initialized
@@ -528,29 +540,37 @@ export const PricingPage: React.FC = () => {
         </motion.div>
 
         {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-16"
-        >
-          <h3 className="text-2xl font-bold text-white mb-4">
-            Ready to Create Your Next Masterpiece?
-          </h3>
-          <p className="text-gray-400 mb-8">
-            Join thousands of filmmakers using CineSpark AI to bring their
-            visions to life.
-          </p>
-          {!user && (
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
+
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-center bg-gradient-to-br from-gold-500/10 to-cinema-500/10 rounded-2xl p-12 border border-gold-500/30"
             >
-              <Sparkles className="h-5 w-5" />
-              <span>Start Creating for Free</span>
-            </button>
-          )}
-        </motion.div>
+              <h2 className="text-4xl font-bold text-white mb-6">
+                Ready to Transform Your{" "}
+                <span className="text-gold-400">Creative Vision?</span>
+              </h2>
+              <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+                Join thousands of creators who are already using CineSparkAI to
+                bring their stories to life. Start your filmmaking journey today
+                with our AI-powered platform.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => navigate("/")}
+                  className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white px-8 py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  <span>Start Creating</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </div>
 
       {/* Auth Modal */}

@@ -34,6 +34,7 @@ export const CREDIT_COSTS = {
   STORY_GENERATION: 10,
   SHOT_LIST_GENERATION: 15,
   PHOTOBOARD_GENERATION: 20,
+  PHOTOBOARD_REGENERATION: 5,
 } as const;
 
 export type CreditAction = keyof typeof CREDIT_COSTS;
@@ -306,6 +307,7 @@ export const useCredits = () => {
       STORY_GENERATION: "Story Generation",
       SHOT_LIST_GENERATION: "Shot List Generation",
       PHOTOBOARD_GENERATION: "Photoboard Generation",
+      PHOTOBOARD_REGENERATION: "Photoboard ReGeneration",
     };
     return displayNames[action];
   };

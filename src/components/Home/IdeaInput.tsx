@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Sparkles, ArrowRight, Lightbulb } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { useProjects } from '../../hooks/useProjects';
-import { useStoryAPI } from '../../hooks/useStoryAPI';
-import { useCredits } from '../../hooks/useCredits';
-import { CreditGuard } from '../Credits/CreditGuard';
-import { supabase } from '../../lib/supabase';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Sparkles, ArrowRight, Lightbulb } from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useProjects } from "../../hooks/useProjects";
+import { useStoryAPI } from "../../hooks/useStoryAPI";
+import { useCredits } from "../../hooks/useCredits";
+import { CreditGuard } from "../Credits/CreditGuard";
+import { supabase } from "../../lib/supabase";
+import toast from "react-hot-toast";
 
 interface IdeaInputProps {
   isGenerating?: boolean;
@@ -37,21 +37,30 @@ interface GeneratedStory {
   }>;
 }
 
-export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) => {
-  const [idea, setIdea] = useState('');
+export const IdeaInput: React.FC<IdeaInputProps> = ({
+  isGenerating = false,
+}) => {
+  const [idea, setIdea] = useState("");
   const [localGenerating, setLocalGenerating] = useState(false);
   const [showCreditGuard, setShowCreditGuard] = useState(false);
   const { user } = useAuth();
   const { createProject } = useProjects();
-  const { generateStoryFromAPI, loading: apiLoading, error: apiError } = useStoryAPI();
+  const {
+    generateStoryFromAPI,
+    loading: apiLoading,
+    error: apiError,
+  } = useStoryAPI();
   const { canPerformAction, getCreditCost } = useCredits();
   const navigate = useNavigate();
 
-  const createStoryInDatabase = async (projectId: string, story: GeneratedStory) => {
+  const createStoryInDatabase = async (
+    projectId: string,
+    story: GeneratedStory
+  ) => {
     try {
       // Create story
       const { data: storyRecord, error: storyError } = await supabase
-        .from('stories')
+        .from("stories")
         .insert({
           project_id: projectId,
           logline: story.logline,
@@ -74,7 +83,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
       }));
 
       const { error: charactersError } = await supabase
-        .from('characters')
+        .from("characters")
         .insert(charactersToInsert);
 
       if (charactersError) throw charactersError;
@@ -91,14 +100,14 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
       }));
 
       const { error: scenesError } = await supabase
-        .from('scenes')
+        .from("scenes")
         .insert(scenesToInsert);
 
       if (scenesError) throw scenesError;
 
       return storyRecord;
     } catch (error) {
-      console.error('Error creating story in database:', error);
+      console.error("Error creating story in database:", error);
       throw error;
     }
   };
@@ -108,12 +117,12 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
     if (!idea.trim() || isGenerating || localGenerating || apiLoading) return;
 
     if (!user) {
-      toast.error('Please sign in to create a project');
+      toast.error("Please sign in to create a project");
       return;
     }
 
     // Check if user can perform the action
-    const canProceed = await canPerformAction('STORY_GENERATION');
+    const canProceed = await canPerformAction("STORY_GENERATION");
     if (!canProceed) {
       setShowCreditGuard(true);
       return;
@@ -124,40 +133,43 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
 
   const generateStory = async () => {
     setLocalGenerating(true);
-    
+
     try {
       // Step 1: Generate story from API (credits will be deducted inside the hook)
-      toast.loading('Sending your idea to AI...', { id: 'generation' });
-      
+      toast.loading("Sending your idea to AI...", { id: "generation" });
+
       const generatedStory = await generateStoryFromAPI(idea.trim());
-      
+
       if (!generatedStory) {
-        toast.error('Failed to generate story. Please try again.', { id: 'generation' });
+        toast.error("Failed to generate story. Please try again.", {
+          id: "generation",
+        });
         return;
       }
 
       // Step 2: Create project in database with sequential naming
-      toast.loading('Creating your project...', { id: 'generation' });
-      
+      toast.loading("Creating your project...", { id: "generation" });
+
       const project = await createProject({
-        description: 'AI-generated film project',
+        description: "AI-generated film project",
         original_idea: idea.trim(),
         // Title will be auto-generated as sequential number in createProject
       });
 
       // Step 3: Create the story in the database
-      toast.loading('Setting up your story...', { id: 'generation' });
-      
+      toast.loading("Setting up your story...", { id: "generation" });
+
       await createStoryInDatabase(project.id, generatedStory);
-      
-      toast.success('Story generated successfully!', { id: 'generation' });
-      
+
+      toast.success("Story generated successfully!", { id: "generation" });
+
       // Step 4: Navigate to the existing story page where user can edit and continue
       navigate(`/story/${project.id}`);
-      
     } catch (error) {
-      console.error('Error in story generation workflow:', error);
-      toast.error('Error generating story. Please try again.', { id: 'generation' });
+      console.error("Error in story generation workflow:", error);
+      toast.error("Error generating story. Please try again.", {
+        id: "generation",
+      });
     } finally {
       setLocalGenerating(false);
     }
@@ -167,7 +179,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
     "A lonely lighthouse keeper discovers a mysterious creature from the deep",
     "Two rival food truck owners fall in love during a city-wide festival",
     "A time traveler gets stuck in a small town and must solve a decades-old mystery",
-    "An AI assistant develops consciousness and questions its purpose"
+    "An AI assistant develops consciousness and questions its purpose",
   ];
 
   const isCurrentlyGenerating = isGenerating || localGenerating || apiLoading;
@@ -189,13 +201,16 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
           >
             <Lightbulb className="h-10 w-10 text-white" />
           </motion.div>
-          
+
           <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
-            Transform Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">Film Idea</span>
+            Transform Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">
+              Film Idea
+            </span>
           </h1>
           <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
-            From a single sentence to a complete pre-production package. 
-            Let AI craft your story, shot list, and storyboard in minutes.
+            From a single sentence to a complete pre-production package. Let AI
+            craft your story, shot list, and storyboard in minutes.
           </p>
         </div>
 
@@ -206,10 +221,13 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
           onSubmit={handleSubmit}
           className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700"
         >
-          <label htmlFor="idea-input" className="block text-sm font-medium text-gray-300 mb-4">
+          <label
+            htmlFor="idea-input"
+            className="block text-sm font-medium text-gray-300 mb-4"
+          >
             Describe your film concept
           </label>
-          
+
           <div className="relative">
             <textarea
               id="idea-input"
@@ -220,7 +238,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
               rows={4}
               disabled={isCurrentlyGenerating}
             />
-            
+
             <motion.button
               type="submit"
               disabled={!idea.trim() || isCurrentlyGenerating || !user}
@@ -245,7 +263,8 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
           {user && (
             <div className="mt-3 flex items-center justify-between text-sm">
               <p className="text-gray-400">
-                This will use {getCreditCost('STORY_GENERATION')} credits to generate your story.
+                This will use {getCreditCost("STORY_GENERATION")} credits to
+                generate your story.
               </p>
             </div>
           )}
@@ -258,9 +277,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
 
           {apiError && (
             <div className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
-              <p className="text-red-400 text-sm">
-                Error: {apiError}
-              </p>
+              <p className="text-red-400 text-sm">Error: {apiError}</p>
             </div>
           )}
         </motion.form>
@@ -290,9 +307,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
               </motion.button>
             ))}
           </div>
-         
         </motion.div>
-         
       </motion.div>
 
       {/* Credit Guard Modal */}
@@ -303,7 +318,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({ isGenerating = false }) =>
         onCancel={() => setShowCreditGuard(false)}
         metadata={{
           user_idea: idea.trim(),
-          idea_length: idea.trim().length
+          idea_length: idea.trim().length,
         }}
       />
     </>
