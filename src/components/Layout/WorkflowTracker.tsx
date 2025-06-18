@@ -29,7 +29,7 @@ export const WorkflowTracker: React.FC = () => {
       path: `/photoboard/${projectId}`, 
       icon: Image, 
       label: 'Visual Storyboard', 
-      shortLabel: 'Storyboard',
+      shortLabel: 'Board',
       step: 3 
     },
   ];
@@ -44,7 +44,6 @@ export const WorkflowTracker: React.FC = () => {
   if (!projectId) return null;
 
   return (
-  
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
