@@ -1,5 +1,5 @@
 # CineSpark AI - Stripe Integration
-
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a603fbd0-483b-4640-9c5d-59659668b0f0/deploy-status)](https://app.netlify.com/projects/cinesparkai/deploys)
 A complete AI-powered filmmaking pre-production platform with integrated Stripe payment processing.
 
 ## Features
