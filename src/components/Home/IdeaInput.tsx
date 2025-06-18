@@ -44,7 +44,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
   const [localGenerating, setLocalGenerating] = useState(false);
   const [showCreditGuard, setShowCreditGuard] = useState(false);
   const { user } = useAuth();
-  const { createProject } = useProjects();
+  const { createProject, checkProjectLimit } = useProjects();
   const {
     generateStoryFromAPI,
     loading: apiLoading,
@@ -121,6 +121,19 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
       return;
     }
 
+    // Check project limit first
+    const limitCheck = checkProjectLimit();
+    if (!limitCheck.canCreate) {
+      toast.error(limitCheck.message);
+      // Redirect to pricing page if it's a plan limit issue
+      if (limitCheck.message?.includes('limited to')) {
+        setTimeout(() => {
+          navigate('/pricing');
+        }, 2000);
+      }
+      return;
+    }
+
     // Check if user can perform the action
     const canProceed = await canPerformAction("STORY_GENERATION");
     if (!canProceed) {
@@ -135,6 +148,18 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
     setLocalGenerating(true);
 
     try {
+      // Check project limit again before creating
+      const limitCheck = checkProjectLimit();
+      if (!limitCheck.canCreate) {
+        toast.error(limitCheck.message);
+        if (limitCheck.message?.includes('limited to')) {
+          setTimeout(() => {
+            navigate('/pricing');
+          }, 2000);
+        }
+        return;
+      }
+
       // Step 1: Generate story from API (credits will be deducted inside the hook)
       toast.loading("Sending your idea to AI...", { id: "generation" });
 
@@ -165,11 +190,20 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
 
       // Step 4: Navigate to the existing story page where user can edit and continue
       navigate(`/story/${project.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in story generation workflow:", error);
-      toast.error("Error generating story. Please try again.", {
-        id: "generation",
-      });
+      
+      // Handle specific project limit errors
+      if (error.message?.includes('limited to')) {
+        toast.error(error.message, { id: "generation" });
+        setTimeout(() => {
+          navigate('/pricing');
+        }, 2000);
+      } else {
+        toast.error("Error generating story. Please try again.", {
+          id: "generation",
+        });
+      }
     } finally {
       setLocalGenerating(false);
     }
@@ -306,6 +340,26 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
                 </p>
               </motion.button>
             ))}
+          </div>
+        </motion.div>
+
+        {/* Information about project creation */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mt-8 bg-blue-900/20 border border-blue-700 rounded-xl p-4"
+        >
+          <div className="flex items-start space-x-3">
+            <Lightbulb className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-blue-400 font-medium text-sm">How It Works</h4>
+              <p className="text-blue-300 text-sm mt-1">
+                Enter your film idea above and our AI will generate a complete story with characters, 
+                three-act structure, and scenes. This creates a new project that you can then develop 
+                into shot lists and storyboards.
+              </p>
+            </div>
           </div>
         </motion.div>
       </motion.div>

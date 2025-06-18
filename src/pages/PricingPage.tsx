@@ -9,9 +9,12 @@ import {
   AlertCircle,
   ToggleLeft,
   ToggleRight,
+  CheckCircle,
+  Film,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useProfile } from "../hooks/useProfile";
+import { useProjects } from "../hooks/useProjects";
 import { AuthModal } from "../components/Auth/AuthModal";
 import { PricingCard } from "../components/Pricing/PricingCard";
 import { createCheckoutSession, STRIPE_PRODUCTS } from "../lib/stripe";
@@ -26,12 +29,15 @@ import { useCredits } from "../hooks/useCredits";
 export const PricingPage: React.FC = () => {
   const { user, session, loading: authLoading, initialized } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
+  const { getProjectLimitInfo } = useProjects();
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const { getTransactionHistory, CREDIT_COSTS } = useCredits();
+
+  const limitInfo = getProjectLimitInfo();
 
   // Check for stored pricing session on component mount
   useEffect(() => {
@@ -65,7 +71,7 @@ export const PricingPage: React.FC = () => {
       popular: false,
       features: [
         "100 AI generation credits",
-        "3 projects",
+        "3 projects maximum",
         "Basic story generation",
         "Standard shot lists",
         "Basic storyboard frames",
@@ -367,6 +373,61 @@ export const PricingPage: React.FC = () => {
           </div>
         </motion.div>
 
+        {/* Current Plan Status */}
+        {user && profile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-gray-800 rounded-xl p-6 mb-12 border border-gray-700"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-cinema-600 rounded-lg flex items-center justify-center">
+                  <Film className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Current Plan Status</h3>
+                  <div className="flex items-center space-x-4 mt-1">
+                    <span className={`text-sm ${
+                      profile.plan === 'pro' ? 'text-gold-400' : 
+                      profile.plan === 'enterprise' ? 'text-purple-400' : 'text-gray-400'
+                    }`}>
+                      {profile.plan === 'pro' ? 'Pro Plan' : 
+                       profile.plan === 'enterprise' ? 'Enterprise Plan' : 'Free Plan'}
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-400 text-sm">
+                      {profile.credits.toLocaleString()} credits
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-400 text-sm">
+                      {limitInfo.current} of {limitInfo.limit} projects
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {profile.plan === 'free' && limitInfo.current >= 2 && (
+                <div className="text-right">
+                  <div className="flex items-center space-x-2 text-orange-400 mb-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      {limitInfo.current === 3 ? 'Project Limit Reached' : 'Approaching Limit'}
+                    </span>
+                  </div>
+                  <p className="text-orange-300 text-xs">
+                    {limitInfo.current === 3 
+                      ? 'Upgrade to create more projects'
+                      : `${limitInfo.remaining} project${limitInfo.remaining !== 1 ? 's' : ''} remaining`
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Stored Session Notice */}
         {getPricingSession() && user && (
           <motion.div
@@ -492,6 +553,16 @@ export const PricingPage: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-white mb-2">
+                How many projects can I create?
+              </h4>
+              <p className="text-gray-400">
+                Free plan users can create up to 3 projects. Pro and Enterprise 
+                plans include unlimited projects, allowing you to work on as many 
+                film concepts as you want.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">
                 Do unused credits expire?
               </h4>
               <p className="text-gray-400">
@@ -514,12 +585,12 @@ export const PricingPage: React.FC = () => {
                 Is there a free trial?
               </h4>
               <p className="text-gray-400">
-                Every new user starts with 100 free credits to explore all
-                features. No credit card required to get started.
+                Every new user starts with 100 free credits and can create up to 
+                3 projects to explore all features. No credit card required to get started.
               </p>
             </div>
             <div>
-              <h4 className="font-semibent text-white mb-2">
+              <h4 className="font-semibold text-white mb-2">
                 What payment methods do you accept?
               </h4>
               <p className="text-gray-400">
@@ -527,20 +598,10 @@ export const PricingPage: React.FC = () => {
                 wallets through our secure Stripe payment processor.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold text-white mb-2">
-                Is my payment information secure?
-              </h4>
-              <p className="text-gray-400">
-                Yes! We use Stripe for payment processing, which is PCI DSS
-                compliant and trusted by millions of businesses worldwide.
-              </p>
-            </div>
           </div>
         </motion.div>
 
         {/* Call to Action */}
-
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div

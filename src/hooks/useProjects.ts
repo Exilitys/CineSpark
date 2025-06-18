@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
 import { useAuth } from './useAuth';
+import { useProfile } from './useProfile';
 
 type Project = Database['public']['Tables']['projects']['Row'];
 type ProjectInsert = Database['public']['Tables']['projects']['Insert'];
@@ -10,6 +11,7 @@ export const useProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { profile } = useProfile();
 
   useEffect(() => {
     if (user) {
@@ -52,8 +54,46 @@ export const useProjects = () => {
     return maxNumber + 1;
   };
 
+  const checkProjectLimit = (): { canCreate: boolean; message?: string } => {
+    if (!profile) {
+      return { canCreate: false, message: 'Profile not loaded' };
+    }
+
+    // Check plan limits
+    const planLimits = {
+      free: 3,
+      pro: Infinity,
+      enterprise: Infinity
+    };
+
+    const currentLimit = planLimits[profile.plan as keyof typeof planLimits] || planLimits.free;
+    const currentCount = projects.length;
+
+    if (currentCount >= currentLimit) {
+      if (profile.plan === 'free') {
+        return {
+          canCreate: false,
+          message: `Free plan is limited to ${currentLimit} projects. Upgrade to Pro or Enterprise for unlimited projects.`
+        };
+      } else {
+        return {
+          canCreate: false,
+          message: `You have reached your plan limit of ${currentLimit} projects.`
+        };
+      }
+    }
+
+    return { canCreate: true };
+  };
+
   const createProject = async (projectData: Omit<ProjectInsert, 'user_id' | 'title'> & { title?: string }) => {
     if (!user) throw new Error('User not authenticated');
+
+    // Check project limit before creating
+    const limitCheck = checkProjectLimit();
+    if (!limitCheck.canCreate) {
+      throw new Error(limitCheck.message);
+    }
 
     try {
       // Generate sequential title if not provided
@@ -153,6 +193,30 @@ export const useProjects = () => {
     return index + 1;
   };
 
+  const getProjectLimitInfo = () => {
+    if (!profile) {
+      return { current: 0, limit: 0, canCreate: false, plan: 'free' };
+    }
+
+    const planLimits = {
+      free: 3,
+      pro: Infinity,
+      enterprise: Infinity
+    };
+
+    const limit = planLimits[profile.plan as keyof typeof planLimits] || planLimits.free;
+    const current = projects.length;
+    const canCreate = current < limit;
+
+    return {
+      current,
+      limit: limit === Infinity ? 'Unlimited' : limit,
+      canCreate,
+      plan: profile.plan,
+      remaining: limit === Infinity ? 'Unlimited' : Math.max(0, limit - current)
+    };
+  };
+
   return {
     projects,
     loading,
@@ -162,6 +226,8 @@ export const useProjects = () => {
     deleteProject,
     getProjectById,
     getProjectDisplayNumber,
+    checkProjectLimit,
+    getProjectLimitInfo,
     refetch: fetchProjects,
   };
 };

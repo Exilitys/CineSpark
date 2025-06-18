@@ -119,6 +119,66 @@ export const useAuth = () => {
         session: data?.session ? "Present" : "None",
         error: error?.message || "None",
       });
+
+      // If signup was successful but there's no session (email confirmation required)
+      if (data?.user && !data?.session && !error) {
+        console.log('📧 Email confirmation required for:', email);
+        return { 
+          data, 
+          error: null,
+          needsConfirmation: true 
+        };
+      }
+
+      // If there's an error, return it
+      if (error) {
+        console.error('❌ Sign up error:', error);
+        return { data, error };
+      }
+
+      // If signup was successful and we have a session, wait a bit for the profile to be created
+      if (data?.session) {
+        console.log('✅ Sign up successful with immediate session');
+        
+        // Wait a moment for the database trigger to create the user profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify the profile was created
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .single();
+          
+          if (profileError || !profile) {
+            console.warn('⚠️ Profile not found after signup, creating manually...');
+            
+            // Manually create the profile if the trigger failed
+            const { error: createError } = await supabase
+              .from('user_profiles')
+              .insert({
+                user_id: data.user.id,
+                full_name: fullName?.trim() || data.user.email?.split('@')[0] || 'User',
+                credits: 100,
+                plan: 'free'
+              });
+            
+            if (createError) {
+              console.error('❌ Failed to create profile manually:', createError);
+              // Don't fail the signup, just log the error
+            } else {
+              console.log('✅ Profile created manually');
+            }
+          } else {
+            console.log('✅ Profile found after signup');
+          }
+        } catch (profileCheckError) {
+          console.error('❌ Error checking/creating profile:', profileCheckError);
+          // Don't fail the signup
+        }
+      }
+
       return { data, error };
     } catch (error) {
       console.error("💥 Sign up error:", error);
