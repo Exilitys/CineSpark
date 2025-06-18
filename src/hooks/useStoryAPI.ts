@@ -50,16 +50,19 @@ export const useStoryAPI = () => {
       }
 
       // Make API call
-      const response = await fetch("http://127.0.0.1:8000/generate_story", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idea: userIdea,
-          story: story,
-        }),
-      });
+      const response = await fetch(
+        "https://cinesparkapi.onrender.com/generate_story",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idea: userIdea,
+            story: story,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

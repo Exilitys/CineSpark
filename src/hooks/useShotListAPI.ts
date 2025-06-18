@@ -87,17 +87,20 @@ export const useShotListAPI = () => {
 
       // Make API call
       console.log(currentShotsData);
-      const response = await fetch("http://127.0.0.1:8000/generate_shot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idea: idea,
-          story: storyData,
-          shot: currentShotsData, // Send current shots array instead of string
-        }),
-      });
+      const response = await fetch(
+        "https://cinesparkapi.onrender.com/generate_shot",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idea: idea,
+            story: storyData,
+            shot: currentShotsData, // Send current shots array instead of string
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

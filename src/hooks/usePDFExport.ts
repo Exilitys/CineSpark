@@ -74,16 +74,19 @@ export const usePDFExport = () => {
     try {
       toast.loading("Generating story PDF...", { id: "export-story" });
 
-      const response = await fetch("http://localhost:8000/generate-pdf-story", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          project_name: projectName,
-          story: storyData,
-        }),
-      });
+      const response = await fetch(
+        "https://cinesparkapi.onrender.com/generate-pdf-story",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            project_name: projectName,
+            story: storyData,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -111,16 +114,19 @@ export const usePDFExport = () => {
     try {
       toast.loading("Generating shot list PDF...", { id: "export-shots" });
 
-      const response = await fetch("http://localhost:8000/generate-pdf-shot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          project_name: projectName,
-          shot: shotsData,
-        }),
-      });
+      const response = await fetch(
+        "https://cinesparkapi.onrender.com/generate-pdf-shot",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            project_name: projectName,
+            shot: shotsData,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -164,16 +170,19 @@ export const usePDFExport = () => {
         first_frame: photoboardData[0],
       });
 
-      const response = await fetch("http://localhost:8000/generate-pdf-photo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          project_name: projectName,
-          photo: photoboardData,
-        }),
-      });
+      const response = await fetch(
+        "https://cinesparkapi.onrender.com/generate-pdf-photo",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            project_name: projectName,
+            photo: photoboardData,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
