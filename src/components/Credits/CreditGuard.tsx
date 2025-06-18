@@ -81,10 +81,10 @@ export const CreditGuard: React.FC<CreditGuardProps> = ({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-gray-800 rounded-xl p-6 border border-gray-700 max-w-md w-full"
+            className="bg-gray-800 rounded-xl p-5 sm:p-6 border border-gray-700 max-w-md w-full"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-white">
                 {title || 'Credit Required'}
               </h3>
               <button
@@ -103,58 +103,58 @@ export const CreditGuard: React.FC<CreditGuardProps> = ({
             ) : validation ? (
               <>
                 <div className="text-center mb-6">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
                     validation.isValid ? 'bg-gold-600' : 'bg-red-600'
                   }`}>
                     {validation.isValid ? (
-                      <Zap className="h-8 w-8 text-white" />
+                      <Zap className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     ) : (
-                      <AlertTriangle className="h-8 w-8 text-white" />
+                      <AlertTriangle className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     )}
                   </div>
 
-                  <h4 className="text-lg font-semibold text-white mb-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">
                     {getActionDisplayName(action)}
                   </h4>
                   
                   {description && (
-                    <p className="text-gray-400 text-sm mb-4">{description}</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mb-4">{description}</p>
                   )}
                   
-                  <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                  <div className="bg-gray-700 rounded-lg p-3 sm:p-4 mb-4">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-400">Required Credits:</span>
-                      <span className="text-white font-medium">{validation.requiredCredits}</span>
+                      <span className="text-gray-400 text-xs sm:text-sm">Required Credits:</span>
+                      <span className="text-white font-medium text-xs sm:text-sm">{validation.requiredCredits}</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-400">Your Balance:</span>
-                      <span className={`font-medium ${getCreditColor(validation.currentCredits)}`}>
+                      <span className="text-gray-400 text-xs sm:text-sm">Your Balance:</span>
+                      <span className={`font-medium ${getCreditColor(validation.currentCredits)} text-xs sm:text-sm`}>
                         {validation.currentCredits}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Current Plan:</span>
-                      <span className="text-white font-medium">{getPlanDisplayName(plan)}</span>
+                      <span className="text-gray-400 text-xs sm:text-sm">Current Plan:</span>
+                      <span className="text-white font-medium text-xs sm:text-sm">{getPlanDisplayName(plan)}</span>
                     </div>
                   </div>
 
                   {!validation.isValid ? (
-                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-4">
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 sm:p-4 mb-4">
                       <div className="flex items-start space-x-3">
-                        <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h5 className="text-red-400 font-medium text-sm">Insufficient Credits</h5>
-                          <p className="text-red-300 text-sm mt-1">{validation.message}</p>
+                          <h5 className="text-red-400 font-medium text-xs sm:text-sm">Insufficient Credits</h5>
+                          <p className="text-red-300 text-xs sm:text-sm mt-1">{validation.message}</p>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gold-900/20 border border-gold-700 rounded-lg p-4 mb-4">
+                    <div className="bg-gold-900/20 border border-gold-700 rounded-lg p-3 sm:p-4 mb-4">
                       <div className="flex items-start space-x-3">
-                        <Zap className="h-5 w-5 text-gold-400 flex-shrink-0 mt-0.5" />
+                        <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-gold-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h5 className="text-gold-400 font-medium text-sm">Ready to Proceed</h5>
-                          <p className="text-gold-300 text-sm mt-1">
+                          <h5 className="text-gold-400 font-medium text-xs sm:text-sm">Ready to Proceed</h5>
+                          <p className="text-gold-300 text-xs sm:text-sm mt-1">
                             This action will deduct {validation.requiredCredits} credits from your account.
                           </p>
                         </div>
@@ -163,10 +163,10 @@ export const CreditGuard: React.FC<CreditGuardProps> = ({
                   )}
                 </div>
 
-                <div className="flex space-x-3">
+                <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
                   <button
                     onClick={onCancel}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors duration-200"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 sm:py-3 rounded-lg font-medium transition-colors duration-200 text-sm"
                   >
                     Cancel
                   </button>
@@ -174,7 +174,7 @@ export const CreditGuard: React.FC<CreditGuardProps> = ({
                   {validation.isValid ? (
                     <button
                       onClick={handleProceed}
-                      className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                      className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
                     >
                       <span>Proceed</span>
                       <ArrowRight className="h-4 w-4" />
@@ -182,7 +182,7 @@ export const CreditGuard: React.FC<CreditGuardProps> = ({
                   ) : (
                     <button
                       onClick={() => navigate('/pricing')}
-                      className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                      className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
                     >
                       <CreditCard className="h-4 w-4" />
                       <span>Upgrade Plan</span>

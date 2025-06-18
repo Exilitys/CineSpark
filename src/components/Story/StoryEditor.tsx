@@ -354,50 +354,54 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-6xl mx-auto"
+        className="max-w-6xl mx-auto px-4"
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-cinema-600 rounded-lg flex items-center justify-center">
-              <FileText className="h-6 w-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cinema-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Story Editor</h1>
-              <p className="text-gray-400">Review and refine your AI-generated story</p>
+              <h1 className="text-xl sm:text-3xl font-bold text-white">Story Editor</h1>
+              <p className="text-xs sm:text-sm text-gray-400">Review and refine your AI-generated story</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button
               onClick={handleExportStoryPDF}
               disabled={exportingStory}
-              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
             >
               {exportingStory ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Exporting...</span>
+                  <span className="hidden sm:inline">Exporting...</span>
+                  <span className="sm:hidden">Export...</span>
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  <span>Export PDF</span>
+                  <span className="hidden sm:inline">Export PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </>
               )}
             </button>
             <button
               onClick={handleApproveStory}
               disabled={isCurrentlyGenerating}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
             >
               {isCurrentlyGenerating ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Generating Shots...</span>
+                  <span className="hidden sm:inline">Generating Shots...</span>
+                  <span className="sm:hidden">Generating...</span>
                 </>
               ) : (
                 <>
                   <Camera className="h-4 w-4" />
-                  <span>Approve & Generate Shots</span>
+                  <span className="hidden sm:inline">Approve & Generate Shots</span>
+                  <span className="sm:hidden">Generate Shots</span>
                 </>
               )}
             </button>
@@ -407,24 +411,24 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
         {/* API Error Display */}
         {(apiError || storyApiError) && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-400">
+            <p className="text-red-400 text-sm">
               Error: {apiError || storyApiError}
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Logline & Synopsis */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
             {/* Logline */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">Logline</h2>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Logline</h2>
                 <button
                   onClick={() => setEditingSection(editingSection === 'logline' ? null : 'logline')}
                   className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
@@ -434,18 +438,18 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               </div>
               
               {editingSection === 'logline' ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <textarea
                     value={logline}
                     onChange={(e) => setLogline(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none text-sm sm:text-base"
                     rows={3}
                   />
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleSaveStory}
                       disabled={saving}
-                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
                     >
                       <Save className="h-4 w-4" />
                       <span>{saving ? 'Saving...' : 'Save'}</span>
@@ -455,14 +459,14 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                         setLogline(story.logline);
                         setEditingSection(null);
                       }}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
+                      className="text-gray-400 hover:text-white transition-colors duration-200 text-sm"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-300 text-lg leading-relaxed italic">
+                <p className="text-sm sm:text-lg text-gray-300 leading-relaxed italic">
                   "{logline}"
                 </p>
               )}
@@ -473,10 +477,10 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">Synopsis</h2>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Synopsis</h2>
                 <button
                   onClick={() => setEditingSection(editingSection === 'synopsis' ? null : 'synopsis')}
                   className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
@@ -486,18 +490,18 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               </div>
               
               {editingSection === 'synopsis' ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <textarea
                     value={synopsis}
                     onChange={(e) => setSynopsis(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none text-sm sm:text-base"
                     rows={6}
                   />
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleSaveStory}
                       disabled={saving}
-                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
                     >
                       <Save className="h-4 w-4" />
                       <span>{saving ? 'Saving...' : 'Save'}</span>
@@ -507,14 +511,14 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                         setSynopsis(story.synopsis);
                         setEditingSection(null);
                       }}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
+                      className="text-gray-400 hover:text-white transition-colors duration-200 text-sm"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-300 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
                   {synopsis}
                 </p>
               )}
@@ -525,11 +529,11 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-white flex items-center">
-                  <Play className="h-5 w-5 mr-2" />
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
+                  <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Three-Act Structure
                 </h2>
                 <button
@@ -541,39 +545,39 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               </div>
               
               {editingSection === 'structure' ? (
-                <div className="space-y-6">
-                  <div className="border-l-4 border-gold-500 pl-4">
-                    <h3 className="font-semibold text-gold-400 mb-2">Act I - Setup</h3>
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="border-l-4 border-gold-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-gold-400 mb-2 text-sm sm:text-base">Act I - Setup</h3>
                     <textarea
                       value={threeActStructure.act1}
                       onChange={(e) => setThreeActStructure(prev => ({ ...prev, act1: e.target.value }))}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none text-xs sm:text-sm"
                       rows={3}
                     />
                   </div>
-                  <div className="border-l-4 border-cinema-500 pl-4">
-                    <h3 className="font-semibold text-cinema-400 mb-2">Act II - Confrontation</h3>
+                  <div className="border-l-4 border-cinema-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-cinema-400 mb-2 text-sm sm:text-base">Act II - Confrontation</h3>
                     <textarea
                       value={threeActStructure.act2}
                       onChange={(e) => setThreeActStructure(prev => ({ ...prev, act2: e.target.value }))}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none text-xs sm:text-sm"
                       rows={3}
                     />
                   </div>
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <h3 className="font-semibold text-green-400 mb-2">Act III - Resolution</h3>
+                  <div className="border-l-4 border-green-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-green-400 mb-2 text-sm sm:text-base">Act III - Resolution</h3>
                     <textarea
                       value={threeActStructure.act3}
                       onChange={(e) => setThreeActStructure(prev => ({ ...prev, act3: e.target.value }))}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs sm:text-sm"
                       rows={3}
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleSaveStory}
                       disabled={saving}
-                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+                      className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
                     >
                       <Save className="h-4 w-4" />
                       <span>{saving ? 'Saving...' : 'Save'}</span>
@@ -583,25 +587,25 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                         setThreeActStructure(story.three_act_structure);
                         setEditingSection(null);
                       }}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
+                      className="text-gray-400 hover:text-white transition-colors duration-200 text-sm"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="border-l-4 border-gold-500 pl-4">
-                    <h3 className="font-semibold text-gold-400 mb-2">Act I - Setup</h3>
-                    <p className="text-gray-300 leading-relaxed">{threeActStructure.act1}</p>
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="border-l-4 border-gold-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-gold-400 mb-2 text-sm sm:text-base">Act I - Setup</h3>
+                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">{threeActStructure.act1}</p>
                   </div>
-                  <div className="border-l-4 border-cinema-500 pl-4">
-                    <h3 className="font-semibold text-cinema-400 mb-2">Act II - Confrontation</h3>
-                    <p className="text-gray-300 leading-relaxed">{threeActStructure.act2}</p>
+                  <div className="border-l-4 border-cinema-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-cinema-400 mb-2 text-sm sm:text-base">Act II - Confrontation</h3>
+                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">{threeActStructure.act2}</p>
                   </div>
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <h3 className="font-semibold text-green-400 mb-2">Act III - Resolution</h3>
-                    <p className="text-gray-300 leading-relaxed">{threeActStructure.act3}</p>
+                  <div className="border-l-4 border-green-500 pl-3 sm:pl-4">
+                    <h3 className="font-semibold text-green-400 mb-2 text-sm sm:text-base">Act III - Resolution</h3>
+                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">{threeActStructure.act3}</p>
                   </div>
                 </div>
               )}
@@ -609,23 +613,23 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
           </div>
 
           {/* Characters & Scenes */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Characters */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700"
             >
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
-                <Users className="h-5 w-5 mr-2" />
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Characters
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {characters.map((character) => (
-                  <div key={character.id} className="bg-gray-700 rounded-lg p-4">
+                  <div key={character.id} className="bg-gray-700 rounded-lg p-3 sm:p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-white">{character.name}</h3>
+                      <h3 className="font-semibold text-white text-sm sm:text-base">{character.name}</h3>
                       <button
                         onClick={() => setEditingCharacter(editingCharacter === character.id ? null : character.id)}
                         className="text-gold-400 hover:text-gold-300 transition-colors duration-200"
@@ -635,39 +639,39 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                     </div>
                     
                     {editingCharacter === character.id ? (
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         <input
                           value={character.name}
                           onChange={(e) => updateCharacter(character.id, 'name', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white text-sm"
+                          className="w-full px-2 sm:px-3 py-1 sm:py-2 bg-gray-600 border border-gray-500 rounded text-white text-xs sm:text-sm"
                           placeholder="Character name"
                         />
                         <textarea
                           value={character.description}
                           onChange={(e) => updateCharacter(character.id, 'description', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white text-sm resize-none"
+                          className="w-full px-2 sm:px-3 py-1 sm:py-2 bg-gray-600 border border-gray-500 rounded text-white text-xs sm:text-sm resize-none"
                           rows={2}
                           placeholder="Description"
                         />
                         <textarea
                           value={character.motivation}
                           onChange={(e) => updateCharacter(character.id, 'motivation', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white text-sm resize-none"
+                          className="w-full px-2 sm:px-3 py-1 sm:py-2 bg-gray-600 border border-gray-500 rounded text-white text-xs sm:text-sm resize-none"
                           rows={2}
                           placeholder="Motivation"
                         />
                         <textarea
                           value={character.arc}
                           onChange={(e) => updateCharacter(character.id, 'arc', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white text-sm resize-none"
+                          className="w-full px-2 sm:px-3 py-1 sm:py-2 bg-gray-600 border border-gray-500 rounded text-white text-xs sm:text-sm resize-none"
                           rows={2}
                           placeholder="Character arc"
                         />
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => handleSaveCharacter(character.id)}
                             disabled={saving}
-                            className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-3 py-1 rounded text-sm flex items-center space-x-1"
+                            className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm flex items-center space-x-1"
                           >
                             <Save className="h-3 w-3" />
                             <span>{saving ? 'Saving...' : 'Save'}</span>
@@ -677,7 +681,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                               setCharacters(story.characters);
                               setEditingCharacter(null);
                             }}
-                            className="text-gray-400 hover:text-white text-sm"
+                            className="text-gray-400 hover:text-white text-xs sm:text-sm"
                           >
                             Cancel
                           </button>
@@ -685,7 +689,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm text-gray-300 mb-2">{character.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-300 mb-2">{character.description}</p>
                         <div className="text-xs text-gray-400">
                           <p><span className="font-medium">Motivation:</span> {character.motivation}</p>
                           <p><span className="font-medium">Arc:</span> {character.arc}</p>
@@ -702,14 +706,14 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700"
             >
-              <h2 className="text-xl font-semibold text-white mb-4">Scene Breakdown</h2>
-              <div className="space-y-3">
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Scene Breakdown</h2>
+              <div className="space-y-2 sm:space-y-3">
                 {scenes.map((scene, index) => (
                   <div key={scene.id} className="bg-gray-700 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-white text-sm">
+                      <h4 className="font-medium text-white text-xs sm:text-sm">
                         Scene {index + 1}: {scene.title}
                       </h4>
                       <button
@@ -741,7 +745,7 @@ export const StoryEditor: React.FC<StoryEditorProps> = ({
                           rows={2}
                           placeholder="Description"
                         />
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => handleSaveScene(scene.id)}
                             disabled={saving}

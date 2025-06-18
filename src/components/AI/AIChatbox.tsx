@@ -89,7 +89,7 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
       {/* Floating Chat Button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all duration-200"
+        className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all duration-200"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         initial={{ opacity: 0, scale: 0 }}
@@ -97,16 +97,16 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
         transition={{ duration: 0.3, delay: 1 }}
       >
         {loading ? (
-          <Loader className="h-6 w-6 animate-spin" />
+          <Loader className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
         ) : (
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
         )}
       </motion.button>
 
       {/* Chat Modal */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-end p-6">
+          <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -119,7 +119,7 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl w-full max-w-md"
+              className="relative bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -128,7 +128,7 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                     <Sparkles className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{title}</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-white">{title}</h3>
                     <p className="text-xs text-gray-400">Ask for changes or improvements</p>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                       onChange={(e) => setSuggestion(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder={placeholder}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none transition-all duration-200"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none transition-all duration-200 text-sm sm:text-base"
                       rows={4}
                       disabled={sending || loading}
                     />
@@ -165,8 +165,8 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                   {/* Credit Cost Display */}
                   <div className="bg-gold-900/20 border border-gold-700 rounded-lg p-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-gold-400 text-sm font-medium">Credit Cost:</span>
-                      <span className="text-gold-300 text-sm">{getCreditCost(creditAction)} credits</span>
+                      <span className="text-gold-400 text-xs sm:text-sm font-medium">Credit Cost:</span>
+                      <span className="text-gold-300 text-xs sm:text-sm">{getCreditCost(creditAction)} credits</span>
                     </div>
                     <p className="text-gold-300 text-xs mt-1">
                       This modification will use the same credits as generation
@@ -181,14 +181,14 @@ export const AIChatbox: React.FC<AIChatboxProps> = ({
                       <button
                         type="button"
                         onClick={() => setIsOpen(false)}
-                        className="px-4 py-2 text-gray-400 hover:text-white transition-colors duration-200"
+                        className="px-3 sm:px-4 py-2 text-gray-400 hover:text-white transition-colors duration-200 text-sm"
                       >
                         Cancel
                       </button>
                       <motion.button
                         type="submit"
                         disabled={!suggestion.trim() || sending || loading || suggestion.length > 500}
-                        className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+                        className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 text-sm"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >

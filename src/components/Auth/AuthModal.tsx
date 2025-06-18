@@ -210,7 +210,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-gray-800 rounded-2xl p-8 w-full max-w-md border border-gray-700 shadow-2xl"
+            className="relative bg-gray-800 rounded-2xl p-6 sm:p-8 w-full max-w-md border border-gray-700 shadow-2xl"
           >
             <button
               onClick={onClose}
@@ -219,14 +219,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <X className="h-5 w-5" />
             </button>
 
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-8 w-8 text-white" />
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                 {isSignUp ? "Create Account" : "Welcome Back"}
               </h2>
-              <p className="text-gray-400">
+              <p className="text-gray-400 text-sm sm:text-base">
                 {isSignUp
                   ? "Start creating amazing films with CineSpark AI"
                   : "Sign in to continue your filmmaking journey"}
@@ -256,7 +256,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Full Name (Sign Up Only) */}
               {isSignUp && (
                 <div>
@@ -361,7 +361,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-gray-400">
+              <p className="text-gray-400 text-sm">
                 {isSignUp
                   ? "Already have an account?"
                   : "Don't have an account?"}

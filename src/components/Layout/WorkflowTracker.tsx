@@ -51,9 +51,9 @@ export const WorkflowTracker: React.FC = () => {
       className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600 shadow-lg"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-4">
+        <div className="py-3 sm:py-4">
           {/* Desktop Progress Tracker */}
-          <div className="hidden md:flex items-center justify-center space-x-8">
+          <div className="hidden md:flex items-center justify-center space-x-4 lg:space-x-8">
             {steps.map((step, index) => {
               const isActive = step.step === currentStep;
               const isCompleted = step.step < currentStep;
@@ -63,7 +63,7 @@ export const WorkflowTracker: React.FC = () => {
                 <React.Fragment key={step.path}>
                   <Link
                     to={step.path}
-                    className={`flex items-center space-x-3 px-6 py-3 rounded-xl transition-all duration-300 group ${
+                    className={`flex items-center space-x-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-300 group ${
                       isActive
                         ? 'bg-cinema-600 text-white shadow-xl scale-105'
                         : isCompleted
@@ -78,7 +78,7 @@ export const WorkflowTracker: React.FC = () => {
                       }
                     }}
                   >
-                    <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${
+                    <div className={`relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 ${
                       isActive
                         ? 'bg-white/20'
                         : isCompleted
@@ -88,13 +88,13 @@ export const WorkflowTracker: React.FC = () => {
                         : 'bg-gray-700'
                     }`}>
                       {isCompleted ? (
-                        <Check className="h-5 w-5 text-white" />
+                        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       ) : (
-                        <step.icon className="h-5 w-5" />
+                        <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                       )}
                       
                       {/* Step number indicator */}
-                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      <div className={`absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                         isActive
                           ? 'bg-gold-500 text-white'
                           : isCompleted
@@ -106,12 +106,12 @@ export const WorkflowTracker: React.FC = () => {
                     </div>
                     
                     <div className="flex flex-col">
-                      <span className={`font-semibold transition-all duration-300 ${
+                      <span className={`font-semibold text-sm sm:text-base transition-all duration-300 ${
                         isActive ? 'text-white' : isCompleted ? 'text-green-400' : 'text-gray-300'
                       }`}>
                         {step.label}
                       </span>
-                      <span className={`text-sm transition-all duration-300 ${
+                      <span className={`text-xs transition-all duration-300 ${
                         isActive ? 'text-blue-200' : isCompleted ? 'text-green-300' : 'text-gray-500'
                       }`}>
                         Step {step.step} of 3
@@ -121,7 +121,7 @@ export const WorkflowTracker: React.FC = () => {
                   
                   {index < steps.length - 1 && (
                     <div className="flex items-center">
-                      <ChevronRight className={`h-6 w-6 transition-colors duration-300 ${
+                      <ChevronRight className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors duration-300 ${
                         step.step < currentStep ? 'text-green-400' : 'text-gray-500'
                       }`} />
                     </div>
@@ -134,38 +134,38 @@ export const WorkflowTracker: React.FC = () => {
           {/* Mobile Progress Tracker */}
           <div className="md:hidden">
             {/* Current Step Display */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   currentStep === 1 ? 'bg-cinema-600' : 
                   currentStep === 2 ? 'bg-cinema-600' : 'bg-cinema-600'
                 }`}>
                   {steps.find(s => s.step === currentStep)?.icon && 
                     React.createElement(steps.find(s => s.step === currentStep)!.icon, { 
-                      className: "h-5 w-5 text-white" 
+                      className: "h-4 w-4 text-white" 
                     })
                   }
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">
+                  <h3 className="text-sm font-semibold text-white">
                     {steps.find(s => s.step === currentStep)?.label}
                   </h3>
-                  <p className="text-gray-400 text-sm">Step {currentStep} of 3</p>
+                  <p className="text-xs text-gray-400">Step {currentStep} of 3</p>
                 </div>
               </div>
               
               <div className="text-right">
-                <div className="text-sm text-gray-400 mb-1">Progress</div>
-                <div className="text-lg font-bold text-cinema-400">
+                <div className="text-xs text-gray-400 mb-1">Progress</div>
+                <div className="text-sm font-bold text-cinema-400">
                   {Math.round((currentStep / 3) * 100)}%
                 </div>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
+            <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
               <motion.div
-                className="bg-gradient-to-r from-cinema-500 to-gold-500 h-3 rounded-full"
+                className="bg-gradient-to-r from-cinema-500 to-gold-500 h-2 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${(currentStep / 3) * 100}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
@@ -198,7 +198,7 @@ export const WorkflowTracker: React.FC = () => {
                       }
                     }}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                       isActive
                         ? 'bg-cinema-600'
                         : isCompleted
@@ -208,9 +208,9 @@ export const WorkflowTracker: React.FC = () => {
                         : 'bg-gray-700'
                     }`}>
                       {isCompleted ? (
-                        <Check className="h-4 w-4 text-white" />
+                        <Check className="h-3 w-3 text-white" />
                       ) : (
-                        <step.icon className="h-4 w-4 text-white" />
+                        <step.icon className="h-3 w-3 text-white" />
                       )}
                     </div>
                     <span className="text-xs font-medium">{step.shortLabel}</span>

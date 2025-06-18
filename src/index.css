@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Responsive font sizes */
+@layer base {
+  html {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+}
+
+/* Improved tap target sizes for mobile */
+@layer components {
+  .mobile-tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth transitions */
+@layer utilities {
+  .transition-all-smooth {
+    transition: all 0.3s ease-in-out;
+  }
+}

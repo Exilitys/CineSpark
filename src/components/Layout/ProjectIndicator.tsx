@@ -63,25 +63,28 @@ export const ProjectIndicator: React.FC = () => {
       className="bg-gray-800 border-b border-gray-700 sticky top-16 z-40"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3 sm:py-4">
           {/* Project Info & Breadcrumb */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             {/* Project Info */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-cinema-600 rounded-lg flex items-center justify-center">
-                <Film className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-cinema-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Film className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white truncate max-w-xs">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm sm:text-lg font-semibold text-white truncate">
                   {currentProject.title}
                 </h2>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 hidden sm:block">
                   Step {currentStep} of 4 • {currentStepInfo?.description}
+                </p>
+                <p className="text-xs text-gray-400 sm:hidden">
+                  {currentStep}/4 • {currentStepInfo?.label}
                 </p>
               </div>
             </div>
 
-            {/* Breadcrumb */}
+            {/* Breadcrumb - Hidden on mobile */}
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <Link
                 to="/"
@@ -97,8 +100,8 @@ export const ProjectIndicator: React.FC = () => {
             </div>
           </div>
 
-          {/* Progress Steps */}
-          <div className="hidden lg:flex items-center space-x-1">
+          {/* Progress Steps - Desktop */}
+          <div className="hidden xl:flex items-center space-x-1">
             {steps.map((step, index) => {
               const isActive = step.step === currentStep;
               const isCompleted = step.step < currentStep;
@@ -124,7 +127,7 @@ export const ProjectIndicator: React.FC = () => {
                     }}
                   >
                     <step.icon className="h-4 w-4" />
-                    <span className="hidden xl:inline">{step.label}</span>
+                    <span>{step.label}</span>
                     {isCompleted && (
                       <div className="w-2 h-2 bg-green-400 rounded-full" />
                     )}
@@ -137,12 +140,49 @@ export const ProjectIndicator: React.FC = () => {
             })}
           </div>
 
+          {/* Progress Steps - Tablet */}
+          <div className="hidden lg:flex xl:hidden items-center space-x-1">
+            {steps.map((step, index) => {
+              const isActive = step.step === currentStep;
+              const isCompleted = step.step < currentStep;
+              const isAccessible = step.step <= currentStep + 1;
+
+              return (
+                <React.Fragment key={step.path}>
+                  <Link
+                    to={step.path}
+                    className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-cinema-600 text-white shadow-lg'
+                        : isCompleted
+                        ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                        : isAccessible
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        : 'text-gray-600 cursor-not-allowed'
+                    }`}
+                    onClick={(e) => {
+                      if (!isAccessible) {
+                        e.preventDefault();
+                      }
+                    }}
+                    title={step.label}
+                  >
+                    <step.icon className="h-4 w-4" />
+                  </Link>
+                  {index < steps.length - 1 && (
+                    <ChevronRight className="h-3 w-3 text-gray-500" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+
           {/* Mobile Progress Indicator */}
           <div className="lg:hidden flex items-center space-x-2">
             <div className="text-sm text-gray-400">
               {currentStep}/4
             </div>
-            <div className="w-20 bg-gray-700 rounded-full h-2">
+            <div className="w-16 sm:w-20 bg-gray-700 rounded-full h-2">
               <div
                 className="bg-gradient-to-r from-cinema-500 to-gold-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(currentStep / 4) * 100}%` }}

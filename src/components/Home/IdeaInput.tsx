@@ -224,25 +224,25 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-4xl mx-auto"
+        className="max-w-4xl mx-auto px-4 sm:px-6"
       >
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full mb-6 shadow-xl"
+            className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full mb-4 sm:mb-6 shadow-xl"
           >
-            <Lightbulb className="h-10 w-10 text-white" />
+            <Lightbulb className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </motion.div>
 
-          <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight px-4">
             Transform Your{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">
               Film Idea
             </span>
           </h1>
-          <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto px-4">
             From a single sentence to a complete pre-production package. Let AI
             craft your story, shot list, and storyboard in minutes.
           </p>
@@ -253,7 +253,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           onSubmit={handleSubmit}
-          className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700"
+          className="bg-gray-800 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-700"
         >
           <label
             htmlFor="idea-input"
@@ -268,7 +268,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               placeholder="Enter your film idea here... A single sentence or detailed paragraph works perfectly."
-              className="w-full px-6 py-4 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none transition-all duration-200"
+              className="w-full px-4 sm:px-6 py-4 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent resize-none transition-all duration-200 text-sm sm:text-base"
               rows={4}
               disabled={isCurrentlyGenerating}
             />
@@ -276,18 +276,20 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
             <motion.button
               type="submit"
               disabled={!idea.trim() || isCurrentlyGenerating || !user}
-              className="absolute bottom-4 right-4 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg"
+              className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg text-sm sm:text-base"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               {isCurrentlyGenerating ? (
                 <>
                   <Sparkles className="h-4 w-4 animate-spin" />
-                  <span>Generating...</span>
+                  <span className="hidden sm:inline">Generating...</span>
+                  <span className="sm:hidden">Gen...</span>
                 </>
               ) : (
                 <>
-                  <span>Generate Story</span>
+                  <span className="hidden sm:inline">Generate Story</span>
+                  <span className="sm:hidden">Generate</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -295,7 +297,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           </div>
 
           {user && (
-            <div className="mt-3 flex items-center justify-between text-sm">
+            <div className="mt-3 flex items-center justify-between text-xs sm:text-sm">
               <p className="text-gray-400">
                 This will use {getCreditCost("STORY_GENERATION")} credits to
                 generate your story.
@@ -304,14 +306,14 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           )}
 
           {!user && (
-            <p className="text-sm text-gray-400 mt-3">
+            <p className="text-xs sm:text-sm text-gray-400 mt-3">
               Please sign in to create and save your projects.
             </p>
           )}
 
           {apiError && (
             <div className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
-              <p className="text-red-400 text-sm">Error: {apiError}</p>
+              <p className="text-red-400 text-xs sm:text-sm">Error: {apiError}</p>
             </div>
           )}
         </motion.form>
@@ -320,22 +322,22 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="mt-12"
+          className="mt-8 sm:mt-12"
         >
-          <h3 className="text-lg font-medium text-gray-300 mb-6 text-center">
+          <h3 className="text-base sm:text-lg font-medium text-gray-300 mb-4 sm:mb-6 text-center">
             Need inspiration? Try one of these ideas:
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {exampleIdeas.map((example, index) => (
               <motion.button
                 key={index}
                 onClick={() => setIdea(example)}
                 disabled={isCurrentlyGenerating}
-                className="text-left p-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gold-500 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-left p-3 sm:p-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gold-500 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: isCurrentlyGenerating ? 1 : 1.02 }}
                 whileTap={{ scale: isCurrentlyGenerating ? 1 : 0.98 }}
               >
-                <p className="text-gray-300 group-hover:text-white transition-colors duration-200">
+                <p className="text-sm sm:text-base text-gray-300 group-hover:text-white transition-colors duration-200">
                   "{example}"
                 </p>
               </motion.button>
@@ -348,7 +350,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="mt-8 bg-blue-900/20 border border-blue-700 rounded-xl p-4"
+          className="mt-6 sm:mt-8 bg-blue-900/20 border border-blue-700 rounded-xl p-4"
         >
           <div className="flex items-start space-x-3">
             <Lightbulb className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
@@ -356,7 +358,7 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
               <h4 className="text-blue-400 font-medium text-sm">
                 How It Works
               </h4>
-              <p className="text-blue-300 text-sm mt-1">
+              <p className="text-blue-300 text-xs sm:text-sm mt-1">
                 Enter your film idea above and our AI will generate a complete
                 story with characters, three-act structure, and scenes. This
                 creates a new project that you can then develop into shot lists

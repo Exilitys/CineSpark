@@ -176,22 +176,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-7xl mx-auto p-6"
+      className="max-w-7xl mx-auto p-4 sm:p-6"
     >
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-cinema-600 rounded-lg flex items-center justify-center">
-            <Image className="h-6 w-6 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cinema-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Image className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Photoboard</h1>
-            <p className="text-gray-400">
+            <h1 className="text-xl sm:text-3xl font-bold text-white">Photoboard</h1>
+            <p className="text-xs sm:text-sm text-gray-400">
               {frames.length} frames • {uniqueScenes.length} scenes • Visual storyboard for your film
             </p>
           </div>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div className="flex items-center bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setViewMode('grid')}
@@ -213,27 +213,30 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
           <button 
             onClick={handleExportPhotoboard}
             disabled={exportingPhotoboard || frames.length === 0}
-            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
           >
             {exportingPhotoboard ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Exporting...</span>
+                <span className="hidden sm:inline">Exporting...</span>
+                <span className="sm:hidden">Export...</span>
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                <span>Export PDF</span>
+                <span className="hidden sm:inline">Export PDF</span>
+                <span className="sm:hidden">PDF</span>
               </>
             )}
           </button>
           {onApprove && (
             <button
               onClick={onApprove}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 text-sm"
             >
               <Check className="h-4 w-4" />
-              <span>Approve & Continue</span>
+              <span className="hidden sm:inline">Approve & Continue</span>
+              <span className="sm:hidden">Approve</span>
             </button>
           )}
         </div>
@@ -241,14 +244,14 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
 
       {/* Scene Filter Only */}
       {uniqueScenes.length > 1 && (
-        <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="bg-gray-800 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700 overflow-x-auto hide-scrollbar">
+          <div className="flex flex-nowrap items-center gap-3 sm:gap-4 min-w-max">
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-300">Scene:</span>
-              <div className="flex flex-wrap gap-2">
+              <span className="text-xs sm:text-sm font-medium text-gray-300 whitespace-nowrap">Scene:</span>
+              <div className="flex flex-nowrap gap-2">
                 <button
                   onClick={() => setSelectedScene('all')}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                  className={`px-2 sm:px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
                     selectedScene === 'all' 
                       ? 'bg-cinema-600 text-white' 
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -260,7 +263,7 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                   <button
                     key={sceneNum}
                     onClick={() => setSelectedScene(sceneNum.toString())}
-                    className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                    className={`px-2 sm:px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
                       selectedScene === sceneNum.toString() 
                         ? 'bg-cinema-600 text-white' 
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -277,7 +280,7 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
 
       {/* Photoboard Grid/List */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredFrames.map((frame, index) => {
             const shot = getShotDetails(frame);
             
@@ -371,13 +374,13 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                   )}
                 </div>
                 
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <div className="flex items-center space-x-2">
                       {shot && (
                         <>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(shot.scene_number || 1)}`}>
-                            Scene {shot.scene_number || 1}
+                            {shot.scene_number || 1}
                           </span>
                           <span className="text-xs font-medium text-gray-400">
                             Shot {shot.shot_number.toString().padStart(3, '0')}
@@ -389,15 +392,15 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                   
                   {/* Shot Description from Shot List */}
                   {shot && (
-                    <div className="mb-3">
-                      <p className="text-sm text-white font-medium mb-1">
+                    <div className="mb-2 sm:mb-3">
+                      <p className="text-xs sm:text-sm text-white font-medium mb-1">
                         {shot.shot_type} • {shot.camera_angle}
                       </p>
-                      <p className="text-sm text-gray-300 line-clamp-3">
+                      <p className="text-xs sm:text-sm text-gray-300 line-clamp-2">
                         {shot.description}
                       </p>
                       {shot.lens_recommendation && (
-                        <p className="text-xs text-gold-400 mt-1">
+                        <p className="text-xs text-gold-400 mt-1 hidden sm:block">
                           {shot.lens_recommendation}
                         </p>
                       )}
@@ -419,11 +422,11 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="bg-gray-800 rounded-xl border border-gray-700 p-6 hover:border-gold-500 transition-colors duration-200"
+                className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6 hover:border-gold-500 transition-colors duration-200"
               >
-                <div className="flex items-start space-x-6">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:space-x-6">
                   <div 
-                    className={`w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center relative ${
+                    className={`w-full sm:w-48 h-32 bg-gray-700 rounded-lg flex-shrink-0 flex items-center justify-center relative ${
                       dragOver === frame.id ? 'border-2 border-dashed border-gold-500 bg-gold-900/20' : ''
                     }`}
                     onDrop={(e) => handleDrop(e, frame.id)}
@@ -481,17 +484,17 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                   </div>
                   
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         {shot && (
                           <>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(shot.scene_number || 1)}`}>
                               Scene {shot.scene_number || 1}
                             </span>
-                            <span className="text-lg font-medium text-white">
+                            <span className="text-sm sm:text-lg font-medium text-white">
                               Shot {shot.shot_number.toString().padStart(3, '0')}
                             </span>
-                            <span className="text-sm text-gray-400">
+                            <span className="text-xs sm:text-sm text-gray-400">
                               {shot.shot_type} • {shot.camera_angle}
                             </span>
                           </>
@@ -521,22 +524,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
                     
                     {/* Shot Description from Shot List */}
                     {shot && (
-                      <div className="mb-3">
-                        <p className="text-gray-300 mb-2">
+                      <div className="mb-2 sm:mb-3">
+                        <p className="text-xs sm:text-sm text-gray-300 line-clamp-3">
                           {shot.description}
                         </p>
                         {shot.lens_recommendation && (
-                          <p className="text-sm text-gold-400">
+                          <p className="text-xs sm:text-sm text-gold-400 mt-1">
                             <span className="font-medium">Lens:</span> {shot.lens_recommendation}
                           </p>
                         )}
                         {shot.estimated_duration && (
-                          <p className="text-sm text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-400 mt-1">
                             <span className="font-medium">Duration:</span> {shot.estimated_duration}s
                           </p>
                         )}
                         {shot.notes && (
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-1 hidden sm:block">
                             <span className="font-medium">Notes:</span> {shot.notes}
                           </p>
                         )}

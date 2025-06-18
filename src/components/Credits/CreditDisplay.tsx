@@ -64,7 +64,7 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
         <span className={`font-medium ${getCreditColor(credits)}`}>
           {credits.toLocaleString()}
         </span>
-        <span className="text-xs text-gray-400">credits</span>
+        <span className="text-xs text-gray-400 hidden sm:inline">credits</span>
       </div>
     );
   }
@@ -75,11 +75,11 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-gray-800 rounded-xl p-6 border border-gray-700 ${className}`}
+      className={`bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 ${className}`}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white flex items-center">
-          <Zap className="h-5 w-5 text-gold-400 mr-2" />
+        <h3 className="text-base sm:text-lg font-semibold text-white flex items-center">
+          <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-gold-400 mr-2" />
           Credit Balance
         </h3>
         <span
@@ -95,26 +95,26 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
         </span>
       </div>
 
-      <div className="text-center mb-6">
-        <div className={`text-4xl font-bold ${getCreditColor(credits)} mb-2`}>
+      <div className="text-center mb-4 sm:mb-6">
+        <div className={`text-2xl sm:text-4xl font-bold ${getCreditColor(credits)} mb-2`}>
           {credits.toLocaleString()}
         </div>
-        <div className="text-gray-400">Credits Available</div>
+        <div className="text-gray-400 text-sm">Credits Available</div>
       </div>
 
-      <div className="space-y-3 mb-6">
-        <h4 className="text-sm font-medium text-gray-300">Usage Estimates</h4>
+      <div className="space-y-3 mb-4 sm:mb-6">
+        <h4 className="text-xs sm:text-sm font-medium text-gray-300">Usage Estimates</h4>
 
         <div className="grid grid-cols-1 gap-2">
-          <div className="flex justify-between items-center text-sm">
+          <div className="flex justify-between items-center text-xs sm:text-sm">
             <span className="text-gray-400">Story Generations:</span>
             <span className="text-white">{usage.storyGenerations}</span>
           </div>
-          <div className="flex justify-between items-center text-sm">
+          <div className="flex justify-between items-center text-xs sm:text-sm">
             <span className="text-gray-400">Shot Lists:</span>
             <span className="text-white">{usage.shotLists}</span>
           </div>
-          <div className="flex justify-between items-center text-sm">
+          <div className="flex justify-between items-center text-xs sm:text-sm">
             <span className="text-gray-400">Photoboards:</span>
             <span className="text-white">{usage.photoboards}</span>
           </div>
@@ -147,7 +147,7 @@ export const CreditDisplay: React.FC<CreditDisplayProps> = ({
         <div className="mt-4 bg-red-900/20 border border-red-700 rounded-lg p-3">
           <div className="flex items-center space-x-2">
             <TrendingDown className="h-4 w-4 text-red-400" />
-            <span className="text-red-400 text-sm font-medium">
+            <span className="text-red-400 text-xs sm:text-sm font-medium">
               Low Credits
             </span>
           </div>

@@ -15,11 +15,14 @@ import {
   FolderOpen,
   Settings,
   Info,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useProfile } from "../../hooks/useProfile";
 import { CreditDisplay } from "../Credits/CreditDisplay";
 import { AuthModal } from "../Auth/AuthModal";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
 export const Header: React.FC = () => {
@@ -30,6 +33,7 @@ export const Header: React.FC = () => {
   const { profile, loading: profileLoading } = useProfile();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const navItems = [
     { path: "/", icon: Home, label: "Home" },
@@ -49,6 +53,7 @@ export const Header: React.FC = () => {
       toast.success("Signed out successfully");
     }
     setShowUserMenu(false);
+    setShowMobileMenu(false);
   };
 
   const getPlanBadge = (plan: string) => {
@@ -73,24 +78,30 @@ export const Header: React.FC = () => {
     return "User";
   };
 
+  const closeMobileMenu = () => {
+    setShowMobileMenu(false);
+  };
+
   return (
     <>
       <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-3 group">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3 group flex-shrink-0">
               <div className="relative">
-                <Film className="h-8 w-8 text-gold-500 group-hover:text-gold-400 transition-colors" />
-                <Sparkles className="h-4 w-4 text-cinema-400 absolute -top-1 -right-1 animate-pulse" />
+                <Film className="h-6 w-6 sm:h-8 sm:w-8 text-gold-500 group-hover:text-gold-400 transition-colors" />
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-cinema-400 absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white group-hover:text-gold-400 transition-colors">
+              <div className="hidden sm:block">
+                <h1 className="text-lg sm:text-xl font-bold text-white group-hover:text-gold-400 transition-colors">
                   CineSpark AI
                 </h1>
               </div>
             </Link>
 
-            <nav className="hidden md:flex space-x-8">
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex space-x-4 xl:space-x-8">
               {navItems.map(({ path, icon: Icon, label }) => {
                 // Show Home, About, and Projects for everyone
                 if (path === "/" || path === "/about" || path === "/projects") {
@@ -105,7 +116,7 @@ export const Header: React.FC = () => {
                       }`}
                     >
                       <Icon className="h-4 w-4" />
-                      <span>{label}</span>
+                      <span className="hidden xl:inline">{label}</span>
                     </Link>
                   );
                 }
@@ -126,7 +137,7 @@ export const Header: React.FC = () => {
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    <span>{label}</span>
+                    <span className="hidden xl:inline">{label}</span>
                   </Link>
                 );
               })}
@@ -141,29 +152,32 @@ export const Header: React.FC = () => {
                 }`}
               >
                 <CreditCard className="h-4 w-4" />
-                <span>Pricing</span>
+                <span className="hidden xl:inline">Pricing</span>
               </Link>
             </nav>
 
-            <div className="flex items-center space-x-4">
+            {/* Right side - Credits and User Menu */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {user ? (
-                <div className="flex items-center space-x-4">
-                  {/* Credits Display */}
-                  <CreditDisplay />
+                <>
+                  {/* Credits Display - Hidden on small screens */}
+                  <div className="hidden sm:block">
+                    <CreditDisplay />
+                  </div>
 
                   {/* User Menu */}
                   <div className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                      className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-2 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       <User className="h-4 w-4" />
-                      <span className="max-w-32 truncate">
+                      <span className="hidden sm:inline max-w-20 sm:max-w-32 truncate">
                         {getDisplayName()}
                       </span>
                       {profile?.plan && profile.plan !== "free" && (
                         <span
-                          className={`text-xs ${
+                          className={`text-xs hidden md:inline ${
                             getPlanBadge(profile.plan).color
                           }`}
                         >
@@ -228,27 +242,135 @@ export const Header: React.FC = () => {
                       </div>
                     )}
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4">
                   <Link
                     to="/pricing"
-                    className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-200"
+                    className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-200 hidden sm:inline"
                   >
                     Pricing
                   </Link>
                   <button
                     onClick={() => setShowAuthModal(true)}
-                    className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
+                    className="bg-gold-600 hover:bg-gold-700 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
                   >
                     <Sparkles className="h-4 w-4" />
-                    <span>Sign In</span>
+                    <span className="hidden sm:inline">Sign In</span>
                   </button>
                 </div>
               )}
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
+                aria-label="Toggle mobile menu"
+              >
+                {showMobileMenu ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        <AnimatePresence>
+          {showMobileMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden border-t border-gray-700 bg-gray-800"
+            >
+              <div className="px-4 py-2 space-y-1">
+                {/* Mobile Credits Display for authenticated users */}
+                {user && (
+                  <div className="sm:hidden py-3 border-b border-gray-700 mb-2">
+                    <CreditDisplay />
+                  </div>
+                )}
+
+                {/* Navigation Items */}
+                {navItems.map(({ path, icon: Icon, label }) => {
+                  // Show Home, About, and Projects for everyone
+                  if (path === "/" || path === "/about" || path === "/projects") {
+                    return (
+                      <Link
+                        key={path}
+                        to={path}
+                        onClick={closeMobileMenu}
+                        className={`flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${
+                          location.pathname === path
+                            ? "bg-cinema-600 text-white"
+                            : "text-gray-300 hover:text-white hover:bg-gray-700"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span>{label}</span>
+                      </Link>
+                    );
+                  }
+
+                  // Skip project-specific nav items if no projectId
+                  if (path.includes("undefined") || !projectId) {
+                    return null;
+                  }
+
+                  return (
+                    <Link
+                      key={path}
+                      to={path}
+                      onClick={closeMobileMenu}
+                      className={`flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${
+                        location.pathname === path
+                          ? "bg-cinema-600 text-white"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
+
+                {/* Pricing Link */}
+                <Link
+                  to="/pricing"
+                  onClick={closeMobileMenu}
+                  className={`flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${
+                    location.pathname === "/pricing"
+                      ? "bg-cinema-600 text-white"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span>Pricing</span>
+                </Link>
+
+                {/* Mobile Auth Section */}
+                {!user && (
+                  <div className="pt-4 border-t border-gray-700">
+                    <button
+                      onClick={() => {
+                        setShowAuthModal(true);
+                        closeMobileMenu();
+                      }}
+                      className="w-full bg-gold-600 hover:bg-gold-700 text-white px-4 py-3 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <Sparkles className="h-5 w-5" />
+                      <span>Sign In</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <AuthModal
