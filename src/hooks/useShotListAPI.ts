@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useCredits } from './useCredits';
-import toast from 'react-hot-toast';
+import { useCredits } from "./useCredits";
+import toast from "react-hot-toast";
 
 interface GeneratedStory {
   logline: string;
@@ -46,20 +46,21 @@ export const useShotListAPI = () => {
 
   const generateShotListFromAPI = async (
     storyData: GeneratedStory,
-    idea: string = " "
+    idea: string = " ",
+    shotdata: GeneratedShotList | string = " "
   ): Promise<GeneratedShotList | null> => {
     setLoading(true);
     setError(null);
 
     try {
       // Use SHOT_LIST_GENERATION for both new shot lists and modifications
-      const action = 'SHOT_LIST_GENERATION';
+      const action = "SHOT_LIST_GENERATION";
 
       // Validate credits before making API call
       const validation = await validateCredits(action);
       if (!validation.isValid) {
-        setError(validation.message || 'Insufficient credits');
-        toast.error(validation.message || 'Insufficient credits');
+        setError(validation.message || "Insufficient credits");
+        toast.error(validation.message || "Insufficient credits");
         return null;
       }
 
@@ -72,6 +73,7 @@ export const useShotListAPI = () => {
         body: JSON.stringify({
           idea: idea,
           story: JSON.stringify(storyData),
+          shot: shotdata,
         }),
       });
 
@@ -93,14 +95,20 @@ export const useShotListAPI = () => {
         modification_request: idea,
         is_modification: isModification,
         shots_generated: result.shot.length,
-        api_response_size: JSON.stringify(result).length
+        api_response_size: JSON.stringify(result).length,
       });
 
       if (!deductionResult.success) {
-        console.error('Credit deduction failed:', deductionResult.error);
-        toast.error('Shot list generated but credit deduction failed. Please contact support.');
+        console.error("Credit deduction failed:", deductionResult.error);
+        toast.error(
+          "Shot list generated but credit deduction failed. Please contact support."
+        );
       } else {
-        toast.success(`Shot list ${isModification ? 'modified' : 'generated'} successfully! ${validation.requiredCredits} credits deducted.`);
+        toast.success(
+          `Shot list ${
+            isModification ? "modified" : "generated"
+          } successfully! ${validation.requiredCredits} credits deducted.`
+        );
       }
 
       const generatedShotList: GeneratedShotList = {
