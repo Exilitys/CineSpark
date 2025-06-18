@@ -58,6 +58,22 @@ function App() {
             },
           }}
         />
+        
+        {/* Bolt Badge */}
+        <div className="fixed bottom-4 left-4 z-50">
+          <a 
+            href="https://bolt.new" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block transition-transform hover:scale-110 focus:scale-110"
+          >
+            <img 
+              src="/asset/white_circle_360x360.png" 
+              alt="Powered by Bolt" 
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full shadow-lg"
+            />
+          </a>
+        </div>
       </Layout>
     </Router>
   );

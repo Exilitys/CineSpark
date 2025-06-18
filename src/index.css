@@ -40,3 +40,23 @@
     transition: all 0.3s ease-in-out;
   }
 }
+
+/* Bolt Badge Animation */
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.bolt-badge {
+  animation: pulse-subtle 5s infinite ease-in-out;
+}
+
+.bolt-badge:hover {
+  animation: none;
+}
