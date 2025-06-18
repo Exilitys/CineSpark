@@ -48,7 +48,7 @@ export const WorkflowTracker: React.FC = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600 shadow-lg"
+      className="bg-gradient-to-r from-gray-800 to-gray-700 border-b border-gray-600 shadow-lg overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-3 sm:py-4">
@@ -135,8 +135,8 @@ export const WorkflowTracker: React.FC = () => {
           <div className="md:hidden">
             {/* Current Step Display */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   currentStep === 1 ? 'bg-cinema-600' : 
                   currentStep === 2 ? 'bg-cinema-600' : 'bg-cinema-600'
                 }`}>
@@ -146,15 +146,15 @@ export const WorkflowTracker: React.FC = () => {
                     })
                   }
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-white truncate">
                     {steps.find(s => s.step === currentStep)?.label}
                   </h3>
                   <p className="text-xs text-gray-400">Step {currentStep} of 3</p>
                 </div>
               </div>
               
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <div className="text-xs text-gray-400 mb-1">Progress</div>
                 <div className="text-sm font-bold text-cinema-400">
                   {Math.round((currentStep / 3) * 100)}%
@@ -172,8 +172,8 @@ export const WorkflowTracker: React.FC = () => {
               />
             </div>
 
-            {/* Step Navigation */}
-            <div className="flex justify-between">
+            {/* Step Navigation - Responsive Grid */}
+            <div className="grid grid-cols-3 gap-2">
               {steps.map((step) => {
                 const isActive = step.step === currentStep;
                 const isCompleted = step.step < currentStep;
@@ -213,7 +213,9 @@ export const WorkflowTracker: React.FC = () => {
                         <step.icon className="h-3 w-3 text-white" />
                       )}
                     </div>
-                    <span className="text-xs font-medium">{step.shortLabel}</span>
+                    <span className="text-xs font-medium text-center leading-tight">
+                      {step.shortLabel}
+                    </span>
                   </Link>
                 );
               })}
