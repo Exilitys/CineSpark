@@ -44,6 +44,7 @@ CineSparkAI is an AI-powered pre-production assistant designed to revolutionize 
 - **Icons**: Lucide React  
 - **Auth & DB**: Supabase  
 - **Deployment**: Netlify
+- **AI Backend**: Python, LangGraph, FastAPI
 
 ---
 
