@@ -40,8 +40,14 @@ export const ExportPage: React.FC = () => {
   const { story, loading: storyLoading } = useStory(projectId || null);
   const { shots, loading: shotsLoading } = useShots(projectId || null);
   const { frames, loading: framesLoading } = usePhotoboard(projectId || null);
-  const { exportStoryPDF, exportShotsPDF, exportingStory, exportingShots } =
-    usePDFExport();
+  const { 
+    exportStoryPDF, 
+    exportShotsPDF, 
+    exportPhotoboardPDF,
+    exportingStory, 
+    exportingShots,
+    exportingPhotoboard
+  } = usePDFExport();
 
   // Get project details
   const currentProject = projects.find((p) => p.id === projectId);
@@ -88,7 +94,7 @@ export const ExportPage: React.FC = () => {
         "Technical specifications",
       ],
       available: frames.length > 0,
-      loadingState: false, // Will implement when photoboard PDF export is available
+      loadingState: exportingPhotoboard,
     },
   ];
 
@@ -146,8 +152,7 @@ export const ExportPage: React.FC = () => {
           successCount++;
         } catch (error) {
           console.error("Error exporting story PDF:", error);
-          failedExports.push("story-pdf");
-          // toast.error('Failed to export story PDF');
+          failedExports.push("Story PDF");
         }
       }
 
@@ -170,21 +175,43 @@ export const ExportPage: React.FC = () => {
           successCount++;
         } catch (error) {
           console.error("Error exporting shots PDF:", error);
-          failedExports.push("shot-list-pdf");
-          // toast.error('Failed to export shot list PDF');
+          failedExports.push("Shot List PDF");
         }
       }
 
-      // Export Photoboard PDF (placeholder for future implementation)
-      if (selectedFormats.includes("photoboard-pdf")) {
-        toast.info("Photoboard PDF export will be available soon!");
-        failedExports.push("Photoboard PDF");
-        console.log(failedExports);
-        // successCount++; // Count as success for demo purposes
+      // Export Photoboard PDF
+      if (selectedFormats.includes("photoboard-pdf") && frames.length > 0) {
+        try {
+          // Prepare photoboard data in the format expected by your Python API
+          const photoboardData = frames.map(frame => {
+            const shot = shots.find(s => s.id === frame.shot_id);
+            
+            return {
+              shot_id: frame.shot_id || frame.id,
+              shot_number: shot?.shot_number || 1,
+              scene_number: shot?.scene_number || 1,
+              description: frame.description,
+              style: frame.style,
+              image_url: frame.image_url || '',
+              annotations: frame.annotations || [],
+              technical_specs: {
+                shot_type: shot?.shot_type || 'Medium Shot',
+                camera_angle: shot?.camera_angle || 'Eye-level',
+                camera_movement: shot?.camera_movement || 'Static',
+                lens_recommendation: shot?.lens_recommendation || '50mm standard lens'
+              }
+            };
+          });
+
+          await exportPhotoboardPDF(projectName, photoboardData);
+          successCount++;
+        } catch (error) {
+          console.error("Error exporting photoboard PDF:", error);
+          failedExports.push("Photoboard PDF");
+        }
       }
 
       // Set export result based on success/failure
-
       const result: ExportResult = {
         success: successCount === totalExports && failedExports.length === 0,
         successCount,
@@ -590,13 +617,14 @@ export const ExportPage: React.FC = () => {
                 selectedFormats.length === 0 ||
                 isExporting ||
                 exportingStory ||
-                exportingShots
+                exportingShots ||
+                exportingPhotoboard
               }
               className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
               whileHover={{ scale: selectedFormats.length > 0 ? 1.02 : 1 }}
               whileTap={{ scale: selectedFormats.length > 0 ? 0.98 : 1 }}
             >
-              {isExporting || exportingStory || exportingShots ? (
+              {isExporting || exportingStory || exportingShots || exportingPhotoboard ? (
                 <>
                   <Download className="h-4 w-4 animate-bounce" />
                   <span>Exporting PDFs...</span>

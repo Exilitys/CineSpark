@@ -3,6 +3,9 @@ import { motion } from 'framer-motion';
 import { Image, Play, Edit3, RefreshCw, Download, Grid3X3, List, Check, Upload, X } from 'lucide-react';
 import { Database } from '../../types/database';
 import { useCredits } from '../../hooks/useCredits';
+import { usePDFExport } from '../../hooks/usePDFExport';
+import { useProjects } from '../../hooks/useProjects';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 type PhotoboardFrame = Database['public']['Tables']['photoboard_frames']['Row'];
@@ -26,12 +29,19 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
   onUploadImage,
   onApprove 
 }) => {
+  const { projectId } = useParams<{ projectId: string }>();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedScene, setSelectedScene] = useState('all');
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState<string | null>(null);
   
   const { canPerformAction, getCreditCost, refetch: refetchCredits } = useCredits();
+  const { exportPhotoboardPDF, exportingPhotoboard } = usePDFExport();
+  const { projects } = useProjects();
+
+  // Get project details for export
+  const currentProject = projects.find(p => p.id === projectId);
+  const projectName = currentProject?.title || 'Untitled Project';
 
   // Get unique scenes from shots
   const uniqueScenes = Array.from(new Set(shots.map(shot => shot.scene_number).filter(Boolean)));
@@ -106,6 +116,42 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
     }
   };
 
+  const handleExportPhotoboard = async () => {
+    try {
+      // Prepare photoboard data in the format expected by your Python API
+      const photoboardData = frames.map(frame => {
+        const shot = getShotDetails(frame);
+        
+        return {
+          shot_id: frame.shot_id || frame.id,
+          shot_number: shot?.shot_number || 1,
+          scene_number: shot?.scene_number || 1,
+          description: frame.description,
+          style: frame.style,
+          image_url: frame.image_url || '',
+          annotations: frame.annotations || [],
+          technical_specs: {
+            shot_type: shot?.shot_type || 'Medium Shot',
+            camera_angle: shot?.camera_angle || 'Eye-level',
+            camera_movement: shot?.camera_movement || 'Static',
+            lens_recommendation: shot?.lens_recommendation || '50mm standard lens'
+          }
+        };
+      });
+
+      console.log('📋 Exporting photoboard data:', {
+        project_name: projectName,
+        frames_count: photoboardData.length,
+        sample_frame: photoboardData[0]
+      });
+
+      await exportPhotoboardPDF(projectName, photoboardData);
+    } catch (error) {
+      console.error('Error exporting photoboard PDF:', error);
+      toast.error('Failed to export photoboard PDF');
+    }
+  };
+
   const handleDrop = (e: React.DragEvent, frameId: string) => {
     e.preventDefault();
     setDragOver(null);
@@ -164,9 +210,22 @@ export const PhotoboardView: React.FC<PhotoboardViewProps> = ({
               <List className="h-4 w-4" />
             </button>
           </div>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
-            <Download className="h-4 w-4" />
-            <span>Export Board</span>
+          <button 
+            onClick={handleExportPhotoboard}
+            disabled={exportingPhotoboard || frames.length === 0}
+            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+          >
+            {exportingPhotoboard ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Exporting...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                <span>Export PDF</span>
+              </>
+            )}
           </button>
           {onApprove && (
             <button

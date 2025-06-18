@@ -36,9 +36,26 @@ interface ShotData {
   notes: string;
 }
 
+interface PhotoboardData {
+  shot_id: string;
+  shot_number: number;
+  scene_number: number;
+  description: string;
+  style: string;
+  image_url: string;
+  annotations: string[];
+  technical_specs: {
+    shot_type: string;
+    camera_angle: string;
+    camera_movement: string;
+    lens_recommendation: string;
+  };
+}
+
 export const usePDFExport = () => {
   const [exportingStory, setExportingStory] = useState(false);
   const [exportingShots, setExportingShots] = useState(false);
+  const [exportingPhotoboard, setExportingPhotoboard] = useState(false);
 
   const downloadFile = (blob: Blob, filename: string) => {
     const url = window.URL.createObjectURL(blob);
@@ -80,7 +97,7 @@ export const usePDFExport = () => {
       
     } catch (error) {
       console.error('Error exporting story PDF:', error);
-      // toast.error('Failed to export story PDF. Please try again.', { id: 'export-story' });
+      toast.error('Failed to export story PDF. Please try again.', { id: 'export-story' });
       throw error;
     } finally {
       setExportingStory(false);
@@ -116,17 +133,61 @@ export const usePDFExport = () => {
       
     } catch (error) {
       console.error('Error exporting shots PDF:', error);
-      // toast.error('Failed to export shot list PDF. Please try again.', { id: 'export-shots' });
+      toast.error('Failed to export shot list PDF. Please try again.', { id: 'export-shots' });
       throw error;
     } finally {
       setExportingShots(false);
     }
   };
 
+  const exportPhotoboardPDF = async (projectName: string, photoboardData: PhotoboardData[]) => {
+    setExportingPhotoboard(true);
+    
+    try {
+      toast.loading('Generating photoboard PDF...', { id: 'export-photoboard' });
+      
+      console.log('📤 Sending photoboard data to API:', {
+        project_name: projectName,
+        photo_count: photoboardData.length,
+        first_frame: photoboardData[0]
+      });
+      
+      const response = await fetch('http://localhost:8000/generate-pdf-photo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project_name: projectName,
+          photo: photoboardData
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const filename = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_photoboard.pdf`;
+      
+      downloadFile(blob, filename);
+      toast.success('Photoboard PDF exported successfully!', { id: 'export-photoboard' });
+      
+    } catch (error) {
+      console.error('Error exporting photoboard PDF:', error);
+      toast.error('Failed to export photoboard PDF. Please try again.', { id: 'export-photoboard' });
+      throw error;
+    } finally {
+      setExportingPhotoboard(false);
+    }
+  };
+
   return {
     exportStoryPDF,
     exportShotsPDF,
+    exportPhotoboardPDF,
     exportingStory,
     exportingShots,
+    exportingPhotoboard,
   };
 };
