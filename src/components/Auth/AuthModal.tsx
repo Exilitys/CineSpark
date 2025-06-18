@@ -43,33 +43,87 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
     try {
       console.log('🔐 Auth modal submitting:', { isSignUp, email, fullName: isSignUp ? fullName : 'N/A', redirectAfterAuth });
       
-      const { error } = isSignUp 
-        ? await signUp(email, password, fullName.trim())
-        : await signIn(email, password);
+      if (isSignUp) {
+        const { error, needsConfirmation } = await signUp(email, password, fullName.trim());
 
-      if (error) {
-        console.error('❌ Auth error:', error);
-        toast.error(error.message);
+        if (error) {
+          console.error('❌ Sign up error:', error);
+          
+          // Handle specific error cases
+          if (error.message?.includes('User already registered')) {
+            toast.error('An account with this email already exists. Please sign in instead.');
+            setIsSignUp(false); // Switch to sign in mode
+          } else if (error.message?.includes('Invalid email')) {
+            toast.error('Please enter a valid email address');
+          } else if (error.message?.includes('Password')) {
+            toast.error('Password must be at least 6 characters long');
+          } else {
+            toast.error(error.message || 'Failed to create account');
+          }
+        } else if (needsConfirmation) {
+          toast.success('Please check your email to confirm your account before signing in');
+          setIsSignUp(false); // Switch to sign in mode
+        } else {
+          console.log('✅ Sign up successful');
+          toast.success('Account created successfully!');
+          
+          // Clear form
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          onClose();
+
+          // Handle post-authentication flow
+          await handlePostAuthFlow();
+        }
       } else {
-        console.log('✅ Auth successful');
-        toast.success(isSignUp ? 'Account created successfully!' : 'Welcome back!');
-        
-        // Clear form
-        setEmail('');
-        setPassword('');
-        setFullName('');
-        onClose();
+        const { error } = await signIn(email, password);
 
-        // Handle post-authentication flow
-        await handlePostAuthFlow();
+        if (error) {
+          console.error('❌ Sign in error:', error);
+          
+          // Handle specific error cases
+          if (error.message?.includes('Invalid login credentials')) {
+            toast.error('Invalid email or password. Please check your credentials.');
+          } else if (error.message?.includes('Email not confirmed')) {
+            toast.error('Please check your email and confirm your account before signing in');
+          } else {
+            toast.error(error.message || 'Failed to sign in');
+          }
+        } else {
+          console.log('✅ Sign in successful');
+          toast.success('Welcome back!');
+          
+          // Clear form
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          onClose();
+
+          // Handle post-authentication flow
+          await handlePostAuthFlow();
+        }
       }
     } catch (error) {
       console.error('💥 Unexpected auth error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -195,6 +249,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       placeholder="Enter your full name"
                       maxLength={50}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">This will be displayed in your profile</p>
@@ -215,6 +270,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -234,8 +290,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Enter your password"
                     required
                     minLength={6}
+                    disabled={loading}
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters long</p>
               </div>
 
               <motion.button
@@ -264,7 +322,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}
                 <button
                   onClick={toggleMode}
-                  className="ml-2 text-gold-400 hover:text-gold-300 font-medium transition-colors"
+                  disabled={loading}
+                  className="ml-2 text-gold-400 hover:text-gold-300 font-medium transition-colors disabled:opacity-50"
                 >
                   {isSignUp ? 'Sign In' : 'Sign Up'}
                 </button>
