@@ -1,19 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { Layout } from './components/Layout/Layout';
-import { HomePage } from './pages/HomePage';
-import { AboutPage } from './pages/AboutPage';
-import { ProjectsPage } from './pages/ProjectsPage';
-import { StoryPage } from './pages/StoryPage';
-import { ShotListPage } from './pages/ShotListPage';
-import { PhotoboardPage } from './pages/PhotoboardPage';
-import { ExportPage } from './pages/ExportPage';
-import { PricingPage } from './pages/PricingPage';
-import { PaymentPage } from './pages/PaymentPage';
-import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { useAuth } from './hooks/useAuth';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { Layout } from "./components/Layout/Layout";
+import { HomePage } from "./pages/HomePage";
+import { AboutPage } from "./pages/AboutPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
+import { StoryPage } from "./pages/StoryPage";
+import { ShotListPage } from "./pages/ShotListPage";
+import { PhotoboardPage } from "./pages/PhotoboardPage";
+import { ExportPage } from "./pages/ExportPage";
+import { PricingPage } from "./pages/PricingPage";
+import { PaymentPage } from "./pages/PaymentPage";
+import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { useAuth } from "./hooks/useAuth";
+import NotFound from "./pages/NotFoundPage";
 
 function App() {
   const { loading, initialized } = useAuth();
@@ -25,7 +26,9 @@ function App() {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Initializing CineSpark AI...</p>
-          <p className="text-gray-500 text-sm mt-2">Setting up your creative workspace</p>
+          <p className="text-gray-500 text-sm mt-2">
+            Setting up your creative workspace
+          </p>
         </div>
       </div>
     );
@@ -46,30 +49,31 @@ function App() {
           <Route path="/payment/:planId" element={<PaymentPage />} />
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-        <Toaster 
+        <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#1f2937',
-              color: '#fff',
-              border: '1px solid #374151',
+              background: "#1f2937",
+              color: "#fff",
+              border: "1px solid #374151",
             },
           }}
         />
-        
+
         {/* Bolt Badge */}
         <div className="fixed bottom-4 left-4 z-50">
-          <a 
-            href="https://bolt.new" 
-            target="_blank" 
+          <a
+            href="https://bolt.new"
+            target="_blank"
             rel="noopener noreferrer"
             className="block transition-transform hover:scale-110 focus:scale-110"
           >
-            <img 
-              src="/asset/white_circle_360x360.png" 
-              alt="Powered by Bolt" 
+            <img
+              src="/asset/white_circle_360x360.png"
+              alt="Powered by Bolt"
               className="w-12 h-12 sm:w-16 sm:h-16 rounded-full shadow-lg"
             />
           </a>

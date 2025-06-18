@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ShotListView } from '../components/ShotList/ShotListView';
-import { ShotEditor } from '../components/ShotList/ShotEditor';
-import { ShotCreator } from '../components/ShotList/ShotCreator';
-import { CreditGuard } from '../components/Credits/CreditGuard';
-import { WorkflowTracker } from '../components/Layout/WorkflowTracker';
-import { useShots } from '../hooks/useShots';
-import { usePhotoboardAPI } from '../hooks/usePhotoboardAPI';
-import { useCredits } from '../hooks/useCredits';
-import { supabase } from '../lib/supabase';
-import { Database } from '../types/database';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Camera } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ShotListView } from "../components/ShotList/ShotListView";
+import { ShotEditor } from "../components/ShotList/ShotEditor";
+import { ShotCreator } from "../components/ShotList/ShotCreator";
+import { CreditGuard } from "../components/Credits/CreditGuard";
+import { WorkflowTracker } from "../components/Layout/WorkflowTracker";
+import { useShots } from "../hooks/useShots";
+import { usePhotoboardAPI } from "../hooks/usePhotoboardAPI";
+import { useCredits } from "../hooks/useCredits";
+import { supabase } from "../lib/supabase";
+import { Database } from "../types/database";
+import { motion } from "framer-motion";
+import { ArrowLeft, Camera } from "lucide-react";
+import toast from "react-hot-toast";
 
-type Shot = Database['public']['Tables']['shots']['Row'];
+type Shot = Database["public"]["Tables"]["shots"]["Row"];
 
 export const ShotListPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -25,17 +25,21 @@ export const ShotListPage: React.FC = () => {
   const [showCreditGuard, setShowCreditGuard] = useState(false);
   const [generatingPhotoboard, setGeneratingPhotoboard] = useState(false);
 
-  const { 
-    shots, 
-    loading, 
-    updateShot, 
-    createShot, 
+  const {
+    shots,
+    loading,
+    updateShot,
+    createShot,
     deleteShot,
     generateShots,
-    refetch
+    refetch,
   } = useShots(projectId || null);
 
-  const { generatePhotoboardFromAPI, loading: apiLoading, error: apiError } = usePhotoboardAPI();
+  const {
+    generatePhotoboardFromAPI,
+    loading: apiLoading,
+    error: apiError,
+  } = usePhotoboardAPI();
   const { canPerformAction } = useCredits();
 
   const handleEditShot = (shot: Shot) => {
@@ -46,9 +50,9 @@ export const ShotListPage: React.FC = () => {
   const handleDeleteShot = async (shotId: string) => {
     try {
       await deleteShot(shotId);
-      toast.success('Shot and photoboard frame deleted successfully!');
+      toast.success("Shot and photoboard frame deleted successfully!");
     } catch (error) {
-      toast.error('Error deleting shot');
+      toast.error("Error deleting shot");
       throw error; // Re-throw to handle loading state in component
     }
   };
@@ -81,11 +85,11 @@ export const ShotListPage: React.FC = () => {
           notes: shot.notes,
         });
       }
-      
+
       // Refresh the shots data
       await refetch();
     } catch (error) {
-      console.error('Error updating shots:', error);
+      console.error("Error updating shots:", error);
       throw error;
     }
   };
@@ -94,8 +98,10 @@ export const ShotListPage: React.FC = () => {
     try {
       const framesToInsert = photoboardData.frames.map((frame: any) => {
         // Find the corresponding shot in our database
-        const correspondingShot = shots.find(shot => shot.shot_number === frame.shot_number);
-        
+        const correspondingShot = shots.find(
+          (shot) => shot.shot_number === frame.shot_number
+        );
+
         return {
           project_id: projectId,
           shot_id: correspondingShot?.id || null,
@@ -107,22 +113,22 @@ export const ShotListPage: React.FC = () => {
       });
 
       const { data, error } = await supabase
-        .from('photoboard_frames')
+        .from("photoboard_frames")
         .insert(framesToInsert)
         .select();
 
       if (error) throw error;
-      
+
       return data || [];
     } catch (error) {
-      console.error('Error creating photoboard in database:', error);
+      console.error("Error creating photoboard in database:", error);
       throw error;
     }
   };
 
   const handleApproveShots = async () => {
     // Check if user can perform the action
-    const canProceed = await canPerformAction('PHOTOBOARD_GENERATION');
+    const canProceed = await canPerformAction("PHOTOBOARD_GENERATION");
     if (!canProceed) {
       setShowCreditGuard(true);
       return;
@@ -133,20 +139,24 @@ export const ShotListPage: React.FC = () => {
 
   const generatePhotoboard = async () => {
     setGeneratingPhotoboard(true);
-    
+
     try {
       // If no shots exist, generate them first
       if (shots.length === 0) {
-        toast.loading('Generating shot list...', { id: 'generate-shots' });
+        toast.loading("Generating shot list...", { id: "generate-shots" });
         await generateShots();
-        toast.success('Shot list generated successfully!', { id: 'generate-shots' });
+        toast.success("Shot list generated successfully!", {
+          id: "generate-shots",
+        });
       }
-      
+
       // Step 1: Send shot list data to API for photoboard generation (credits will be deducted inside the hook)
-      toast.loading('Sending shot list to AI for storyboard generation...', { id: 'generate-photoboard' });
-      
+      toast.loading("Sending shot list to AI for storyboard generation...", {
+        id: "generate-photoboard",
+      });
+
       const shotListData = {
-        shots: shots.map(shot => ({
+        shots: shots.map((shot) => ({
           id: shot.id,
           shot_number: shot.shot_number,
           scene_number: shot.scene_number,
@@ -156,30 +166,37 @@ export const ShotListPage: React.FC = () => {
           description: shot.description,
           lens_recommendation: shot.lens_recommendation,
           estimated_duration: shot.estimated_duration,
-          notes: shot.notes
-        }))
+          notes: shot.notes,
+        })),
       };
 
       const generatedPhotoboard = await generatePhotoboardFromAPI(shotListData);
-      
+
       if (!generatedPhotoboard) {
-        toast.error('Failed to generate storyboard. Please try again.', { id: 'generate-photoboard' });
+        toast.error("Failed to generate storyboard. Please try again.", {
+          id: "generate-photoboard",
+        });
         return;
       }
 
       // Step 2: Save photoboard to database
-      toast.loading('Creating storyboard frames in your project...', { id: 'generate-photoboard' });
-      
+      toast.loading("Creating storyboard frames in your project...", {
+        id: "generate-photoboard",
+      });
+
       await createPhotoboardInDatabase(generatedPhotoboard);
-      
-      toast.success('Storyboard generated successfully!', { id: 'generate-photoboard' });
-      
+
+      toast.success("Storyboard generated successfully!", {
+        id: "generate-photoboard",
+      });
+
       // Step 3: Navigate to photoboard page
       navigate(`/photoboard/${projectId}`);
-      
     } catch (error) {
-      console.error('Error in photoboard generation process:', error);
-      toast.error('Error generating storyboard. Please try again.', { id: 'generate-photoboard' });
+      console.error("Error in photoboard generation process:", error);
+      toast.error("Error generating storyboard. Please try again.", {
+        id: "generate-photoboard",
+      });
     } finally {
       setGeneratingPhotoboard(false);
     }
@@ -187,12 +204,16 @@ export const ShotListPage: React.FC = () => {
 
   const handleGenerateShots = async () => {
     try {
-      toast.loading('Generating shot list...', { id: 'generate-shots' });
+      toast.loading("Generating shot list...", { id: "generate-shots" });
       await generateShots();
-      toast.success('Shot list generated successfully!', { id: 'generate-shots' });
+      toast.success("Shot list generated successfully!", {
+        id: "generate-shots",
+      });
     } catch (error) {
-      console.error('Error generating shots:', error);
-      toast.error('Error generating shots. Please try again.', { id: 'generate-shots' });
+      console.error("Error generating shots:", error);
+      toast.error("Error generating shots. Please try again.", {
+        id: "generate-shots",
+      });
     }
   };
 
@@ -223,7 +244,7 @@ export const ShotListPage: React.FC = () => {
           className="mb-6"
         >
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -241,9 +262,12 @@ export const ShotListPage: React.FC = () => {
             <div className="w-16 h-16 bg-cinema-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <Camera className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Generate Shot List</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Generate Shot List
+            </h2>
             <p className="text-gray-400 mb-8 max-w-md mx-auto">
-              Ready to create your cinematography breakdown? We'll generate a professional shot list based on your story.
+              Ready to create your cinematography breakdown? We'll generate a
+              professional shot list based on your story.
             </p>
             <button
               onClick={handleGenerateShots}
@@ -254,8 +278,8 @@ export const ShotListPage: React.FC = () => {
             </button>
           </motion.div>
         ) : (
-          <ShotListView 
-            shots={shots} 
+          <ShotListView
+            shots={shots}
             onEditShot={handleEditShot}
             onDeleteShot={handleDeleteShot}
             onAddShot={handleAddShot}
@@ -291,7 +315,7 @@ export const ShotListPage: React.FC = () => {
           description="Create visual storyboard frames based on your shot list."
           metadata={{
             shots_count: shots.length,
-            project_id: projectId
+            project_id: projectId,
           }}
         />
       </div>
