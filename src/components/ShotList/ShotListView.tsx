@@ -202,10 +202,30 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         })),
       };
 
-      // Call API with suggestion and current story (credits will be deducted inside the hook)
+      // Prepare current shot data for API
+      const currentShotsData = shots.map((shot) => ({
+        shot_number: shot.shot_number,
+        scene_number: shot.scene_number,
+        shot_type: shot.shot_type,
+        camera_angle: shot.camera_angle,
+        camera_movement: shot.camera_movement,
+        description: shot.description,
+        lens_recommendation: shot.lens_recommendation,
+        estimated_duration: shot.estimated_duration || 5,
+        notes: shot.notes || "",
+      }));
+
+      console.log('🎬 Sending current shots to API:', {
+        shotsCount: currentShotsData.length,
+        suggestion,
+        firstShot: currentShotsData[0]
+      });
+
+      // Call API with suggestion, current story, and current shots (credits will be deducted inside the hook)
       const updatedShotList = await generateShotListFromAPI(
         storyData,
-        suggestion
+        suggestion,
+        currentShotsData // Pass current shots to API
       );
 
       if (!updatedShotList) {

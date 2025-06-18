@@ -25,18 +25,20 @@ interface GeneratedStory {
   }>;
 }
 
+interface ShotData {
+  shot_number: number;
+  scene_number: number;
+  shot_type: string;
+  camera_angle: string;
+  camera_movement: string;
+  description: string;
+  lens_recommendation: string;
+  estimated_duration: number;
+  notes: string;
+}
+
 interface GeneratedShotList {
-  shots: Array<{
-    shot_number: number;
-    scene_number: number;
-    shot_type: string;
-    camera_angle: string;
-    camera_movement: string;
-    description: string;
-    lens_recommendation: string;
-    estimated_duration: number;
-    notes: string;
-  }>;
+  shots: Array<ShotData>;
 }
 
 export const useShotListAPI = () => {
@@ -46,7 +48,8 @@ export const useShotListAPI = () => {
 
   const generateShotListFromAPI = async (
     storyData: GeneratedStory,
-    idea: string = " "
+    idea: string = " ",
+    currentShots: ShotData[] = []
   ): Promise<GeneratedShotList | null> => {
     setLoading(true);
     setError(null);
@@ -63,6 +66,26 @@ export const useShotListAPI = () => {
         return null;
       }
 
+      // Prepare shot data for API
+      const shotData = currentShots.map(shot => ({
+        shot_number: shot.shot_number,
+        scene_number: shot.scene_number,
+        shot_type: shot.shot_type,
+        camera_angle: shot.camera_angle,
+        camera_movement: shot.camera_movement,
+        description: shot.description,
+        lens_recommendation: shot.lens_recommendation,
+        estimated_duration: shot.estimated_duration,
+        notes: shot.notes
+      }));
+
+      console.log('📤 Sending to API:', {
+        idea,
+        story: JSON.stringify(storyData),
+        shot: shotData,
+        shotCount: shotData.length
+      });
+
       // Make API call
       const response = await fetch("http://127.0.0.1:8000/generate_shot", {
         method: "POST",
@@ -72,6 +95,7 @@ export const useShotListAPI = () => {
         body: JSON.stringify({
           idea: idea,
           story: JSON.stringify(storyData),
+          shot: shotData, // Send current shots array instead of string
         }),
       });
 
@@ -92,6 +116,7 @@ export const useShotListAPI = () => {
         story_logline: storyData.logline,
         modification_request: idea,
         is_modification: isModification,
+        current_shots_count: currentShots.length,
         shots_generated: result.shot.length,
         api_response_size: JSON.stringify(result).length
       });
