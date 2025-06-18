@@ -1,31 +1,57 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Film, Calendar, Edit3, Trash2, Plus, ArrowRight, CheckCircle, Circle, Clock, Check, X, Save, Crown, AlertTriangle, Zap } from 'lucide-react';
-import { useProjects } from '../../hooks/useProjects';
-import { useAuth } from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { useProjectStatus } from '../../hooks/useProjectStatus';
-import { useProfile } from '../../hooks/useProfile';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Film,
+  Calendar,
+  Edit3,
+  Trash2,
+  Plus,
+  ArrowRight,
+  CheckCircle,
+  Circle,
+  Clock,
+  Check,
+  X,
+  Save,
+  Crown,
+  AlertTriangle,
+  Zap,
+} from "lucide-react";
+import { useProjects } from "../../hooks/useProjects";
+import { useAuth } from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useProjectStatus } from "../../hooks/useProjectStatus";
+import { useProfile } from "../../hooks/useProfile";
+import { toast } from "react-toastify";
 
 export const ProjectsList: React.FC = () => {
-  const { projects, loading, deleteProject, updateProjectTitle, getProjectLimitInfo } = useProjects();
+  const {
+    projects,
+    loading,
+    deleteProject,
+    updateProjectTitle,
+    getProjectLimitInfo,
+  } = useProjects();
   const { user } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
   const [editingProject, setEditingProject] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
+  const [editingTitle, setEditingTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
   const limitInfo = getProjectLimitInfo();
 
   const handleDeleteProject = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${title}"? This action cannot be undone.`
+      )
+    ) {
       try {
         await deleteProject(id);
-        toast.success('Project deleted successfully');
+        toast.success("Project deleted successfully");
       } catch (error) {
-        toast.error('Error deleting project');
+        toast.error("Error deleting project");
       }
     }
   };
@@ -41,12 +67,12 @@ export const ProjectsList: React.FC = () => {
 
   const handleCancelEdit = () => {
     setEditingProject(null);
-    setEditingTitle('');
+    setEditingTitle("");
   };
 
   const handleSaveEdit = async (projectId: string) => {
     if (!editingTitle.trim()) {
-      toast.error('Project name cannot be empty');
+      toast.error("Project name cannot be empty");
       return;
     }
 
@@ -54,19 +80,19 @@ export const ProjectsList: React.FC = () => {
     try {
       await updateProjectTitle(projectId, editingTitle);
       setEditingProject(null);
-      setEditingTitle('');
-      toast.success('Project name updated successfully');
+      setEditingTitle("");
+      toast.success("Project name updated successfully");
     } catch (error: any) {
-      toast.error(error.message || 'Error updating project name');
+      toast.error(error.message || "Error updating project name");
     } finally {
       setSaving(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent, projectId: string) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSaveEdit(projectId);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       handleCancelEdit();
     }
   };
@@ -74,47 +100,52 @@ export const ProjectsList: React.FC = () => {
   const handleCreateNewProject = () => {
     // Check if user can create more projects
     if (!limitInfo.canCreate) {
-      if (profile?.plan === 'free') {
-        toast.error('Free plan is limited to 3 projects. Upgrade to Pro or Enterprise for unlimited projects.');
+      if (profile?.plan === "free") {
+        toast.error(
+          "Free plan is limited to 3 projects. Upgrade to Pro or Enterprise for unlimited projects."
+        );
         // Redirect to pricing page for upgrade
         setTimeout(() => {
-          navigate('/pricing');
+          navigate("/pricing");
         }, 2000);
       } else {
-        toast.error('You have reached your project limit');
+        toast.error("You have reached your project limit");
       }
       return;
     }
 
     // Always redirect to home page for project creation
-    toast.info('Redirecting to create your new project...');
-    navigate('/');
+    toast.info("Redirecting to create your new project...");
+    navigate("/");
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getPlanBadgeStyle = (plan: string) => {
     switch (plan) {
-      case 'pro':
-        return 'bg-gradient-to-r from-gold-500 to-gold-600 text-white';
-      case 'enterprise':
-        return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white';
+      case "pro":
+        return "bg-gradient-to-r from-gold-500 to-gold-600 text-white";
+      case "enterprise":
+        return "bg-gradient-to-r from-purple-500 to-purple-600 text-white";
       default:
-        return 'bg-gray-600 text-gray-100';
+        return "bg-gray-600 text-gray-100";
     }
   };
 
   const getPlanDisplayName = (plan: string) => {
     switch (plan) {
-      case 'pro': return 'Pro';
-      case 'enterprise': return 'Enterprise';
-      default: return 'Free';
+      case "pro":
+        return "Pro";
+      case "enterprise":
+        return "Enterprise";
+      default:
+        return "Free";
     }
   };
 
@@ -143,20 +174,25 @@ export const ProjectsList: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Your Projects</h1>
           <div className="flex items-center space-x-4">
             <p className="text-gray-400">
-              {projects.length} of {limitInfo.limit} project{projects.length !== 1 ? 's' : ''}
+              {projects.length} of {limitInfo.limit} project
+              {projects.length !== 1 ? "s" : ""}
             </p>
             {profile && (
-              <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getPlanBadgeStyle(profile.plan)}`}>
+              <div
+                className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getPlanBadgeStyle(
+                  profile.plan
+                )}`}
+              >
                 <Crown className="h-3 w-3 mr-1" />
                 {getPlanDisplayName(profile.plan)} Plan
               </div>
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           {/* Project Limit Info */}
-          {profile?.plan === 'free' && (
+          {profile?.plan === "free" && (
             <div className="text-right">
               <div className="text-sm text-gray-400">
                 {limitInfo.remaining} of {limitInfo.limit} remaining
@@ -164,7 +200,11 @@ export const ProjectsList: React.FC = () => {
               <div className="w-32 bg-gray-700 rounded-full h-2 mt-1">
                 <div
                   className="bg-gradient-to-r from-gold-500 to-gold-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(limitInfo.current / (limitInfo.limit as number)) * 100}%` }}
+                  style={{
+                    width: `${
+                      (limitInfo.current / (limitInfo.limit as number)) * 100
+                    }%`,
+                  }}
                 />
               </div>
             </div>
@@ -172,12 +212,12 @@ export const ProjectsList: React.FC = () => {
 
           {/* Create Project Button */}
           <div className="relative group">
-            <button 
+            <button
               onClick={handleCreateNewProject}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
-                limitInfo.canCreate 
-                  ? 'bg-gold-600 hover:bg-gold-700 text-white' 
-                  : 'bg-gray-600 hover:bg-gray-500 text-white'
+                limitInfo.canCreate
+                  ? "bg-gold-600 hover:bg-gold-700 text-white"
+                  : "bg-gray-600 hover:bg-gray-500 text-white"
               }`}
             >
               {limitInfo.canCreate ? (
@@ -199,9 +239,12 @@ export const ProjectsList: React.FC = () => {
                 <div className="flex items-start space-x-2">
                   <Plus className="h-4 w-4 text-gold-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-gold-400 font-medium text-sm">Create New Project</p>
+                    <p className="text-gold-400 font-medium text-sm">
+                      Create New Project
+                    </p>
                     <p className="text-gray-300 text-xs mt-1">
-                      You'll be taken to the home page where you can enter your film idea to generate a new project.
+                      You'll be taken to the home page where you can enter your
+                      film idea to generate a new project.
                     </p>
                   </div>
                 </div>
@@ -209,14 +252,17 @@ export const ProjectsList: React.FC = () => {
             )}
 
             {/* Limit Warning Tooltip */}
-            {!limitInfo.canCreate && profile?.plan === 'free' && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 border border-gray-700 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+            {!limitInfo.canCreate && profile?.plan === "free" && (
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                 <div className="flex items-start space-x-2">
                   <AlertTriangle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-orange-400 font-medium text-sm">Project Limit Reached</p>
+                    <p className="text-orange-400 font-medium text-sm">
+                      Project Limit Reached
+                    </p>
                     <p className="text-gray-300 text-xs mt-1">
-                      Free plan is limited to 3 projects. Upgrade to Pro or Enterprise for unlimited projects.
+                      Free plan is limited to 3 projects. Upgrade to Pro or
+                      Enterprise for unlimited projects.
                     </p>
                   </div>
                 </div>
@@ -227,7 +273,7 @@ export const ProjectsList: React.FC = () => {
       </div>
 
       {/* Plan Limit Warning */}
-      {profile?.plan === 'free' && projects.length >= 2 && (
+      {profile?.plan === "free" && projects.length >= 2 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -236,13 +282,19 @@ export const ProjectsList: React.FC = () => {
           <div className="flex items-start space-x-3">
             <AlertTriangle className="h-5 w-5 text-orange-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="text-orange-400 font-medium">Approaching Project Limit</h4>
+              <h4 className="text-orange-400 font-medium">
+                Approaching Project Limit
+              </h4>
               <p className="text-orange-300 text-sm mt-1">
-                You're using {projects.length} of 3 free projects. 
-                {projects.length === 3 ? ' Upgrade to create more projects.' : ` You have ${3 - projects.length} project${3 - projects.length !== 1 ? 's' : ''} remaining.`}
+                You're using {projects.length} of 3 free projects.
+                {projects.length === 3
+                  ? " Upgrade to create more projects."
+                  : ` You have ${3 - projects.length} project${
+                      3 - projects.length !== 1 ? "s" : ""
+                    } remaining.`}
               </p>
               <button
-                onClick={() => navigate('/pricing')}
+                onClick={() => navigate("/pricing")}
                 className="mt-2 text-orange-400 hover:text-orange-300 text-sm font-medium underline"
               >
                 View Upgrade Options →
@@ -255,8 +307,10 @@ export const ProjectsList: React.FC = () => {
       {projects.length === 0 ? (
         <div className="text-center py-12">
           <Film className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4">No projects yet. Create your first film project!</p>
-          <button 
+          <p className="text-gray-400 mb-4">
+            No projects yet. Create your first film project!
+          </p>
+          <button
             onClick={handleCreateNewProject}
             className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto"
           >
@@ -309,20 +363,20 @@ interface ProjectCardProps {
   formatDate: (date: string) => string;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ 
-  project, 
-  index, 
+const ProjectCard: React.FC<ProjectCardProps> = ({
+  project,
+  index,
   isEditing,
   editingTitle,
   saving,
-  onOpen, 
+  onOpen,
   onDelete,
   onStartEdit,
   onCancelEdit,
   onSaveEdit,
   onTitleChange,
   onKeyPress,
-  formatDate 
+  formatDate,
 }) => {
   const { status, loading } = useProjectStatus(project.id);
 
@@ -337,29 +391,29 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   const getStatusColor = (completed: boolean, inProgress: boolean) => {
-    if (completed) return 'text-green-400';
-    if (inProgress) return 'text-gold-400';
-    return 'text-gray-500';
+    if (completed) return "text-green-400";
+    if (inProgress) return "text-gold-400";
+    return "text-gray-500";
   };
 
   const getProgressPercentage = () => {
     if (!status) return 0;
-    
+
     let completed = 0;
     if (status.story.completed) completed++;
     if (status.shots.completed) completed++;
     if (status.photoboard.completed) completed++;
-    
+
     return Math.round((completed / 3) * 100);
   };
 
   const getNextStep = () => {
-    if (!status) return 'Start with story development';
-    
-    if (!status.story.completed) return 'Complete story development';
-    if (!status.shots.completed) return 'Generate shot list';
-    if (!status.photoboard.completed) return 'Create storyboard';
-    return 'Ready for export';
+    if (!status) return "Start with story development";
+
+    if (!status.story.completed) return "Complete story development";
+    if (!status.shots.completed) return "Generate shot list";
+    if (!status.photoboard.completed) return "Create storyboard";
+    return "Ready for export";
   };
 
   return (
@@ -376,7 +430,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
           <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {!isEditing && (
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onStartEdit();
@@ -399,7 +453,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             </button>
           </div>
         </div>
-        
+
         {/* Project Title - Editable */}
         <div className="mb-4">
           {isEditing ? (
@@ -442,14 +496,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                     Cancel
                   </button>
                 </div>
-                <span className={`text-xs ${editingTitle.length > 80 ? 'text-orange-400' : 'text-gray-500'}`}>
+                <span
+                  className={`text-xs ${
+                    editingTitle.length > 80
+                      ? "text-orange-400"
+                      : "text-gray-500"
+                  }`}
+                >
                   {editingTitle.length}/100
                 </span>
               </div>
-              <p className="text-xs text-gray-500">Press Enter to save, Escape to cancel</p>
+              <p className="text-xs text-gray-500">
+                Press Enter to save, Escape to cancel
+              </p>
             </div>
           ) : (
-            <h3 
+            <h3
               className="text-lg font-semibold text-white line-clamp-2 group-hover:text-gold-400 transition-colors duration-200 cursor-pointer"
               onClick={onOpen}
               title="Click to open project"
@@ -458,7 +520,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             </h3>
           )}
         </div>
-        
+
         <p className="text-gray-400 text-sm mb-4 line-clamp-3">
           {project.original_idea}
         </p>
@@ -467,7 +529,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-400">Progress</span>
-            <span className="text-xs text-gray-400">{getProgressPercentage()}%</span>
+            <span className="text-xs text-gray-400">
+              {getProgressPercentage()}%
+            </span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2">
             <div
@@ -482,7 +546,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <p className="text-xs text-gray-500 mb-1">Next step:</p>
           <p className="text-sm text-gold-400 font-medium">{getNextStep()}</p>
         </div>
-        
+
         <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3" />
@@ -491,7 +555,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <span>Updated {formatDate(project.updated_at)}</span>
         </div>
       </div>
-      
+
       <div className="px-6 py-3 bg-gray-700/50 border-t border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 text-xs">
@@ -504,24 +568,48 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               <>
                 {/* Story Status */}
                 <div className="flex items-center space-x-1">
-                  {getStatusIcon(status.story.completed, status.story.inProgress)}
-                  <span className={getStatusColor(status.story.completed, status.story.inProgress)}>
+                  {getStatusIcon(
+                    status.story.completed,
+                    status.story.inProgress
+                  )}
+                  <span
+                    className={getStatusColor(
+                      status.story.completed,
+                      status.story.inProgress
+                    )}
+                  >
                     Story
                   </span>
                 </div>
 
                 {/* Shots Status */}
                 <div className="flex items-center space-x-1">
-                  {getStatusIcon(status.shots.completed, status.shots.inProgress)}
-                  <span className={getStatusColor(status.shots.completed, status.shots.inProgress)}>
+                  {getStatusIcon(
+                    status.shots.completed,
+                    status.shots.inProgress
+                  )}
+                  <span
+                    className={getStatusColor(
+                      status.shots.completed,
+                      status.shots.inProgress
+                    )}
+                  >
                     Shots
                   </span>
                 </div>
 
                 {/* Photoboard Status */}
                 <div className="flex items-center space-x-1">
-                  {getStatusIcon(status.photoboard.completed, status.photoboard.inProgress)}
-                  <span className={getStatusColor(status.photoboard.completed, status.photoboard.inProgress)}>
+                  {getStatusIcon(
+                    status.photoboard.completed,
+                    status.photoboard.inProgress
+                  )}
+                  <span
+                    className={getStatusColor(
+                      status.photoboard.completed,
+                      status.photoboard.inProgress
+                    )}
+                  >
                     Board
                   </span>
                 </div>
@@ -531,7 +619,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             )}
           </div>
           {!isEditing && (
-            <div 
+            <div
               className="flex items-center space-x-1 text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors duration-200 cursor-pointer"
               onClick={onOpen}
             >

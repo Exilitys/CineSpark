@@ -124,11 +124,11 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
     // Check project limit first
     const limitCheck = checkProjectLimit();
     if (!limitCheck.canCreate) {
-      toast.error(limitCheck.message);
+      toast.error(limitCheck.message || "Project limit reached.");
       // Redirect to pricing page if it's a plan limit issue
-      if (limitCheck.message?.includes('limited to')) {
+      if (limitCheck.message?.includes("limited to")) {
         setTimeout(() => {
-          navigate('/pricing');
+          navigate("/pricing");
         }, 2000);
       }
       return;
@@ -151,10 +151,10 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
       // Check project limit again before creating
       const limitCheck = checkProjectLimit();
       if (!limitCheck.canCreate) {
-        toast.error(limitCheck.message);
-        if (limitCheck.message?.includes('limited to')) {
+        toast.error(limitCheck.message || "Project limit reached.");
+        if (limitCheck.message?.includes("limited to")) {
           setTimeout(() => {
-            navigate('/pricing');
+            navigate("/pricing");
           }, 2000);
         }
         return;
@@ -192,12 +192,12 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
       navigate(`/story/${project.id}`);
     } catch (error: any) {
       console.error("Error in story generation workflow:", error);
-      
+
       // Handle specific project limit errors
-      if (error.message?.includes('limited to')) {
+      if (error.message?.includes("limited to")) {
         toast.error(error.message, { id: "generation" });
         setTimeout(() => {
-          navigate('/pricing');
+          navigate("/pricing");
         }, 2000);
       } else {
         toast.error("Error generating story. Please try again.", {
@@ -353,11 +353,14 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
           <div className="flex items-start space-x-3">
             <Lightbulb className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-blue-400 font-medium text-sm">How It Works</h4>
+              <h4 className="text-blue-400 font-medium text-sm">
+                How It Works
+              </h4>
               <p className="text-blue-300 text-sm mt-1">
-                Enter your film idea above and our AI will generate a complete story with characters, 
-                three-act structure, and scenes. This creates a new project that you can then develop 
-                into shot lists and storyboards.
+                Enter your film idea above and our AI will generate a complete
+                story with characters, three-act structure, and scenes. This
+                creates a new project that you can then develop into shot lists
+                and storyboards.
               </p>
             </div>
           </div>

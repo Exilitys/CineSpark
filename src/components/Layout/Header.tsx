@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
-import { Film, Sparkles, Home, FileText, Camera, Image, Download, User, LogOut, CreditCard, Zap, FolderOpen, Settings, Info } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useProfile } from '../../hooks/useProfile';
-import { CreditDisplay } from '../Credits/CreditDisplay';
-import { AuthModal } from '../Auth/AuthModal';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import {
+  Film,
+  Sparkles,
+  Home,
+  FileText,
+  Camera,
+  Image,
+  Download,
+  User,
+  LogOut,
+  CreditCard,
+  Zap,
+  FolderOpen,
+  Settings,
+  Info,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { useProfile } from "../../hooks/useProfile";
+import { CreditDisplay } from "../Credits/CreditDisplay";
+import { AuthModal } from "../Auth/AuthModal";
+import toast from "react-hot-toast";
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -17,33 +32,33 @@ export const Header: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/about', icon: Info, label: 'About' },
-    { path: '/projects', icon: FolderOpen, label: 'Projects' },
-    { path: `/story/${projectId}`, icon: FileText, label: 'Story' },
-    { path: `/shots/${projectId}`, icon: Camera, label: 'Shot List' },
-    { path: `/photoboard/${projectId}`, icon: Image, label: 'Photoboard' },
-    { path: `/export/${projectId}`, icon: Download, label: 'Export' },
+    { path: "/", icon: Home, label: "Home" },
+    { path: "/about", icon: Info, label: "About" },
+    { path: "/projects", icon: FolderOpen, label: "Projects" },
+    { path: `/story/${projectId}`, icon: FileText, label: "Story" },
+    { path: `/shots/${projectId}`, icon: Camera, label: "Shot List" },
+    { path: `/photoboard/${projectId}`, icon: Image, label: "Photoboard" },
+    { path: `/export/${projectId}`, icon: Download, label: "Export" },
   ];
 
   const handleSignOut = async () => {
     const { error } = await signOut();
     if (error) {
-      toast.error('Error signing out');
+      toast.error("Error signing out");
     } else {
-      toast.success('Signed out successfully');
+      toast.success("Signed out successfully");
     }
     setShowUserMenu(false);
   };
 
   const getPlanBadge = (plan: string) => {
     switch (plan) {
-      case 'pro':
-        return { label: 'Pro', color: 'text-gold-400' };
-      case 'enterprise':
-        return { label: 'Enterprise', color: 'text-purple-400' };
+      case "pro":
+        return { label: "Pro", color: "text-gold-400" };
+      case "enterprise":
+        return { label: "Enterprise", color: "text-purple-400" };
       default:
-        return { label: 'Free', color: 'text-gray-400' };
+        return { label: "Free", color: "text-gray-400" };
     }
   };
 
@@ -53,9 +68,9 @@ export const Header: React.FC = () => {
       return profile.full_name;
     }
     if (user?.email) {
-      return user.email.split('@')[0];
+      return user.email.split("@")[0];
     }
-    return 'User';
+    return "User";
   };
 
   return (
@@ -72,22 +87,21 @@ export const Header: React.FC = () => {
                 <h1 className="text-xl font-bold text-white group-hover:text-gold-400 transition-colors">
                   CineSpark AI
                 </h1>
-                <p className="text-xs text-gray-400 -mt-1">Professional Pre-production</p>
               </div>
             </Link>
 
             <nav className="hidden md:flex space-x-8">
               {navItems.map(({ path, icon: Icon, label }) => {
                 // Show Home, About, and Projects for everyone
-                if (path === '/' || path === '/about' || path === '/projects') {
+                if (path === "/" || path === "/about" || path === "/projects") {
                   return (
                     <Link
                       key={path}
                       to={path}
                       className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                         location.pathname === path
-                          ? 'bg-cinema-600 text-white shadow-lg'
-                          : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                          ? "bg-cinema-600 text-white shadow-lg"
+                          : "text-gray-300 hover:text-white hover:bg-gray-700"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -95,20 +109,20 @@ export const Header: React.FC = () => {
                     </Link>
                   );
                 }
-                
+
                 // Skip project-specific nav items if no projectId
-                if (path.includes('undefined') || !projectId) {
+                if (path.includes("undefined") || !projectId) {
                   return null;
                 }
-                
+
                 return (
                   <Link
                     key={path}
                     to={path}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       location.pathname === path
-                        ? 'bg-cinema-600 text-white shadow-lg'
-                        : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        ? "bg-cinema-600 text-white shadow-lg"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -116,14 +130,14 @@ export const Header: React.FC = () => {
                   </Link>
                 );
               })}
-              
+
               {/* Pricing Link */}
               <Link
                 to="/pricing"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  location.pathname === '/pricing'
-                    ? 'bg-cinema-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  location.pathname === "/pricing"
+                    ? "bg-cinema-600 text-white shadow-lg"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
                 }`}
               >
                 <CreditCard className="h-4 w-4" />
@@ -144,29 +158,44 @@ export const Header: React.FC = () => {
                       className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                     >
                       <User className="h-4 w-4" />
-                      <span className="max-w-32 truncate">{getDisplayName()}</span>
-                      {profile?.plan && profile.plan !== 'free' && (
-                        <span className={`text-xs ${getPlanBadge(profile.plan).color}`}>
+                      <span className="max-w-32 truncate">
+                        {getDisplayName()}
+                      </span>
+                      {profile?.plan && profile.plan !== "free" && (
+                        <span
+                          className={`text-xs ${
+                            getPlanBadge(profile.plan).color
+                          }`}
+                        >
                           {getPlanBadge(profile.plan).label}
                         </span>
                       )}
                     </button>
-                    
+
                     {showUserMenu && (
                       <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50">
                         <div className="py-1">
                           <div className="px-4 py-3 text-sm border-b border-gray-700">
-                            <div className="font-medium text-white">{getDisplayName()}</div>
-                            <div className="text-gray-400 text-xs">{user.email}</div>
+                            <div className="font-medium text-white">
+                              {getDisplayName()}
+                            </div>
+                            <div className="text-gray-400 text-xs">
+                              {user.email}
+                            </div>
                             <div className="mt-2">
                               <CreditDisplay showDetails={false} />
                             </div>
                             {profile?.plan && (
                               <div className="mt-1">
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  profile.plan === 'pro' ? 'bg-gold-600' : 
-                                  profile.plan === 'enterprise' ? 'bg-purple-600' : 'bg-gray-600'
-                                } text-white`}>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    profile.plan === "pro"
+                                      ? "bg-gold-600"
+                                      : profile.plan === "enterprise"
+                                      ? "bg-purple-600"
+                                      : "bg-gray-600"
+                                  } text-white`}
+                                >
                                   {getPlanBadge(profile.plan).label}
                                 </span>
                               </div>
@@ -222,7 +251,10 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </>
   );
 };
