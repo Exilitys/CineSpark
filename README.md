@@ -27,7 +27,8 @@ CineSparkAI is an AI-powered pre-production assistant designed to revolutionize 
 
 ## 🌐 Live Site
 
-👉 [Visit CineSparkAI](https://cinesparkai.netlify.app/)
+👉 [Visit CineSparkAI On Netlify](https://cinesparkai.netlify.app/)
+👉 [Visit CineSparkAI On Own Domain](http://cinesparkai.online/)
 
 ---
 
