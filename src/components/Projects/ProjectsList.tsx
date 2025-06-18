@@ -9,14 +9,13 @@ import { useProfile } from '../../hooks/useProfile';
 import toast from 'react-hot-toast';
 
 export const ProjectsList: React.FC = () => {
-  const { projects, loading, deleteProject, updateProjectTitle, createProject, getProjectLimitInfo } = useProjects();
+  const { projects, loading, deleteProject, updateProjectTitle, getProjectLimitInfo } = useProjects();
   const { user } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [saving, setSaving] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   const limitInfo = getProjectLimitInfo();
 
@@ -72,11 +71,12 @@ export const ProjectsList: React.FC = () => {
     }
   };
 
-  const handleCreateNewProject = async () => {
+  const handleCreateNewProject = () => {
+    // Check if user can create more projects
     if (!limitInfo.canCreate) {
       if (profile?.plan === 'free') {
         toast.error('Free plan is limited to 3 projects. Upgrade to Pro or Enterprise for unlimited projects.');
-        // Optionally redirect to pricing page
+        // Redirect to pricing page for upgrade
         setTimeout(() => {
           navigate('/pricing');
         }, 2000);
@@ -86,29 +86,9 @@ export const ProjectsList: React.FC = () => {
       return;
     }
 
-    setCreating(true);
-    try {
-      const newProject = await createProject({
-        description: 'New film project',
-        original_idea: 'Enter your film idea here...',
-      });
-      
-      toast.success('New project created successfully!');
-      navigate(`/story/${newProject.id}`);
-    } catch (error: any) {
-      console.error('Error creating project:', error);
-      if (error.message?.includes('limited to')) {
-        toast.error(error.message);
-        // Redirect to pricing page for upgrade
-        setTimeout(() => {
-          navigate('/pricing');
-        }, 2000);
-      } else {
-        toast.error('Error creating project');
-      }
-    } finally {
-      setCreating(false);
-    }
+    // Always redirect to home page for project creation
+    toast.info('Redirecting to create your new project...');
+    navigate('/');
   };
 
   const formatDate = (dateString: string) => {
@@ -191,22 +171,16 @@ export const ProjectsList: React.FC = () => {
           )}
 
           {/* Create Project Button */}
-          <div className="relative">
+          <div className="relative group">
             <button 
-              onClick={limitInfo.canCreate ? handleCreateNewProject : () => navigate('/pricing')}
-              disabled={creating}
+              onClick={handleCreateNewProject}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
                 limitInfo.canCreate 
                   ? 'bg-gold-600 hover:bg-gold-700 text-white' 
                   : 'bg-gray-600 hover:bg-gray-500 text-white'
-              } ${creating ? 'opacity-50 cursor-not-allowed' : ''}`}
+              }`}
             >
-              {creating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Creating...</span>
-                </>
-              ) : limitInfo.canCreate ? (
+              {limitInfo.canCreate ? (
                 <>
                   <Plus className="h-4 w-4" />
                   <span>New Project</span>
@@ -219,9 +193,24 @@ export const ProjectsList: React.FC = () => {
               )}
             </button>
 
+            {/* Tooltip for create button */}
+            {limitInfo.canCreate && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 border border-gray-700 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <div className="flex items-start space-x-2">
+                  <Plus className="h-4 w-4 text-gold-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-gold-400 font-medium text-sm">Create New Project</p>
+                    <p className="text-gray-300 text-xs mt-1">
+                      You'll be taken to the home page where you can enter your film idea to generate a new project.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Limit Warning Tooltip */}
             {!limitInfo.canCreate && profile?.plan === 'free' && (
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg p-3 z-10">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 border border-gray-700 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                 <div className="flex items-start space-x-2">
                   <AlertTriangle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" />
                   <div>
@@ -269,21 +258,14 @@ export const ProjectsList: React.FC = () => {
           <p className="text-gray-400 mb-4">No projects yet. Create your first film project!</p>
           <button 
             onClick={handleCreateNewProject}
-            disabled={creating}
-            className="bg-gold-600 hover:bg-gold-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto"
+            className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto"
           >
-            {creating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Creating...</span>
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                <span>Create Project</span>
-              </>
-            )}
+            <Plus className="h-4 w-4" />
+            <span>Create Project</span>
           </button>
+          <p className="text-gray-500 text-sm mt-3">
+            You'll be taken to the home page to enter your film idea
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -342,6 +342,26 @@ export const IdeaInput: React.FC<IdeaInputProps> = ({
             ))}
           </div>
         </motion.div>
+
+        {/* Information about project creation */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mt-8 bg-blue-900/20 border border-blue-700 rounded-xl p-4"
+        >
+          <div className="flex items-start space-x-3">
+            <Lightbulb className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-blue-400 font-medium text-sm">How It Works</h4>
+              <p className="text-blue-300 text-sm mt-1">
+                Enter your film idea above and our AI will generate a complete story with characters, 
+                three-act structure, and scenes. This creates a new project that you can then develop 
+                into shot lists and storyboards.
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
 
       {/* Credit Guard Modal */}
