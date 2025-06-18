@@ -9,6 +9,8 @@ import {
   Check,
   Trash2,
   Image,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Database } from "../../types/database";
 import { AIChatbox } from "../AI/AIChatbox";
@@ -286,7 +288,7 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-7xl mx-auto px-4"
+        className="max-w-7xl mx-auto px-4 sm:px-6"
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div className="flex items-center space-x-3 sm:space-x-4">
@@ -354,207 +356,362 @@ export const ShotListView: React.FC<ShotListViewProps> = ({
 
         {/* Filters */}
         {uniqueScenes.length > 1 && (
-          <div className="bg-gray-800 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700 overflow-x-auto hide-scrollbar">
-            <div className="flex flex-nowrap items-center gap-3 sm:gap-4 min-w-max">
+          <div className="bg-gray-800 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center space-x-2">
                 <Filter className="h-4 w-4 text-gray-400" />
                 <span className="text-xs sm:text-sm font-medium text-gray-300 whitespace-nowrap">
                   Filter by scene:
                 </span>
               </div>
-              <div className="flex flex-nowrap gap-2">
-                <button
-                  onClick={() => setSelectedScene("all")}
-                  className={`px-2 sm:px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
-                    selectedScene === "all"
-                      ? "bg-cinema-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  All Scenes
-                </button>
-                {uniqueScenes.map((sceneNum) => (
+              <div className="overflow-x-auto hide-scrollbar">
+                <div className="flex gap-2 min-w-max">
                   <button
-                    key={sceneNum}
-                    onClick={() => setSelectedScene(sceneNum.toString())}
-                    className={`px-2 sm:px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
-                      selectedScene === sceneNum.toString()
+                    onClick={() => setSelectedScene("all")}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
+                      selectedScene === "all"
                         ? "bg-cinema-600 text-white"
                         : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                   >
-                    Scene {sceneNum}
+                    All Scenes
                   </button>
-                ))}
+                  {uniqueScenes.map((sceneNum) => (
+                    <button
+                      key={sceneNum}
+                      onClick={() => setSelectedScene(sceneNum.toString())}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 whitespace-nowrap ${
+                        selectedScene === sceneNum.toString()
+                          ? "bg-cinema-600 text-white"
+                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      }`}
+                    >
+                      Scene {sceneNum}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Shot List Table */}
+        {/* Shot List Table - Responsive Container */}
         <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Shot #
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Scene
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Shot Type
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider hidden sm:table-cell">
-                    Camera
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider hidden sm:table-cell">
-                    Duration
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredShots.map((shot, index) => (
-                  <motion.tr
-                    key={shot.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className={`hover:bg-gray-700/50 transition-colors duration-200 ${
-                      deletingShot === shot.id ? "opacity-50" : ""
-                    }`}
-                  >
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <div className="text-xs sm:text-sm font-medium text-white">
-                        {shot.shot_number.toString().padStart(3, "0")}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(
-                          shot.scene_number || 1
-                        )}`}
-                      >
-                        {shot.scene_number || 1}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(
-                          shot.shot_type
-                        )}`}
-                      >
-                        {shot.shot_type}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
-                      <div className="text-sm text-gray-300">
-                        <div>{shot.camera_angle}</div>
-                        <div className="text-xs text-gray-500">
-                          {shot.camera_movement}
+          {/* Desktop Table */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Shot #
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Scene
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Shot Type
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Camera
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredShots.map((shot, index) => (
+                    <motion.tr
+                      key={shot.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className={`hover:bg-gray-700/50 transition-colors duration-200 ${
+                        deletingShot === shot.id ? "opacity-50" : ""
+                      }`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">
+                          {shot.shot_number.toString().padStart(3, "0")}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <div className="text-xs sm:text-sm text-gray-300 max-w-[150px] sm:max-w-xs">
-                        <div className="line-clamp-2">{shot.description}</div>
-                        <div className="text-xs text-gold-400 mt-1 hidden sm:block">
-                          {shot.lens_recommendation}
-                        </div>
-                        {shot.notes && (
-                          <div className="text-xs text-gray-500 mt-1 hidden sm:block">
-                            {shot.notes}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(
+                            shot.scene_number || 1
+                          )}`}
+                        >
+                          {shot.scene_number || 1}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(
+                            shot.shot_type
+                          )}`}
+                        >
+                          {shot.shot_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-300">
+                          <div>{shot.camera_angle}</div>
+                          <div className="text-xs text-gray-500">
+                            {shot.camera_movement}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
-                      <div className="text-sm text-gray-300">
-                        {shot.estimated_duration}s
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        {onEditShot && (
-                          <button
-                            onClick={() => onEditShot(shot)}
-                            disabled={deletingShot === shot.id}
-                            className="text-gold-400 hover:text-gold-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            title="Edit shot"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </button>
-                        )}
-                        {onDeleteShot && (
-                          <button
-                            onClick={() => handleDeleteShot(shot)}
-                            disabled={deletingShot === shot.id}
-                            className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            title="Delete shot"
-                          >
-                            {deletingShot === shot.id ? (
-                              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-300 max-w-xs">
+                          <div className="line-clamp-2">{shot.description}</div>
+                          <div className="text-xs text-gold-400 mt-1">
+                            {shot.lens_recommendation}
+                          </div>
+                          {shot.notes && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {shot.notes}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-300">
+                          {shot.estimated_duration}s
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          {onEditShot && (
+                            <button
+                              onClick={() => onEditShot(shot)}
+                              disabled={deletingShot === shot.id}
+                              className="text-gold-400 hover:text-gold-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                              title="Edit shot"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {onDeleteShot && (
+                            <button
+                              onClick={() => handleDeleteShot(shot)}
+                              disabled={deletingShot === shot.id}
+                              className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                              title="Delete shot"
+                            >
+                              {deletingShot === shot.id ? (
+                                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile/Tablet Horizontal Scrollable Table */}
+          <div className="lg:hidden">
+            {/* Scroll Indicator */}
+            <div className="bg-gray-700 px-4 py-2 border-b border-gray-600">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">
+                  Swipe left to see more columns
+                </span>
+                <div className="flex items-center space-x-1">
+                  <ChevronLeft className="h-3 w-3 text-gray-500" />
+                  <ChevronRight className="h-3 w-3 text-gray-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Horizontally Scrollable Container */}
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[60px]">
+                      Shot #
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[60px]">
+                      Scene
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[100px]">
+                      Type
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[120px]">
+                      Camera
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[200px]">
+                      Description
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[80px]">
+                      Duration
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[80px]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredShots.map((shot, index) => (
+                    <motion.tr
+                      key={shot.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className={`hover:bg-gray-700/50 transition-colors duration-200 ${
+                        deletingShot === shot.id ? "opacity-50" : ""
+                      }`}
+                    >
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">
+                          {shot.shot_number.toString().padStart(3, "0")}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(
+                            shot.scene_number || 1
+                          )}`}
+                        >
+                          {shot.scene_number || 1}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShotTypeColor(
+                            shot.shot_type
+                          )}`}
+                        >
+                          {shot.shot_type}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="text-sm text-gray-300">
+                          <div className="font-medium">{shot.camera_angle}</div>
+                          <div className="text-xs text-gray-500">
+                            {shot.camera_movement}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="text-sm text-gray-300">
+                          <div className="line-clamp-2 mb-1">{shot.description}</div>
+                          <div className="text-xs text-gold-400">
+                            {shot.lens_recommendation}
+                          </div>
+                          {shot.notes && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {shot.notes}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="text-sm text-gray-300">
+                          {shot.estimated_duration}s
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          {onEditShot && (
+                            <button
+                              onClick={() => onEditShot(shot)}
+                              disabled={deletingShot === shot.id}
+                              className="text-gold-400 hover:text-gold-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 p-1"
+                              title="Edit shot"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {onDeleteShot && (
+                            <button
+                              onClick={() => handleDeleteShot(shot)}
+                              disabled={deletingShot === shot.id}
+                              className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 p-1"
+                              title="Delete shot"
+                            >
+                              {deletingShot === shot.id ? (
+                                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Scroll Hint */}
+            <div className="bg-gray-700 px-4 py-2 border-t border-gray-600">
+              <div className="flex items-center justify-center">
+                <span className="text-xs text-gray-500">
+                  Scroll horizontally to view all shot details
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Scene Summary */}
         {selectedScene === "all" && uniqueScenes.length > 1 && (
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {uniqueScenes.map((sceneNum) => {
-              const sceneShots = shotsByScene[sceneNum] || [];
-              const sceneDuration = sceneShots.reduce(
-                (sum, shot) => sum + (shot.estimated_duration || 0),
-                0
-              );
+          <div className="mt-6 sm:mt-8">
+            <h3 className="text-lg font-semibold text-white mb-4">Scene Summary</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              {uniqueScenes.map((sceneNum) => {
+                const sceneShots = shotsByScene[sceneNum] || [];
+                const sceneDuration = sceneShots.reduce(
+                  (sum, shot) => sum + (shot.estimated_duration || 0),
+                  0
+                );
 
-              return (
-                <motion.div
-                  key={sceneNum}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: sceneNum * 0.1 }}
-                  className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(
-                        sceneNum
-                      )}`}
-                    >
-                      Scene {sceneNum}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {Math.floor(sceneDuration / 60)}m {sceneDuration % 60}s
-                    </span>
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-300">
-                    {sceneShots.length} shots
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Shots {sceneShots[0]?.shot_number} -{" "}
-                    {sceneShots[sceneShots.length - 1]?.shot_number}
-                  </div>
-                </motion.div>
-              );
-            })}
+                return (
+                  <motion.div
+                    key={sceneNum}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: sceneNum * 0.1 }}
+                    className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSceneColor(
+                          sceneNum
+                        )}`}
+                      >
+                        Scene {sceneNum}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {Math.floor(sceneDuration / 60)}m {sceneDuration % 60}s
+                      </span>
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-300">
+                      {sceneShots.length} shots
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Shots {sceneShots[0]?.shot_number} -{" "}
+                      {sceneShots[sceneShots.length - 1]?.shot_number}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         )}
 
