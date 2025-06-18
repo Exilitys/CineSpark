@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -14,33 +14,36 @@ export const useAuth = () => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('🔍 Getting initial session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log('📊 Initial session result:', { 
-          session: session ? 'Present' : 'None', 
-          user: session?.user?.email || 'None',
-          error: error?.message || 'None'
+        console.log("🔍 Getting initial session...");
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        console.log("📊 Initial session result:", {
+          session: session ? "Present" : "None",
+          user: session?.user?.email || "None",
+          error: error?.message || "None",
         });
-        
+
         if (error) {
-          console.error('❌ Error getting session:', error);
+          console.error("❌ Error getting session:", error);
         }
-        
+
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
           setInitialized(true);
           setLoading(false);
-          
-          console.log('✅ Auth state initialized:', {
-            user: session?.user?.email || 'None',
+
+          console.log("✅ Auth state initialized:", {
+            user: session?.user?.email || "None",
             initialized: true,
-            loading: false
+            loading: false,
           });
         }
       } catch (error) {
-        console.error('💥 Error in getInitialSession:', error);
+        console.error("💥 Error in getInitialSession:", error);
         if (mounted) {
           setSession(null);
           setUser(null);
@@ -56,31 +59,31 @@ export const useAuth = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', {
+      console.log("🔄 Auth state changed:", {
         event,
-        user: session?.user?.email || 'None',
-        sessionId: session?.access_token ? 'Present' : 'None'
+        user: session?.user?.email || "None",
+        sessionId: session?.access_token ? "Present" : "None",
       });
-      
+
       if (mounted) {
         // Prevent flash by only updating if we're already initialized
         // or if this is the first auth state change
-        if (initialized || event === 'INITIAL_SESSION') {
+        if (initialized || event === "INITIAL_SESSION") {
           setSession(session);
           setUser(session?.user ?? null);
         }
-        
+
         // Always mark as initialized after first auth state change
         if (!initialized) {
           setInitialized(true);
         }
         setLoading(false);
-        
-        console.log('🔄 Auth hook state updated:', {
+
+        console.log("🔄 Auth hook state updated:", {
           event,
-          user: session?.user?.email || 'None',
+          user: session?.user?.email || "None",
           initialized: true,
-          loading: false
+          loading: false,
         });
       }
     });
@@ -93,8 +96,8 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      console.log('📝 Attempting sign up for:', email, 'with name:', fullName);
-      
+      console.log("📝 Attempting sign up for:", email, "with name:", fullName);
+
       const signUpData: any = {
         email,
         password,
@@ -104,62 +107,62 @@ export const useAuth = () => {
       if (fullName && fullName.trim()) {
         signUpData.options = {
           data: {
-            full_name: fullName.trim()
-          }
+            full_name: fullName.trim(),
+          },
         };
       }
 
       const { data, error } = await supabase.auth.signUp(signUpData);
-      
-      console.log('📝 Sign up result:', { 
-        user: data?.user?.email || 'None', 
-        session: data?.session ? 'Present' : 'None',
-        error: error?.message || 'None' 
+
+      console.log("📝 Sign up result:", {
+        user: data?.user?.email || "None",
+        session: data?.session ? "Present" : "None",
+        error: error?.message || "None",
       });
       return { data, error };
     } catch (error) {
-      console.error('💥 Sign up error:', error);
+      console.error("💥 Sign up error:", error);
       return { data: null, error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔑 Attempting sign in for:', email);
+      console.log("🔑 Attempting sign in for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      console.log('🔑 Sign in result:', { 
-        user: data?.user?.email || 'None', 
-        session: data?.session ? 'Present' : 'None',
-        error: error?.message || 'None' 
+      console.log("🔑 Sign in result:", {
+        user: data?.user?.email || "None",
+        session: data?.session ? "Present" : "None",
+        error: error?.message || "None",
       });
       return { data, error };
     } catch (error) {
-      console.error('💥 Sign in error:', error);
+      console.error("💥 Sign in error:", error);
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('🚪 Attempting sign out');
+      console.log("🚪 Attempting sign out");
       const { error } = await supabase.auth.signOut();
-      console.log('🚪 Sign out result:', { error: error?.message || 'None' });
+      console.log("🚪 Sign out result:", { error: error?.message || "None" });
       return { error };
     } catch (error) {
-      console.error('💥 Sign out error:', error);
+      console.error("💥 Sign out error:", error);
       return { error };
     }
   };
 
   // Debug current state every render
-  console.log('🎯 useAuth current state:', {
-    user: user?.email || 'None',
+  console.log("🎯 useAuth current state:", {
+    user: user?.email || "None",
     loading,
     initialized,
-    sessionExists: !!session
+    sessionExists: !!session,
   });
 
   return {
