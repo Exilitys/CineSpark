@@ -44,7 +44,7 @@ export const WorkflowTracker: React.FC = () => {
   if (!projectId) return null;
 
   return (
-    <div className="overflow-x-hidden w-full">
+  
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -225,6 +225,5 @@ export const WorkflowTracker: React.FC = () => {
         </div>
       </div>
     </motion.div>
-      </div>
   );
 };
