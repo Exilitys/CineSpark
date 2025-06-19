@@ -23,7 +23,7 @@ import {
   getPricingSession,
   clearPricingSession,
 } from "../utils/sessionStorage";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { useCredits } from "../hooks/useCredits";
 
 export const PricingPage: React.FC = () => {
@@ -139,6 +139,7 @@ export const PricingPage: React.FC = () => {
   ];
 
   const handleSelectPlan = async (planId: string, annual: boolean) => {
+    toast.error("Pricing Plan are currently not avaiable");
     console.log("💳 handleSelectPlan called:", {
       planId,
       annual,
@@ -147,105 +148,105 @@ export const PricingPage: React.FC = () => {
       initialized,
     });
 
-    // Wait for auth to finish loading and be initialized
-    if (authLoading || !initialized) {
-      console.log("⏳ Auth still loading or not initialized, waiting...");
-      toast.error("Please wait while we load your account information");
-      return;
-    }
+    // // Wait for auth to finish loading and be initialized
+    // if (authLoading || !initialized) {
+    //   console.log("⏳ Auth still loading or not initialized, waiting...");
+    //   toast.error("Please wait while we load your account information");
+    //   return;
+    // }
 
-    const selectedPlan = plans.find((p) => p.id === planId);
-    if (!selectedPlan) {
-      toast.error("Invalid plan selected");
-      return;
-    }
+    // const selectedPlan = plans.find((p) => p.id === planId);
+    // if (!selectedPlan) {
+    //   toast.error("Invalid plan selected");
+    //   return;
+    // }
 
-    // Handle free plan
-    if (planId === "free") {
-      if (user) {
-        toast.success("You're already on the free plan!");
-      } else {
-        toast.info("Sign up to get started with the free plan");
-        setShowAuthModal(true);
-      }
-      return;
-    }
+    // // Handle free plan
+    // if (planId === "free") {
+    //   if (user) {
+    //     toast.success("You're already on the free plan!");
+    //   } else {
+    //     toast.info("Sign up to get started with the free plan");
+    //     setShowAuthModal(true);
+    //   }
+    //   return;
+    // }
 
-    // Check authentication for paid plans
-    if (!user) {
-      console.log(
-        "🚫 No user found, storing pricing session and showing auth modal"
-      );
+    // // Check authentication for paid plans
+    // if (!user) {
+    //   console.log(
+    //     "🚫 No user found, storing pricing session and showing auth modal"
+    //   );
 
-      // Store pricing session securely
-      const price = annual
-        ? selectedPlan.annualPrice
-        : selectedPlan.monthlyPrice;
-      storePricingSession(planId, selectedPlan.name, price);
+    //   // Store pricing session securely
+    //   const price = annual
+    //     ? selectedPlan.annualPrice
+    //     : selectedPlan.monthlyPrice;
+    //   storePricingSession(planId, selectedPlan.name, price);
 
-      // Set pending plan for UI feedback
-      setPendingPlanId(planId);
+    //   // Set pending plan for UI feedback
+    //   setPendingPlanId(planId);
 
-      // Show auth modal with payment context
-      setShowAuthModal(true);
+    //   // Show auth modal with payment context
+    //   setShowAuthModal(true);
 
-      toast.info(
-        "Please sign in or create an account to complete your purchase"
-      );
-      return;
-    }
+    //   toast.info(
+    //     "Please sign in or create an account to complete your purchase"
+    //   );
+    //   return;
+    // }
 
-    console.log("✅ User is authenticated, proceeding with checkout");
-    setProcessingPlan(planId);
+    // console.log("✅ User is authenticated, proceeding with checkout");
+    // setProcessingPlan(planId);
 
-    try {
-      // Check if we're in demo mode
-      const isDemoMode =
-        !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === "pk_test_demo";
+    // try {
+    //   // Check if we're in demo mode
+    //   const isDemoMode =
+    //     !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+    //     import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY === "pk_test_demo";
 
-      if (isDemoMode) {
-        console.log("🎭 Demo mode: Redirecting to demo payment page");
-        toast.success("Demo mode: Redirecting to payment simulation...");
+    //   if (isDemoMode) {
+    //     console.log("🎭 Demo mode: Redirecting to demo payment page");
+    //     toast.success("Demo mode: Redirecting to payment simulation...");
 
-        // In demo mode, redirect to our payment page
-        setTimeout(() => {
-          navigate(`/payment/${planId}`);
-        }, 1000);
-        return;
-      }
+    //     // In demo mode, redirect to our payment page
+    //     setTimeout(() => {
+    //       navigate(`/payment/${planId}`);
+    //     }, 1000);
+    //     return;
+    //   }
 
-      // Get the appropriate price ID based on plan and billing cycle
-      const priceId = annual
-        ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.annual
-        : STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.monthly;
+    //   // Get the appropriate price ID based on plan and billing cycle
+    //   const priceId = annual
+    //     ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.annual
+    //     : STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS]?.monthly;
 
-      if (!priceId) {
-        throw new Error("Price ID not found for selected plan");
-      }
+    //   if (!priceId) {
+    //     throw new Error("Price ID not found for selected plan");
+    //   }
 
-      // Create Stripe checkout session with user's access token
-      const { sessionId, url, demo } = await createCheckoutSession(
-        priceId,
-        // profile?.stripe_customer_id,
-        session?.access_token
-      );
+    //   // Create Stripe checkout session with user's access token
+    //   const { sessionId, url, demo } = await createCheckoutSession(
+    //     priceId,
+    //     // profile?.stripe_customer_id,
+    //     session?.access_token
+    //   );
 
-      if (demo) {
-        // Demo mode - redirect to our payment page
-        navigate(`/payment/${planId}`);
-      } else if (url) {
-        // Production mode - redirect to Stripe Checkout
-        window.location.href = url;
-      } else {
-        throw new Error("No checkout URL received");
-      }
-    } catch (error) {
-      console.error("💥 Checkout error:", error);
-      toast.error("Failed to start checkout process. Please try again.");
-    } finally {
-      setProcessingPlan(null);
-    }
+    //   if (demo) {
+    //     // Demo mode - redirect to our payment page
+    //     navigate(`/payment/${planId}`);
+    //   } else if (url) {
+    //     // Production mode - redirect to Stripe Checkout
+    //     window.location.href = url;
+    //   } else {
+    //     throw new Error("No checkout URL received");
+    //   }
+    // } catch (error) {
+    //   console.error("💥 Checkout error:", error);
+    //   toast.error("Failed to start checkout process. Please try again.");
+    // } finally {
+    //   setProcessingPlan(null);
+    // }
   };
 
   const handleAuthModalClose = () => {
@@ -387,14 +388,24 @@ export const PricingPage: React.FC = () => {
                   <Film className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">Current Plan Status</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    Current Plan Status
+                  </h3>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                    <span className={`text-xs sm:text-sm ${
-                      profile.plan === 'pro' ? 'text-gold-400' : 
-                      profile.plan === 'enterprise' ? 'text-purple-400' : 'text-gray-400'
-                    }`}>
-                      {profile.plan === 'pro' ? 'Pro Plan' : 
-                       profile.plan === 'enterprise' ? 'Enterprise Plan' : 'Free Plan'}
+                    <span
+                      className={`text-xs sm:text-sm ${
+                        profile.plan === "pro"
+                          ? "text-gold-400"
+                          : profile.plan === "enterprise"
+                          ? "text-purple-400"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {profile.plan === "pro"
+                        ? "Pro Plan"
+                        : profile.plan === "enterprise"
+                        ? "Enterprise Plan"
+                        : "Free Plan"}
                     </span>
                     <span className="text-gray-400 hidden sm:inline">•</span>
                     <span className="text-gray-400 text-xs sm:text-sm">
@@ -407,20 +418,23 @@ export const PricingPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
-              {profile.plan === 'free' && limitInfo.current >= 2 && (
+
+              {profile.plan === "free" && limitInfo.current >= 2 && (
                 <div className="text-right">
                   <div className="flex items-center space-x-2 text-orange-400 mb-1 sm:mb-2 justify-end">
                     <AlertCircle className="h-4 w-4" />
                     <span className="text-xs sm:text-sm font-medium">
-                      {limitInfo.current === 3 ? 'Project Limit Reached' : 'Approaching Limit'}
+                      {limitInfo.current === 3
+                        ? "Project Limit Reached"
+                        : "Approaching Limit"}
                     </span>
                   </div>
                   <p className="text-orange-300 text-xs">
-                    {limitInfo.current === 3 
-                      ? 'Upgrade to create more projects'
-                      : `${limitInfo.remaining} project${limitInfo.remaining !== 1 ? 's' : ''} remaining`
-                    }
+                    {limitInfo.current === 3
+                      ? "Upgrade to create more projects"
+                      : `${limitInfo.remaining} project${
+                          limitInfo.remaining !== 1 ? "s" : ""
+                        } remaining`}
                   </p>
                 </div>
               )}
@@ -514,7 +528,9 @@ export const PricingPage: React.FC = () => {
             </div>
             <div className="text-center">
               <Zap className="h-8 w-8 sm:h-12 sm:w-12 text-gold-400 mx-auto mb-3 sm:mb-4" />
-              <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">Instant Access</h4>
+              <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">
+                Instant Access
+              </h4>
               <p className="text-gray-400 text-xs sm:text-sm">
                 Get immediate access to your plan features as soon as your
                 payment is processed.
@@ -522,7 +538,9 @@ export const PricingPage: React.FC = () => {
             </div>
             <div className="text-center">
               <Crown className="h-8 w-8 sm:h-12 sm:w-12 text-purple-400 mx-auto mb-3 sm:mb-4" />
-              <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">Cancel Anytime</h4>
+              <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">
+                Cancel Anytime
+              </h4>
               <p className="text-gray-400 text-xs sm:text-sm">
                 No long-term commitments. Cancel or change your plan anytime
                 from your account settings.
@@ -558,9 +576,9 @@ export const PricingPage: React.FC = () => {
                 How many projects can I create?
               </h4>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Free plan users can create up to 3 projects. Pro and Enterprise 
-                plans include unlimited projects, allowing you to work on as many 
-                film concepts as you want.
+                Free plan users can create up to 3 projects. Pro and Enterprise
+                plans include unlimited projects, allowing you to work on as
+                many film concepts as you want.
               </p>
             </div>
             <div>
@@ -587,8 +605,9 @@ export const PricingPage: React.FC = () => {
                 Is there a free trial?
               </h4>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Every new user starts with 100 free credits and can create up to 
-                3 projects to explore all features. No credit card required to get started.
+                Every new user starts with 100 free credits and can create up to
+                3 projects to explore all features. No credit card required to
+                get started.
               </p>
             </div>
             <div>

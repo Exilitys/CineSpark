@@ -19,7 +19,7 @@ import { useProjects } from "../hooks/useProjects";
 import { useStory } from "../hooks/useStory";
 import { useShots } from "../hooks/useShots";
 import { usePhotoboard } from "../hooks/usePhotoboard";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 interface ExportResult {
   success: boolean;
@@ -40,13 +40,13 @@ export const ExportPage: React.FC = () => {
   const { story, loading: storyLoading } = useStory(projectId || null);
   const { shots, loading: shotsLoading } = useShots(projectId || null);
   const { frames, loading: framesLoading } = usePhotoboard(projectId || null);
-  const { 
-    exportStoryPDF, 
-    exportShotsPDF, 
+  const {
+    exportStoryPDF,
+    exportShotsPDF,
     exportPhotoboardPDF,
-    exportingStory, 
+    exportingStory,
     exportingShots,
-    exportingPhotoboard
+    exportingPhotoboard,
   } = usePDFExport();
 
   // Get project details
@@ -183,23 +183,24 @@ export const ExportPage: React.FC = () => {
       if (selectedFormats.includes("photoboard-pdf") && frames.length > 0) {
         try {
           // Prepare photoboard data in the format expected by your Python API
-          const photoboardData = frames.map(frame => {
-            const shot = shots.find(s => s.id === frame.shot_id);
-            
+          const photoboardData = frames.map((frame) => {
+            const shot = shots.find((s) => s.id === frame.shot_id);
+
             return {
               shot_id: frame.shot_id || frame.id,
               shot_number: shot?.shot_number || 1,
               scene_number: shot?.scene_number || 1,
               description: frame.description,
               style: frame.style,
-              image_url: frame.image_url || '',
+              image_url: frame.image_url || "",
               annotations: frame.annotations || [],
               technical_specs: {
-                shot_type: shot?.shot_type || 'Medium Shot',
-                camera_angle: shot?.camera_angle || 'Eye-level',
-                camera_movement: shot?.camera_movement || 'Static',
-                lens_recommendation: shot?.lens_recommendation || '50mm standard lens'
-              }
+                shot_type: shot?.shot_type || "Medium Shot",
+                camera_angle: shot?.camera_angle || "Eye-level",
+                camera_movement: shot?.camera_movement || "Static",
+                lens_recommendation:
+                  shot?.lens_recommendation || "50mm standard lens",
+              },
             };
           });
 
@@ -624,7 +625,10 @@ export const ExportPage: React.FC = () => {
               whileHover={{ scale: selectedFormats.length > 0 ? 1.02 : 1 }}
               whileTap={{ scale: selectedFormats.length > 0 ? 0.98 : 1 }}
             >
-              {isExporting || exportingStory || exportingShots || exportingPhotoboard ? (
+              {isExporting ||
+              exportingStory ||
+              exportingShots ||
+              exportingPhotoboard ? (
                 <>
                   <Download className="h-4 w-4 animate-bounce" />
                   <span>Exporting PDFs...</span>
