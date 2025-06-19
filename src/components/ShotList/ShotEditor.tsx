@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Edit3, Image, Info } from 'lucide-react';
-import { Database } from '../../types/database';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Save, Camera, Edit3, Image, Info } from "lucide-react";
+import { Database } from "../../types/database";
+import toast from "react-hot-toast";
 
-type Shot = Database['public']['Tables']['shots']['Row'];
+type Shot = Database["public"]["Tables"]["shots"]["Row"];
 
 interface ShotEditorProps {
   shot: Shot | null;
@@ -17,19 +17,19 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
   shot,
   isOpen,
   onClose,
-  onSave
+  onSave,
 }) => {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     shot_number: shot?.shot_number || 1,
     scene_number: shot?.scene_number || 1,
-    shot_type: shot?.shot_type || 'Wide Shot',
-    camera_angle: shot?.camera_angle || 'Eye-level',
-    camera_movement: shot?.camera_movement || 'Static',
-    description: shot?.description || '',
-    lens_recommendation: shot?.lens_recommendation || '',
+    shot_type: shot?.shot_type || "Wide Shot",
+    camera_angle: shot?.camera_angle || "Eye-level",
+    camera_movement: shot?.camera_movement || "Static",
+    description: shot?.description || "",
+    lens_recommendation: shot?.lens_recommendation || "",
     estimated_duration: shot?.estimated_duration || 5,
-    notes: shot?.notes || '',
+    notes: shot?.notes || "",
   });
 
   React.useEffect(() => {
@@ -43,7 +43,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
         description: shot.description,
         lens_recommendation: shot.lens_recommendation,
         estimated_duration: shot.estimated_duration || 5,
-        notes: shot.notes || '',
+        notes: shot.notes || "",
       });
     }
   }, [shot]);
@@ -54,41 +54,43 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
     setSaving(true);
     try {
       await onSave(shot.id, formData);
-      toast.success('Shot updated successfully! Photoboard frame will be updated automatically.');
+      toast.success(
+        "Shot updated successfully! Photoboard frame will be updated automatically."
+      );
       onClose();
     } catch (error) {
-      toast.error('Error updating shot');
+      toast.error("Error updating shot");
     } finally {
       setSaving(false);
     }
   };
 
   const shotTypes = [
-    'Wide Shot',
-    'Medium Shot', 
-    'Close-up',
-    'Extreme Close-up',
-    'POV',
-    'Over Shoulder'
+    "Wide Shot",
+    "Medium Shot",
+    "Close-up",
+    "Extreme Close-up",
+    "POV",
+    "Over Shoulder",
   ];
 
   const cameraAngles = [
-    'Eye-level',
-    'High Angle',
-    'Low Angle',
-    'Dutch Angle',
-    'Bird\'s Eye',
-    'Worm\'s Eye'
+    "Eye-level",
+    "High Angle",
+    "Low Angle",
+    "Dutch Angle",
+    "Bird's Eye",
+    "Worm's Eye",
   ];
 
   const cameraMovements = [
-    'Static',
-    'Pan',
-    'Tilt',
-    'Dolly',
-    'Steadicam',
-    'Handheld',
-    'Crane'
+    "Static",
+    "Pan",
+    "Tilt",
+    "Dolly",
+    "Steadicam",
+    "Handheld",
+    "Crane",
   ];
 
   return (
@@ -102,7 +104,7 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
             className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
             onClick={onClose}
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -116,7 +118,10 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Edit Shot</h2>
-                  <p className="text-gray-400">Shot #{shot.shot_number.toString().padStart(3, '0')} • Scene {shot.scene_number || 1}</p>
+                  <p className="text-gray-400">
+                    Shot #{shot.shot_number.toString().padStart(3, "0")} • Scene{" "}
+                    {shot.scene_number || 1}
+                  </p>
                 </div>
               </div>
               <button
@@ -132,9 +137,13 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
               <div className="flex items-start space-x-3">
                 <Image className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-blue-400 font-medium text-sm">Photoboard Integration</h4>
+                  <h4 className="text-blue-400 font-medium text-sm">
+                    Photoboard Integration
+                  </h4>
                   <p className="text-blue-300 text-xs mt-1">
-                    Changes to this shot will automatically update the corresponding photoboard frame with new technical specifications and annotations.
+                    Changes to this shot will automatically update the
+                    corresponding photoboard frame with new technical
+                    specifications and annotations.
                   </p>
                 </div>
               </div>
@@ -157,7 +166,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                     <input
                       type="number"
                       value={formData.shot_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, shot_number: parseInt(e.target.value) || 1 }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          shot_number: parseInt(e.target.value) || 1,
+                        }))
+                      }
                       className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                       min="1"
                     />
@@ -169,7 +183,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                     <input
                       type="number"
                       value={formData.scene_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, scene_number: parseInt(e.target.value) || 1 }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          scene_number: parseInt(e.target.value) || 1,
+                        }))
+                      }
                       className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                       min="1"
                     />
@@ -183,11 +202,18 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   </label>
                   <select
                     value={formData.shot_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, shot_type: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shot_type: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                   >
-                    {shotTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    {shotTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -199,11 +225,18 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   </label>
                   <select
                     value={formData.camera_angle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, camera_angle: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        camera_angle: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                   >
-                    {cameraAngles.map(angle => (
-                      <option key={angle} value={angle}>{angle}</option>
+                    {cameraAngles.map((angle) => (
+                      <option key={angle} value={angle}>
+                        {angle}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -215,11 +248,18 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   </label>
                   <select
                     value={formData.camera_movement}
-                    onChange={(e) => setFormData(prev => ({ ...prev, camera_movement: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        camera_movement: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                   >
-                    {cameraMovements.map(movement => (
-                      <option key={movement} value={movement}>{movement}</option>
+                    {cameraMovements.map((movement) => (
+                      <option key={movement} value={movement}>
+                        {movement}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -239,7 +279,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none"
                     rows={3}
                     placeholder="Describe the shot composition and action..."
@@ -254,7 +299,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   <input
                     type="text"
                     value={formData.lens_recommendation}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lens_recommendation: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        lens_recommendation: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                     placeholder="e.g., 50mm standard lens, 24mm wide-angle"
                   />
@@ -268,7 +318,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   <input
                     type="number"
                     value={formData.estimated_duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, estimated_duration: parseInt(e.target.value) || 5 }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        estimated_duration: parseInt(e.target.value) || 5,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent"
                     min="1"
                   />
@@ -281,7 +336,12 @@ export const ShotEditor: React.FC<ShotEditorProps> = ({
                   </label>
                   <textarea
                     value={formData.notes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cinema-500 focus:border-transparent resize-none"
                     rows={3}
                     placeholder="Special requirements, lighting notes, props, effects..."
